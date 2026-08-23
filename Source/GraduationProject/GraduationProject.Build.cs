@@ -13,7 +13,10 @@ public class GraduationProject : ModuleRules
 			"Engine",
 			"HeadMountedDisplay",
 			"InputCore",
-			"EnhancedInput"
+			"EnhancedInput",
+			"UMG",
+			"Slate",
+			"SlateCore"
 		});
 	}
 }

@@ -13,6 +13,16 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogGraduationAssembly, Log, All);
 
+namespace
+{
+	float ProjectBoxExtentOntoDirection(const FVector& BoxExtent, const FVector& Direction)
+	{
+		return FMath::Abs(Direction.X) * BoxExtent.X
+			+ FMath::Abs(Direction.Y) * BoxExtent.Y
+			+ FMath::Abs(Direction.Z) * BoxExtent.Z;
+	}
+}
+
 UAssemblyPartComponent::UAssemblyPartComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -31,10 +41,18 @@ void UAssemblyPartComponent::BeginPlay()
 
 	InitialTransform = ResolveControlledComponent()->GetComponentTransform();
 	bHasInitialTransform = true;
+	if (const AActor* Owner = GetOwner())
+	{
+		ObservationPartBoundsExtent = Owner->GetComponentsBoundingBox(true).GetExtent();
+	}
+	if (TargetComponent && TargetComponent->GetOwner())
+	{
+		ObservationTargetBoundsExtent = TargetComponent->GetOwner()->GetComponentsBoundingBox(true).GetExtent();
+	}
 	RunStats = FAssemblyRunStats();
 	RunStartTimeSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
 	UpdateEntryApproachState();
-	SetComponentTickEnabled(bAutoSnapWhenInRange || bHideXRHandWhenHeld);
+	SetComponentTickEnabled(bAssemblyInteractionEnabled && (bAutoSnapWhenInRange || bHideXRHandWhenHeld));
 	BindExternalGrabEvents();
 	BroadcastRunStats();
 	UE_LOG(LogGraduationAssembly, Log, TEXT("Assembly part '%s' initialized. Target='%s', AutoSnap=%s."),
@@ -50,18 +68,29 @@ void UAssemblyPartComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void UAssemblyPartComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (!bAssemblyInteractionEnabled)
+	{
+		RestoreActiveXRHandVisibility();
+		return;
+	}
 	UpdateExternalGrabHandVisibility();
 	UpdateEntryApproachState();
 	if (AssemblyState == EAssemblyPartState::Completed)
 	{
-		if (!bAllowReassemblyAfterCompletion || EvaluateCurrentPose().bIsAtFinalPose)
+		// A completed part remains exactly on its authored target until the external
+		// grab system actually attaches it again. TryGetExternalHeldHand runs above
+		// and changes the state to Held before this branch for a real re-grab.
+		// Re-applying the target prevents release/collision settling from leaving a
+		// visible seam without using pose drift itself as an unlock signal.
+		if (USceneComponent* ControlledSceneComponent = ResolveControlledComponent(); TargetComponent && ControlledSceneComponent)
 		{
-			return;
+			ControlledSceneComponent->SetWorldTransform(
+				TargetComponent->GetAssemblyTargetTransform(),
+				false,
+				nullptr,
+				ETeleportType::TeleportPhysics);
 		}
-
-		RestoreFreeAssemblyPhysics();
-		SetAssemblyState(EAssemblyPartState::Idle);
-		UE_LOG(LogGraduationAssembly, Log, TEXT("Assembly part '%s' rearmed after being moved from its completed pose."), *GetNameSafe(GetOwner()));
+		return;
 	}
 
 	if (bIsHeld || bAutoSnapWhenInRange)
@@ -72,6 +101,11 @@ void UAssemblyPartComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UAssemblyPartComponent::NotifyGrabStarted()
 {
+	if (!bAssemblyInteractionEnabled)
+	{
+		return;
+	}
+
 	if (!HasValidConfiguration())
 	{
 		LogConfigurationWarningOnce();
@@ -80,8 +114,15 @@ void UAssemblyPartComponent::NotifyGrabStarted()
 
 	if (AssemblyState == EAssemblyPartState::Completed)
 	{
-		UE_LOG(LogGraduationAssembly, Verbose, TEXT("Ignored grab on completed assembly part '%s'."), *GetNameSafe(GetOwner()));
-		return;
+		if (!bAllowReassemblyAfterCompletion)
+		{
+			UE_LOG(LogGraduationAssembly, Verbose, TEXT("Ignored grab on permanently completed assembly part '%s'."), *GetNameSafe(GetOwner()));
+			return;
+		}
+
+		RestoreFreeAssemblyPhysics();
+		bEntryApproachArmed = false;
+		UE_LOG(LogGraduationAssembly, Log, TEXT("Assembly part '%s' rearmed by a new grab."), *GetNameSafe(GetOwner()));
 	}
 
 	bIsHeld = true;
@@ -98,7 +139,7 @@ void UAssemblyPartComponent::NotifyGrabEnded()
 	}
 
 	bIsHeld = false;
-	SetComponentTickEnabled(bAutoSnapWhenInRange || bHideXRHandWhenHeld);
+	SetComponentTickEnabled(bAssemblyInteractionEnabled && (bAutoSnapWhenInRange || bHideXRHandWhenHeld));
 	UpdateEntryApproachState();
 
 	const FAssemblyPoseEvaluation Evaluation = EvaluateCurrentPose();
@@ -111,6 +152,10 @@ void UAssemblyPartComponent::NotifyGrabEnded()
 	{
 		bGuidanceWasAvailable = false;
 		OnGuidanceChanged.Broadcast(false);
+	}
+	if (TargetComponent)
+	{
+		TargetComponent->SetGuidanceFeedbackActive(false);
 	}
 
 	SetAssemblyState(EAssemblyPartState::Idle);
@@ -140,12 +185,204 @@ void UAssemblyPartComponent::ResetAssembly()
 		bGuidanceWasAvailable = false;
 		OnGuidanceChanged.Broadcast(false);
 	}
+	if (TargetComponent)
+	{
+		TargetComponent->SetGuidanceFeedbackActive(false);
+	}
 
 	SetAssemblyState(EAssemblyPartState::Idle);
-	SetComponentTickEnabled(bAutoSnapWhenInRange || bHideXRHandWhenHeld);
+	SetComponentTickEnabled(bAssemblyInteractionEnabled && (bAutoSnapWhenInRange || bHideXRHandWhenHeld));
 	++RunStats.ResetCount;
 	BroadcastRunStats();
 	OnAssemblyReset.Broadcast();
+}
+
+void UAssemblyPartComponent::SetGuidanceEnabled(bool bEnabled)
+{
+	if (bGuidanceEnabled == bEnabled)
+	{
+		return;
+	}
+
+	bGuidanceEnabled = bEnabled;
+	if (!bGuidanceEnabled)
+	{
+		ClearTeachingHint();
+	}
+	if (!bGuidanceEnabled && bGuidanceWasAvailable)
+	{
+		bGuidanceWasAvailable = false;
+		OnGuidanceChanged.Broadcast(false);
+		if (TargetComponent)
+		{
+			TargetComponent->SetGuidanceFeedbackActive(false);
+		}
+	}
+}
+
+void UAssemblyPartComponent::SetAssemblyInteractionEnabled(bool bEnabled)
+{
+	if (bAssemblyInteractionEnabled == bEnabled)
+	{
+		return;
+	}
+
+	bAssemblyInteractionEnabled = bEnabled;
+	if (!bAssemblyInteractionEnabled)
+	{
+		RestoreActiveXRHandVisibility();
+		ClearTeachingHint();
+		bIsHeld = false;
+		bWasExternallyHeld = false;
+		bAttemptTimerActive = false;
+		if (bGuidanceWasAvailable)
+		{
+			bGuidanceWasAvailable = false;
+			OnGuidanceChanged.Broadcast(false);
+			if (TargetComponent)
+			{
+				TargetComponent->SetGuidanceFeedbackActive(false);
+			}
+		}
+
+		if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(ResolveControlledComponent()))
+		{
+			PrimitiveComponent->SetPhysicsLinearVelocity(FVector::ZeroVector);
+			PrimitiveComponent->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+			PrimitiveComponent->SetSimulatePhysics(false);
+			PrimitiveComponent->SetEnableGravity(false);
+			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		SetComponentTickEnabled(false);
+		return;
+	}
+
+	RestoreFreeAssemblyPhysics();
+	UpdateEntryApproachState();
+	SetComponentTickEnabled(bAutoSnapWhenInRange || bHideXRHandWhenHeld);
+}
+
+bool UAssemblyPartComponent::ShowTeachingHint()
+{
+	if (!TargetComponent)
+	{
+		LogConfigurationWarningOnce();
+		return false;
+	}
+
+	TargetComponent->SetGuidanceFeedbackActive(true);
+	bTeachingHintVisible = true;
+	return true;
+}
+
+void UAssemblyPartComponent::ClearTeachingHint()
+{
+	if (bTeachingHintVisible && TargetComponent)
+	{
+		TargetComponent->SetGuidanceFeedbackActive(false);
+	}
+	bTeachingHintVisible = false;
+}
+
+bool UAssemblyPartComponent::ApplyTeachingAlignmentAssist()
+{
+	if (!HasValidConfiguration() || AssemblyState == EAssemblyPartState::Completed)
+	{
+		return false;
+	}
+
+	USceneComponent* ControlledSceneComponent = ResolveControlledComponent();
+	FTransform AlignedTransform = ControlledSceneComponent->GetComponentTransform();
+	const FTransform TargetTransform = TargetComponent->GetAssemblyTargetTransform();
+	AlignedTransform.SetRotation(TargetTransform.GetRotation());
+	AlignedTransform.SetScale3D(TargetTransform.GetScale3D());
+	ControlledSceneComponent->SetWorldTransform(AlignedTransform, false, nullptr, ETeleportType::TeleportPhysics);
+	UE_LOG(LogGraduationAssembly, Log, TEXT("Assembly alignment assist applied to '%s'."), *GetNameSafe(GetOwner()));
+	return true;
+}
+
+void UAssemblyPartComponent::SetTeachingCompletionFeedbackHoldSeconds(float HoldSeconds)
+{
+	if (TargetComponent)
+	{
+		TargetComponent->SetCompletionFeedbackHoldSeconds(HoldSeconds);
+	}
+}
+
+bool UAssemblyPartComponent::SetTeachingObservationExplodeProgress(float ExplodeProgress)
+{
+	if (!HasValidConfiguration() || !bHasInitialTransform)
+	{
+		LogConfigurationWarningOnce();
+		return false;
+	}
+
+	USceneComponent* ControlledSceneComponent = ResolveControlledComponent();
+	if (!ControlledSceneComponent)
+	{
+		return false;
+	}
+
+	const float ClampedProgress = FMath::Clamp(ExplodeProgress, 0.0f, 1.0f);
+	const FTransform TargetTransform = TargetComponent->GetAssemblyTargetTransform();
+	const FVector TargetLocation = TargetTransform.GetLocation();
+	const FVector EntryDirection = GetEntryAxis(TargetTransform).GetSafeNormal();
+	auto GetRequiredSeparation = [this](const FVector& Direction)
+	{
+		return ProjectBoxExtentOntoDirection(ObservationPartBoundsExtent, Direction)
+			+ ProjectBoxExtentOntoDirection(ObservationTargetBoundsExtent, Direction) + 3.0f;
+	};
+	const float EntryClearanceDistance = FMath::Max(ObservationExplodeClearanceDistanceCm, GetRequiredSeparation(EntryDirection));
+	const FVector ClearanceLocation = TargetLocation + EntryDirection * EntryClearanceDistance;
+
+	const FVector AuthoredDelta = InitialTransform.GetLocation() - TargetLocation;
+	const FVector AuthoredDirection = AuthoredDelta.GetSafeNormal(SMALL_NUMBER, EntryDirection);
+	const float SafeEndDistance = FMath::Max(AuthoredDelta.Size(), GetRequiredSeparation(AuthoredDirection));
+
+	// Allocate slider space by the amount of visible transform change. The old
+	// fixed three-phase split could reserve most of the slider for a rotation or
+	// final move that was effectively zero, leaving a large dead section.
+	const float DirectionAngleRadians = FMath::Acos(FMath::Clamp(FVector::DotProduct(EntryDirection, AuthoredDirection), -1.0f, 1.0f));
+	const float DirectionArcDistance = 0.5f * (EntryClearanceDistance + SafeEndDistance) * DirectionAngleRadians;
+	const float RadialDistance = FMath::Abs(SafeEndDistance - EntryClearanceDistance);
+	const float PartVisualRadius = FMath::Max(ObservationPartBoundsExtent.GetMax(), 1.0f);
+	const float RotationDistanceEquivalent = TargetTransform.GetRotation().AngularDistance(InitialTransform.GetRotation()) * PartVisualRadius;
+	const float ScaleDistanceEquivalent = (TargetTransform.GetScale3D() - InitialTransform.GetScale3D()).Size() * PartVisualRadius;
+	const float SecondaryPathLength = DirectionArcDistance + RadialDistance + RotationDistanceEquivalent + ScaleDistanceEquivalent;
+	const bool bHasSecondaryTransform = SecondaryPathLength > 0.1f;
+	const float MinimumClearanceFraction = FMath::Clamp(ObservationExplodeClearanceFraction, 0.05f, 0.75f);
+	const float DistanceWeightedClearanceFraction = bHasSecondaryTransform
+		? EntryClearanceDistance / (EntryClearanceDistance + SecondaryPathLength)
+		: 1.0f;
+	const float ClearanceFraction = bHasSecondaryTransform
+		? FMath::Clamp(FMath::Max(MinimumClearanceFraction, DistanceWeightedClearanceFraction), MinimumClearanceFraction, 0.95f)
+		: 1.0f;
+
+	FVector ObservationLocation = TargetLocation;
+	FQuat ObservationRotation = TargetTransform.GetRotation();
+	FVector ObservationScale = TargetTransform.GetScale3D();
+	if (!bHasSecondaryTransform || ClampedProgress <= ClearanceFraction)
+	{
+		const float PhaseProgress = ClearanceFraction > SMALL_NUMBER ? ClampedProgress / ClearanceFraction : 1.0f;
+		ObservationLocation = FMath::Lerp(TargetLocation, ClearanceLocation, PhaseProgress);
+	}
+	else
+	{
+		const float PhaseProgress = (ClampedProgress - ClearanceFraction) / (1.0f - ClearanceFraction);
+		const FQuat DirectionArc = FQuat::FindBetweenNormals(EntryDirection, AuthoredDirection);
+		const FVector ArcDirection = FQuat::Slerp(FQuat::Identity, DirectionArc, PhaseProgress).RotateVector(EntryDirection).GetSafeNormal();
+		const float ArcDistance = FMath::Max(FMath::Lerp(EntryClearanceDistance, SafeEndDistance, PhaseProgress), GetRequiredSeparation(ArcDirection));
+		ObservationLocation = TargetLocation + ArcDirection * ArcDistance;
+		ObservationRotation = FQuat::Slerp(TargetTransform.GetRotation(), InitialTransform.GetRotation(), PhaseProgress).GetNormalized();
+		ObservationScale = FMath::Lerp(TargetTransform.GetScale3D(), InitialTransform.GetScale3D(), PhaseProgress);
+	}
+
+	FTransform ObservationTransform;
+	ObservationTransform.SetLocation(ObservationLocation);
+	ObservationTransform.SetRotation(ObservationRotation);
+	ObservationTransform.SetScale3D(ObservationScale);
+	ControlledSceneComponent->SetWorldTransform(ObservationTransform, false, nullptr, ETeleportType::TeleportPhysics);
+	return true;
 }
 
 FAssemblyPoseEvaluation UAssemblyPartComponent::EvaluateCurrentPose() const
@@ -226,7 +463,7 @@ void UAssemblyPartComponent::UpdateEntryApproachState()
 	}
 
 	const FAssemblyPoseEvaluation Evaluation = EvaluateCurrentPose();
-	if (Evaluation.DistanceAlongEntryAxisCm < -FinalPositionToleranceCm)
+	if (Evaluation.DistanceAlongEntryAxisCm < -FMath::Max(WrongSideDisarmDistanceCm, FinalPositionToleranceCm))
 	{
 		if (bEntryApproachArmed)
 		{
@@ -251,12 +488,12 @@ void UAssemblyPartComponent::UpdateGuidanceState()
 		return;
 	}
 
-	const bool bGuidanceAvailable = Evaluation.bIsWithinGuidanceVolume;
+	const bool bGuidanceAvailable = bIsHeld && bGuidanceEnabled && Evaluation.bIsWithinGuidanceVolume;
 	if (bGuidanceAvailable != bGuidanceWasAvailable)
 	{
 		bGuidanceWasAvailable = bGuidanceAvailable;
 		OnGuidanceChanged.Broadcast(bGuidanceAvailable);
-		TargetComponent->SetGuidanceFeedbackActive(bGuidanceAvailable);
+		TargetComponent->SetGuidanceFeedbackActive(bGuidanceAvailable || bTeachingHintVisible);
 		if (bGuidanceAvailable)
 		{
 			++RunStats.GuidanceEntryCount;
@@ -270,7 +507,7 @@ void UAssemblyPartComponent::UpdateGuidanceState()
 			Evaluation.bIsWithinSnapRange ? TEXT("true") : TEXT("false"));
 	}
 
-	SetAssemblyState(bGuidanceAvailable ? EAssemblyPartState::Guided : EAssemblyPartState::Held);
+	SetAssemblyState(bIsHeld ? (bGuidanceAvailable ? EAssemblyPartState::Guided : EAssemblyPartState::Held) : EAssemblyPartState::Idle);
 }
 
 void UAssemblyPartComponent::SetAssemblyState(EAssemblyPartState NewState)
@@ -301,9 +538,10 @@ bool UAssemblyPartComponent::SnapToTarget()
 	const EControllerHand CompletionHand = bHasActiveGrabHand ? ActiveGrabHand : EControllerHand::AnyHand;
 	const FAssemblyPoseEvaluation Evaluation = EvaluateCurrentPose();
 	ReleaseExternalGrabBeforeSnap(ControlledSceneComponent);
+	bIsHeld = false;
 	LockAssemblyPhysics();
 	ControlledSceneComponent->SetWorldTransform(TargetComponent->GetAssemblyTargetTransform(), false, nullptr, ETeleportType::TeleportPhysics);
-	SetComponentTickEnabled(bAutoSnapWhenInRange && bAllowReassemblyAfterCompletion);
+	SetComponentTickEnabled(bAssemblyInteractionEnabled && bAutoSnapWhenInRange && bAllowReassemblyAfterCompletion);
 	SetAssemblyState(EAssemblyPartState::Completed);
 	TargetComponent->PlayCompletionFeedback(CompletionHand);
 	++RunStats.CompletionCount;
@@ -380,6 +618,9 @@ void UAssemblyPartComponent::LockAssemblyPhysics()
 		PrimitiveComponent->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
 		PrimitiveComponent->SetEnableGravity(false);
 		PrimitiveComponent->SetSimulatePhysics(false);
+		// Query-only keeps the completed part available to the XR grab trace while
+		// preventing interlocking geometry from being separated by physics contact.
+		// RestoreFreeAssemblyPhysics re-enables full collision on a real re-grab.
 		PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	}
 }
@@ -481,11 +722,8 @@ void UAssemblyPartComponent::UpdateExternalGrabHandVisibility()
 	if (bIsExternallyHeld)
 	{
 		bWasExternallyHeld = true;
-		if (!bIsHeld && AssemblyState != EAssemblyPartState::Completed)
+		if (!bIsHeld)
 		{
-			// Do not start a new measured attempt merely by grabbing a part that is
-			// still locked at its completed pose. The timer starts once it has been
-			// moved far enough to rearm and therefore becomes a real assembly attempt.
 			StartAttemptTimerIfNeeded();
 			NotifyGrabStarted();
 		}

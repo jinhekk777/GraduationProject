@@ -41,6 +41,38 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Assembly")
 	void ResetAssembly();
 
+	UFUNCTION(BlueprintCallable, Category = "Assembly|Teaching")
+	void SetGuidanceEnabled(bool bEnabled);
+
+	UFUNCTION(BlueprintPure, Category = "Assembly|Teaching")
+	bool IsGuidanceEnabled() const { return bGuidanceEnabled; }
+
+	UFUNCTION(BlueprintCallable, Category = "Assembly|Teaching")
+	void SetAssemblyInteractionEnabled(bool bEnabled);
+
+
+	UFUNCTION(BlueprintPure, Category = "Assembly|Teaching")
+	bool IsAssemblyInteractionEnabled() const { return bAssemblyInteractionEnabled; }
+
+	/** Shows the configured target guide as an explicit teaching hint. */
+	UFUNCTION(BlueprintCallable, Category = "Assembly|Teaching")
+	bool ShowTeachingHint();
+
+	UFUNCTION(BlueprintCallable, Category = "Assembly|Teaching")
+	void ClearTeachingHint();
+
+	/** Aligns only rotation and scale to the target; it does not move or snap the part. */
+	UFUNCTION(BlueprintCallable, Category = "Assembly|Teaching")
+	bool ApplyTeachingAlignmentAssist();
+
+	/** Holds the target's completion feedback for this many seconds during a teaching session. */
+	UFUNCTION(BlueprintCallable, Category = "Assembly|Teaching", meta = (ClampMin = "0.0"))
+	void SetTeachingCompletionFeedbackHoldSeconds(float HoldSeconds);
+
+	/** Moves the controlled part between its assembled target (0) and authored reset pose (1) for structure observation. */
+	UFUNCTION(BlueprintCallable, Category = "Assembly|Teaching", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	bool SetTeachingObservationExplodeProgress(float ExplodeProgress);
+
 	UFUNCTION(BlueprintPure, Category = "Assembly")
 	FAssemblyPoseEvaluation EvaluateCurrentPose() const;
 
@@ -72,6 +104,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Assembly|Guidance", meta = (ClampMin = "0.0", Units = "cm"))
 	float ApproachRearmDistanceCm = 12.0f;
 
+	/** Wrong-side travel required before tracking noise at the target plane can disarm a valid approach. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Assembly|Guidance", meta = (ClampMin = "0.0", Units = "cm"))
+	float WrongSideDisarmDistanceCm = 2.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Assembly|Guidance", meta = (ClampMin = "0.0", Units = "cm"))
 	float LateralToleranceCm = 3.0f;
 
@@ -81,6 +117,14 @@ public:
 	/** Maximum total positional error at release that permits controlled snapping. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Assembly|Snap", meta = (ClampMin = "0.0", Units = "cm"))
 	float SnapDistanceCm = 4.0f;
+
+	/** Distance the observation slider first retracts along the configured entry axis before moving to the authored exploded pose. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Assembly|Teaching", meta = (ClampMin = "0.0", Units = "cm"))
+	float ObservationExplodeClearanceDistanceCm = 18.0f;
+
+	/** Fraction of the observation slider reserved for the initial, collision-free retraction. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Assembly|Teaching", meta = (ClampMin = "0.05", ClampMax = "0.95"))
+	float ObservationExplodeClearanceFraction = 0.35f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Assembly|Validation", meta = (ClampMin = "0.0", Units = "cm"))
 	float FinalPositionToleranceCm = 0.1f;
@@ -136,7 +180,12 @@ private:
 	bool bSnapInProgress = false;
 	bool bWasExternallyHeld = false;
 	bool bAttemptTimerActive = false;
+	bool bGuidanceEnabled = true;
+	bool bAssemblyInteractionEnabled = true;
+	bool bTeachingHintVisible = false;
 	FTransform InitialTransform;
+	FVector ObservationPartBoundsExtent = FVector::ZeroVector;
+	FVector ObservationTargetBoundsExtent = FVector::ZeroVector;
 	FAssemblyRunStats RunStats;
 	double RunStartTimeSeconds = 0.0;
 	double AttemptStartTimeSeconds = 0.0;

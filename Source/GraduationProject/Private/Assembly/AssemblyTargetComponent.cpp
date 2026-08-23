@@ -26,8 +26,16 @@ void UAssemblyTargetComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	}
 
 	CompletionElapsedSeconds += DeltaTime;
+	if (CompletionElapsedSeconds < CompletionFeedbackHoldSeconds)
+	{
+		SetGuidanceOpacity(CompletionOpacity);
+		GuidanceMesh->SetRelativeScale3D(GuidanceMeshBaseScale * CompletionStartScale);
+		return;
+	}
+
+	const float CollapseElapsedSeconds = CompletionElapsedSeconds - CompletionFeedbackHoldSeconds;
 	const float Alpha = CompletionCollapseSeconds > 0.0f
-		? FMath::Clamp(CompletionElapsedSeconds / CompletionCollapseSeconds, 0.0f, 1.0f)
+		? FMath::Clamp(CollapseElapsedSeconds / CompletionCollapseSeconds, 0.0f, 1.0f)
 		: 1.0f;
 	SetGuidanceOpacity(FMath::Lerp(CompletionOpacity, 0.0f, Alpha));
 	GuidanceMesh->SetRelativeScale3D(GuidanceMeshBaseScale * FMath::Lerp(CompletionStartScale, CompletionEndScale, Alpha));
@@ -37,6 +45,11 @@ void UAssemblyTargetComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 		bCompletionCollapseActive = false;
 		ClearFeedback();
 	}
+}
+
+void UAssemblyTargetComponent::SetCompletionFeedbackHoldSeconds(float InHoldSeconds)
+{
+	CompletionFeedbackHoldSeconds = FMath::Max(0.0f, InHoldSeconds);
 }
 
 FTransform UAssemblyTargetComponent::GetAssemblyTargetTransform() const

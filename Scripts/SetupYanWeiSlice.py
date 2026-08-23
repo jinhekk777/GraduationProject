@@ -92,7 +92,7 @@ def get_or_create_tenon_blueprint():
             raise RuntimeError("Could not add AssemblyPartComponent: {}".format(failure_reason))
 
     assembly_component.set_editor_property("auto_snap_when_in_range", True)
-    assembly_component.set_editor_property("entry_axis", unreal.AssemblyEntryAxis.LOCAL_Y)
+    assembly_component.set_editor_property("entry_axis", unreal.AssemblyEntryAxis.LOCAL_X)
     assembly_component.set_editor_property("entry_side", unreal.AssemblyEntrySide.NEGATIVE_LOCAL_Z)
     assembly_component.set_editor_property("guidance_length_cm", 45.0)
     assembly_component.set_editor_property("approach_rearm_distance_cm", 18.0)
@@ -139,8 +139,9 @@ if not mortise_actor:
     mortise_actor = unreal.EditorLevelLibrary.spawn_actor_from_class(unreal.AssemblyMortiseActor, base_location)
     mortise_actor.set_actor_label(MORTISE_LABEL)
 tenon_actor = find_actor(TENON_LABEL)
+tenon_was_created = tenon_actor is None
 if not tenon_actor:
-    tenon_actor = unreal.EditorLevelLibrary.spawn_actor_from_class(tenon_class, base_location + unreal.Vector(0.0, -35.0, 0.0))
+    tenon_actor = unreal.EditorLevelLibrary.spawn_actor_from_class(tenon_class, base_location)
     tenon_actor.set_actor_label(TENON_LABEL)
 
 tenon_actor.set_actor_scale3d(unreal.Vector(1.0, 1.0, 1.0))
@@ -154,7 +155,7 @@ target_component.set_editor_property("completion_sound", completion_sound)
 target_component.set_editor_property("completion_sound_volume", 0.8)
 assembly_component = get_component(tenon_actor, unreal.AssemblyPartComponent)
 assembly_component.set_editor_property("target_component", target_component)
-assembly_component.set_editor_property("entry_axis", unreal.AssemblyEntryAxis.LOCAL_Y)
+assembly_component.set_editor_property("entry_axis", unreal.AssemblyEntryAxis.LOCAL_X)
 assembly_component.set_editor_property("entry_side", unreal.AssemblyEntrySide.NEGATIVE_LOCAL_Z)
 assembly_component.set_editor_property("auto_snap_when_in_range", True)
 assembly_component.set_editor_property("guidance_length_cm", 45.0)
@@ -162,6 +163,8 @@ assembly_component.set_editor_property("approach_rearm_distance_cm", 18.0)
 assembly_component.set_editor_property("lateral_tolerance_cm", 4.0)
 assembly_component.set_editor_property("rotation_tolerance_degrees", 25.0)
 assembly_component.set_editor_property("snap_distance_cm", 5.0)
+if tenon_was_created:
+    tenon_actor.set_actor_location(target_component.get_world_location() - target_component.get_forward_vector() * 35.0, False, False)
 unreal.EditorLevelLibrary.save_current_level()
 unreal.log("YanWei slice configured: {} -> {}; final={}, start={}".format(
 	tenon_actor.get_name(), mortise_actor.get_name(), target_component.get_world_transform(), tenon_actor.get_actor_transform()))

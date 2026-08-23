@@ -38,6 +38,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Assembly|Feedback", meta = (ClampMin = "0.0"))
 	float CompletionCollapseSeconds = 0.28f;
 
+	/** Optional time that the completion confirmation remains fully visible before it collapses. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Assembly|Feedback", meta = (ClampMin = "0.0"))
+	float CompletionFeedbackHoldSeconds = 0.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Assembly|Feedback", meta = (ClampMin = "1.0"))
 	float CompletionStartScale = 1.025f;
 
@@ -65,6 +69,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Assembly|Feedback", meta = (ClampMin = "0.0"))
 	float CompletionHapticSeconds = 0.06f;
+
+	/** Runtime teaching-session override; a value of zero preserves the original immediate collapse. */
+	void SetCompletionFeedbackHoldSeconds(float InHoldSeconds);
 
 private:
 	UPROPERTY(Transient)

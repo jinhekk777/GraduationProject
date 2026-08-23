@@ -46,10 +46,10 @@ if tenon_mesh.get_editor_property("static_mesh").get_path_name() != TENON_MESH_P
     raise RuntimeError("Tenon mesh assignment is incorrect.")
 if not target or target.get_owner() != mortise:
     raise RuntimeError("Tenon target does not reference the YanWei mortise actor.")
-if part.get_editor_property("entry_axis") != unreal.AssemblyEntryAxis.LOCAL_Y:
-    raise RuntimeError("YanWei must use local Y as its insertion axis.")
+if part.get_editor_property("entry_axis") != unreal.AssemblyEntryAxis.LOCAL_X:
+    raise RuntimeError("YanWei must use local X as its insertion axis.")
 if part.get_editor_property("entry_side") != unreal.AssemblyEntrySide.NEGATIVE_LOCAL_Z:
-    raise RuntimeError("YanWei must enter from the negative local-Y side.")
+    raise RuntimeError("YanWei must enter from the negative local-X side.")
 if not part.get_editor_property("auto_snap_when_in_range"):
     raise RuntimeError("Automatic controlled snap is not enabled.")
 tenon_scale = tenon_mesh.get_world_transform().scale3d
@@ -65,8 +65,21 @@ if guidance.get_material(0).get_path_name() != GUIDANCE_MATERIAL_PATH + ".M_YanW
     raise RuntimeError("YanWei guidance material is not independent.")
 if target.get_editor_property("completion_sound").get_path_name() != SOUND_PATH + ".S_YanWeiWoodClick":
     raise RuntimeError("YanWei completion sound is not independent.")
+target_location = target.get_world_location()
+start_delta = tenon.get_actor_location() - target_location
+entry_direction = -target.get_forward_vector()
+entry_distance = start_delta.x * entry_direction.x + start_delta.y * entry_direction.y + start_delta.z * entry_direction.z
+target_right = target.get_right_vector()
+target_up = target.get_up_vector()
+lateral_distance = abs(start_delta.x * target_right.x + start_delta.y * target_right.y + start_delta.z * target_right.z)
+vertical_distance = abs(start_delta.x * target_up.x + start_delta.y * target_up.y + start_delta.z * target_up.z)
+if entry_distance <= 0.0:
+    raise RuntimeError("YanWei start pose is not on the configured local-X entry side.")
+if lateral_distance > 0.5 or vertical_distance > 0.5:
+    raise RuntimeError("YanWei start pose is not aligned before its local-X slide-in motion.")
 blueprint = unreal.load_asset(TENON_BLUEPRINT_PATH)
 if not blueprint or "SNAP" not in str(get_blueprint_grab_component(blueprint).get_editor_property("GrabType")):
     raise RuntimeError("YanWei tenon does not use the XR SNAP grab mode.")
-unreal.log("YanWei validation passed: tenon={}, target={}, axis={}, side={}".format(
-    tenon.get_name(), target.get_name(), part.get_editor_property("entry_axis"), part.get_editor_property("entry_side")))
+unreal.log("YanWei validation passed: tenon={}, target={}, axis={}, side={}, entry_distance={:.3f}, lateral={:.3f}, vertical={:.3f}".format(
+    tenon.get_name(), target.get_name(), part.get_editor_property("entry_axis"), part.get_editor_property("entry_side"),
+    entry_distance, lateral_distance, vertical_distance))
