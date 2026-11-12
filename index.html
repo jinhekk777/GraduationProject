@@ -25,15 +25,7 @@ html,body{height:100%}
 body{background:var(--bg);color:var(--paper);font-family:var(--body);overflow:hidden}
 #app{position:relative;height:100%;overflow:hidden}
 #scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 button{font:inherit;color:inherit;background:transparent;border:0;cursor:pointer}
-button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.top{position:absolute;top:12px;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.brand{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.3em;text-shadow:0 1px 10px rgba(0,0,0,.5)}
-.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
-.seg button{padding:7px 13px;font-size:13px;color:var(--muted)}
-.seg button+button{border-left:1px solid var(--line)}
-.seg button[aria-pressed="true"]{color:var(--paper);background:rgba(208,164,106,.16);box-shadow:inset 0 -2px 0 var(--accent)}
 .card{position:absolute;top:62px;left:max(16px,env(safe-area-inset-left,0px));width:min(330px,calc(100% - 32px));padding:14px 16px}
 .card .k{font-size:12px;color:var(--muted);letter-spacing:.08em}
 .card .head{display:flex;align-items:flex-start;gap:10px}
@@ -51,18 +43,6 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .card ul{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.7;color:var(--paper)}
 .card .note{font-size:11.5px;color:var(--muted);border-top:1px solid var(--line);margin-top:10px;padding-top:8px;line-height:1.6}
 .labels{position:absolute;inset:0;pointer-events:none}
-.lab{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font-size:12.5px;padding:4px 9px;border-radius:999px;background:rgba(16,19,25,.78);border:1px solid rgba(208,164,106,.6);color:var(--paper)}
-.lab b{color:var(--accent);font-weight:500;margin-right:4px;font-variant-numeric:tabular-nums}
-.lab[hidden]{display:none}
-.dock{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;display:flex;align-items:center;gap:10px;padding:8px 12px;width:max-content;max-width:calc(100% - 32px);justify-content:center}
-.dock[hidden]{display:none}
-.btn{padding:7px 13px;border-radius:8px;border:1px solid var(--line);font-size:13px}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
-.btn:disabled{opacity:.35;cursor:default}
-.dots{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
-.dots button{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
-.seg.small button{padding:6px 10px;font-size:12.5px}
-.dots button[aria-current="true"]{border-color:var(--accent);color:var(--paper)}
 .loading{position:absolute;inset:0;display:grid;place-items:center;background:var(--bg);font-family:var(--display);letter-spacing:.3em;color:var(--muted);transition:opacity .7s}
 .loading.done{opacity:0;pointer-events:none}
 /* loading: an axonometric joint drawn in ink on silk; a carpenter's rule (十分一寸，十寸一尺) measures progress */
@@ -92,32 +72,80 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .ld-num.err{letter-spacing:.04em;font-size:14px;white-space:normal;min-width:0}
 @media (prefers-reduced-motion:reduce){.ld-steps li.on::before{animation:none}}
 @media (max-width:760px){
-  .dock{flex-wrap:wrap}
   .card h2{font-size:17px}
   #cardBody{max-height:30vh}
   .card p{font-size:12.5px}
-  .lab{font-size:11px;padding:3px 7px}
 }
-.walkbar{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;display:flex;align-items:center;gap:12px;padding:8px 12px;width:max-content;max-width:calc(100% - 32px);font-size:13px;color:var(--muted)}
-.walkbar[hidden]{display:none}
-.walkbar b{color:var(--paper);font-weight:500}
 .touch-hint{display:none}
-.stick{position:absolute;left:max(24px,env(safe-area-inset-left,0px));bottom:84px;width:120px;height:120px;border-radius:50%;background:rgba(16,19,25,.35);border:1px solid var(--line);touch-action:none;display:none}
-.stick .knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(236,228,214,.28);border:1px solid rgba(236,228,214,.5)}
 @media (pointer:coarse){ .kbd-hint{display:none} .touch-hint{display:inline} .stick:not([hidden]){display:block} }
 .colophon{position:absolute;right:max(18px,env(safe-area-inset-right,0px));top:72px;display:flex;align-items:flex-start;gap:8px;pointer-events:none;opacity:.86}
 .colophon .ins{writing-mode:vertical-rl;font-family:var(--display);font-size:17px;letter-spacing:.35em;color:rgba(40,28,20,.78);line-height:1.6}
 .colophon .seal{display:grid;place-items:center;width:34px;padding:4px 0;border:2px solid rgba(170,40,30,.85);color:rgba(170,40,30,.9);font-family:var(--display);font-weight:700;font-size:13px;line-height:1.1;background:rgba(190,50,35,.08);border-radius:3px}
 @media (max-width:760px){ .colophon{display:none} }
 @media (prefers-reduced-motion:reduce){.loading{transition:none}}
+/* chrome: slips of silk paper lettered in ink, laid over the picture; 石青 marks whatever is current */
+#app{--silk:#dbd0b6;--silk-a:rgba(219,208,182,.93);--ink:#2a221b;--ink-2:rgba(42,34,27,.64);--ink-3:rgba(42,34,27,.3);--qing:#2b6a72}
+.panel{background:var(--silk-a);color:var(--ink);border:1px solid rgba(42,34,27,.58);border-radius:2px;box-shadow:0 8px 22px rgba(18,12,6,.2)}
+button:focus-visible{outline:2px solid var(--qing);outline-offset:2px}
+.top{position:absolute;top:14px;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:14px;align-items:flex-start;pointer-events:none}
+.top > *{pointer-events:auto}
+/* 题签: the title on a tall slip with a double ruled border */
+.brand{margin:0;writing-mode:vertical-rl;font-family:var(--display);font-weight:700;font-size:17px;line-height:1;letter-spacing:.34em;padding:12px 8px 7px;
+  box-shadow:inset 0 0 0 3px var(--silk),inset 0 0 0 4px rgba(42,34,27,.34),0 8px 22px rgba(18,12,6,.2)}
+.seg{display:flex;padding:0 3px}
+.seg button{position:relative;padding:10px 13px 11px;font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.14em;color:var(--ink-2);white-space:nowrap;transition:color .2s}
+.seg button+button::before{content:"";position:absolute;left:0;top:32%;bottom:32%;width:1px;background:var(--ink-3)}
+.seg button::after{content:"";position:absolute;left:13px;right:13px;bottom:5px;height:2px;background:var(--qing);transform:scaleX(0);transform-origin:left;transition:transform .28s}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{color:var(--ink)}
+.seg button[aria-pressed="true"]::after{transform:scaleX(1)}
+.lab{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font-family:var(--display);font-weight:600;font-size:12.5px;letter-spacing:.06em;padding:3px 8px 4px;border-radius:2px;background:var(--silk-a);border:1px solid rgba(42,34,27,.55);color:var(--ink)}
+.lab b{color:var(--qing);font-weight:700;margin-right:5px;font-variant-numeric:tabular-nums}
+.lab[hidden]{display:none}
+/* tour: the route as a ruled strip, one tick per stop */
+.dock{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:2px;padding:7px 6px 6px;width:max-content;max-width:calc(100% - 32px)}
+.dock[hidden]{display:none}
+.arrow{width:40px;height:46px;display:grid;place-items:center;color:var(--ink);border-radius:2px;transition:background .2s}
+.arrow:hover:not(:disabled){background:rgba(42,34,27,.08)}
+.arrow:disabled{opacity:.25;cursor:default}
+.stops{min-width:0;display:grid;justify-items:center;gap:3px;padding:0 4px}
+.stop-name{display:flex;align-items:baseline;gap:.8em;font-family:var(--display);white-space:nowrap;max-width:100%}
+#stopNo{font-size:12px;letter-spacing:.22em;color:var(--ink-2)}
+#stopName{font-size:16px;font-weight:700;letter-spacing:.1em;overflow:hidden;text-overflow:ellipsis}
+.dots{position:relative;display:flex;width:min(364px,calc(100vw - 150px))}
+.dots::before{content:"";position:absolute;left:10px;right:10px;top:50%;height:1px;background:var(--ink-3)}
+.dots button{position:relative;flex:1 1 0;min-width:0;height:26px;padding:0}
+.dots button::before{content:"";position:absolute;left:50%;top:50%;width:1px;height:9px;margin:-4.5px 0 0 -.5px;background:var(--ink-3);transition:height .2s,margin .2s,background .2s}
+.dots button:hover::before{height:15px;margin-top:-7.5px;background:var(--ink)}
+.dots button[data-past="true"]::before{background:var(--ink)}
+.dots button[aria-current="true"]::before{width:8px;height:8px;margin:-4px 0 0 -4px;background:var(--qing);transform:rotate(45deg)}
+.btn{padding:6px 12px 7px;border-radius:2px;border:1px solid rgba(42,34,27,.58);font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.1em;color:var(--ink);transition:background .2s}
+.btn:hover{background:rgba(42,34,27,.08)}
+.walkbar .btn{flex:none;white-space:nowrap}
+.walkbar .kbd-hint{line-height:2}
+.btn:disabled{opacity:.35;cursor:default}
+.walkbar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:14px;padding:8px 10px 8px 14px;width:max-content;max-width:calc(100% - 32px);font-size:13px;color:var(--ink-2)}
+.walkbar[hidden]{display:none}
+.walkbar kbd{display:inline-block;font:500 11.5px/1.5 var(--body);color:var(--ink);border:1px solid rgba(42,34,27,.5);border-bottom-width:2px;border-radius:2px;padding:0 5px;margin:0 1px;text-align:center}
+.walkbar .sep{display:inline-block;width:1px;height:1em;background:var(--ink-3);margin:0 9px;vertical-align:-.15em}
+.stick{position:absolute;left:max(24px,env(safe-area-inset-left,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));width:120px;height:120px;border-radius:50%;background:rgba(219,208,182,.3);border:1px solid rgba(42,34,27,.5);box-shadow:inset 0 0 0 5px rgba(219,208,182,.25),inset 0 0 0 6px rgba(42,34,27,.2);touch-action:none;display:none}
+.stick .knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(42,34,27,.42);border:1px solid var(--ink)}
+@media (max-width:520px){
+  .top{gap:10px}
+  .seg button{padding:10px 8px 11px;font-size:13px;letter-spacing:.04em}
+  .seg button::after{left:8px;right:8px}
+  .walkbar{font-size:12px;gap:10px}
+  .lab{font-size:11px;padding:2px 6px 3px}
+}
+@media (prefers-reduced-motion:reduce){.seg button,.seg button::after,.dots button::before,.arrow,.btn{transition:none}}
 </style>
 
 <div id="app">
   <canvas id="scene" aria-label="木构院落三维模型"></canvas>
   <div class="labels" id="labels"></div>
   <header class="top">
-    <span class="brand">木构院落</span>
-    <div class="seg" id="modes" role="group" aria-label="观看方式">
+    <h1 class="brand panel">木构院落</h1>
+    <div class="seg panel" id="modes" role="group" aria-label="观看方式">
       <button data-mode="ext" aria-pressed="true">外观</button>
       <button data-mode="cut" aria-pressed="false">剖视布局</button>
       <button data-mode="tour" aria-pressed="false">馆内漫游</button>
@@ -138,12 +166,15 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     </div>
   </section>
   <nav class="dock panel" id="tourDock" aria-label="漫游" hidden>
-    <button class="btn" id="prev">上一处</button>
-    <div class="dots" id="dots"></div>
-    <button class="btn primary" id="next">下一处</button>
+    <button class="arrow" id="prev" aria-label="上一处" title="上一处"><svg width="12" height="20" viewBox="0 0 12 20" aria-hidden="true"><path d="M9 3 3 10l6 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="stops">
+      <div class="stop-name" aria-live="polite"><span id="stopNo"></span><b id="stopName"></b></div>
+      <div class="dots" id="dots"></div>
+    </div>
+    <button class="arrow" id="next" aria-label="下一处" title="下一处"><svg width="12" height="20" viewBox="0 0 12 20" aria-hidden="true"><path d="M3 3l6 7-6 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </nav>
   <div class="walkbar panel" id="walkBar" hidden>
-    <span class="kbd-hint"><b>W A S D</b> / <b>↑ ↓</b> 走动 · <b>← →</b> 或拖动画面 转身 · <b>Shift</b> 快走</span>
+    <span class="kbd-hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 走动<i class="sep"></i><kbd>←</kbd><kbd>→</kbd> 或拖动画面转身<i class="sep"></i><kbd>Shift</kbd> 快走</span>
     <span class="touch-hint">左下摇杆走动 · 拖动画面转身</span>
     <button class="btn" id="walkHome">回到山门</button>
   </div>
@@ -911,6 +942,7 @@ const progress = (p, msg) => { LD.tgt = Math.max(LD.tgt, Math.min(1, p)); const 
   })();
 })();
 window.__progress = progress;
+let sceneReady = false;
 const nextFrame = () => new Promise(r => { let d = 0; const go = () => { if (!d) { d = 1; r(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 80); });   // the timer keeps loading moving in a background tab, where rAF is paused
 if (!window.THREE || !THREE.GLTFLoader) { loadingEl.textContent = '三维库加载失败，请刷新重试'; return; }
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1344,7 +1376,7 @@ async function onModel(gltf) {
   scene.add(root);
   const steps = [buildExhibits, buildDisplays, buildMing, buildCeilings, buildCraft, buildOrnaments, buildStars, buildGate, buildNature, () => toonify(scene)];
   for (let i = 0; i < steps.length; i++) { steps[i](); progress(.86 + .13 * (i + 1) / steps.length, '合榫'); await nextFrame(); }
-  setTime('dusk'); setMode('ext');
+  setTime('dusk'); setMode('ext'); sceneReady = true;
   progress(1, '合榫'); for (let i = 0; i < 40 && LD.cur < 1; i++) await nextFrame(); await new Promise(r => setTimeout(r, 600));
   loadingEl.classList.add('done');
 }
@@ -1367,7 +1399,7 @@ const labelsEl = $('labels');
 const LABELS = HALLS.map(h => { const d = document.createElement('div'); d.className = 'lab'; d.innerHTML = `<b>${h.n}</b>${h.name}`; labelsEl.appendChild(d);
   return { el: d, p: new THREE.Vector3(h.at[0], h.at[1] + (h.id === 'zt' ? 5.5 : 3.4), h.at[2]) }; });
 [['山门', [0, 4.5, 68]], ['影壁', [0, 5, 62]], ['前院', [-10, 1.5, 48]], ['回廊', [29.5, 3.5, 50]], ['北院', [-16, 1.5, -44]], ['运河', [-30, 1, -106]], ['鲁班锁', [0, 12, -131]]].forEach(([t, p]) => {
-  const d = document.createElement('div'); d.className = 'lab'; d.textContent = t; d.style.borderColor = 'rgba(236,228,214,.35)'; labelsEl.appendChild(d); LABELS.push({ el: d, p: new THREE.Vector3(...p) }); });
+  const d = document.createElement('div'); d.className = 'lab'; d.textContent = t; d.style.borderColor = 'rgba(42,34,27,.3)'; labelsEl.appendChild(d); LABELS.push({ el: d, p: new THREE.Vector3(...p) }); });
 
 /* ---------- time of day ---------- */
 const TIMES = {
@@ -2830,10 +2862,11 @@ function goTour(i) {
   card(s.k, s.name, s.p, s.list, tourIdx === 0 ? '点“下一处”沿参观路线逐站前进，也可以直接点下面的站名。每站可拖动环顾。' : '');
   camera.fov = s.fov || 40; camera.updateProjectionMatrix();
   aim(s.cam[0], s.cam[1], 1800);
-  [...$('dots').children].forEach((b, j) => b.setAttribute('aria-current', j === tourIdx ? 'true' : 'false'));
+  [...$('dots').children].forEach((b, j) => { b.setAttribute('aria-current', j === tourIdx ? 'true' : 'false'); b.dataset.past = j < tourIdx ? 'true' : 'false'; });
+  $('stopNo').textContent = '第' + ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四'][tourIdx] + '处'; $('stopName').textContent = s.name;
   $('prev').disabled = tourIdx === 0; $('next').disabled = tourIdx === TOUR.length - 1;
 }
-TOUR.forEach((s, i) => { const b = document.createElement('button'); b.textContent = s.name.split(' · ')[0]; b.addEventListener('click', () => goTour(i)); $('dots').appendChild(b); });
+TOUR.forEach((s, i) => { const b = document.createElement('button'); b.title = s.name; b.setAttribute('aria-label', s.name); b.addEventListener('click', () => goTour(i)); $('dots').appendChild(b); });
 document.querySelectorAll('#modes button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
 document.querySelectorAll('#times button').forEach(b => b.addEventListener('click', () => setTime(b.dataset.t)));
 $('prev').addEventListener('click', () => goTour(tourIdx - 1));
@@ -2848,6 +2881,7 @@ window.addEventListener('resize', resize); if (window.ResizeObserver) new Resize
 const v = new THREE.Vector3();
 let last = performance.now();
 function loop(now) {
+  if (!sceneReady) { requestAnimationFrame(loop); return; }   // nothing to draw behind the loading screen
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   if (tween) { const k = Math.min(1, (now - tween.s) / tween.d), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
     camera.position.lerpVectors(tween.p0, tween.p1, e); controls.target.lerpVectors(tween.t0, tween.t1, e); if (k >= 1) tween = null; }
