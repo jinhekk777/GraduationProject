@@ -65,22 +65,32 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .dots button[aria-current="true"]{border-color:var(--accent);color:var(--paper)}
 .loading{position:absolute;inset:0;display:grid;place-items:center;background:var(--bg);font-family:var(--display);letter-spacing:.3em;color:var(--muted);transition:opacity .7s}
 .loading.done{opacity:0;pointer-events:none}
-.ld{width:min(340px,72vw);letter-spacing:0}
-.ld svg{display:block;width:100%;overflow:visible}
-.ld .w1{fill:#c79a66;stroke:#2b2118;stroke-width:1.6;stroke-linejoin:round}
-.ld .w2{fill:#9c6a40;stroke:#2b2118;stroke-width:1.6;stroke-linejoin:round}
-.ld .gr{fill:none;stroke:#2b2118;stroke-width:.7;opacity:.28;stroke-linecap:round}
-#ldPin{fill:#d8b25a;stroke:#2b2118;stroke-width:1.2;opacity:0;transform-origin:200px 60px;transform:scale(.2);transition:opacity .35s,transform .35s}
-.loading.joined #ldPin{opacity:1;transform:scale(1)}
-.ld-bar{height:2px;background:rgba(43,33,24,.16);margin-top:18px;border-radius:2px;overflow:hidden}
-.ld-bar i{display:block;height:100%;width:0;background:#8a3b2a}
-.ld-bar{position:relative}
-.ld-bar::after{content:"";position:absolute;inset:0;width:30%;background:linear-gradient(90deg,transparent,rgba(255,244,220,.75),transparent);animation:ldSheen 1.6s linear infinite;will-change:transform}
-@keyframes ldSheen{from{transform:translateX(-100%)}to{transform:translateX(430%)}}
-@media (prefers-reduced-motion:reduce){.ld-bar::after{animation:none;display:none}}
-.ld-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;font-family:var(--display);color:var(--muted);font-size:15px}
-#ldMsg{letter-spacing:.4em}
-#ldPct{font-variant-numeric:tabular-nums;letter-spacing:.05em}
+/* loading: an axonometric joint drawn in ink on silk; a carpenter's rule (十分一寸，十寸一尺) measures progress */
+.loading{--ld-silk:#d6cbb1;--ld-silk2:#c4b797;--ld-ink:#2a221b;--ld-faint:rgba(42,34,27,.26);--ld-qing:#2b6a72;
+  background:radial-gradient(120% 90% at 50% 42%,var(--ld-silk) 0%,var(--ld-silk) 46%,var(--ld-silk2) 100%);color:var(--ld-ink);letter-spacing:0}
+.loading::before{content:"";position:absolute;inset:0;opacity:.5;mix-blend-mode:multiply;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9 .35' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .26 0 0 0 0 .18 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E")}
+.ld{position:relative;display:grid;grid-template-columns:1fr auto;column-gap:clamp(14px,3vw,30px);row-gap:clamp(14px,3vh,26px);align-items:center;width:min(430px,80vw)}
+.ld-draw{display:block;width:100%;height:auto;overflow:visible}
+.ld-draw .ink{stroke:var(--ld-ink);stroke-width:1.15;stroke-linejoin:round;stroke-linecap:round}
+.ld-draw .gr{fill:none;stroke:var(--ld-ink);stroke-width:.55;opacity:.22;stroke-linecap:round}
+.ld-draw .hole{fill:#33271d;opacity:.82;stroke:var(--ld-ink);stroke-width:1.15;stroke-linejoin:round}
+.ld-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1.5em;font-family:var(--display);font-size:clamp(15px,1.9vw,18px);align-self:center}
+.ld-steps li{writing-mode:vertical-rl;letter-spacing:.42em;color:var(--ld-faint);position:relative;padding-top:15px;transition:color .5s}
+.ld-steps li::before{content:"";position:absolute;top:0;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:currentColor;transition:background .5s,transform .5s}
+.ld-steps li.on{color:var(--ld-ink)}
+.ld-steps li.on::before{background:var(--ld-qing);animation:ldPulse 1.5s ease-in-out infinite}
+.ld-steps li.past{color:rgba(42,34,27,.55)}
+@keyframes ldPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.9);opacity:.45}}
+.ld-foot{grid-column:1 / -1;display:grid;grid-template-columns:1fr auto;align-items:end;column-gap:16px}
+.ld-rule{display:block;width:100%;height:auto;overflow:visible}
+.ld-rule line{stroke:var(--ld-faint);stroke-width:1}
+.ld-rule line.on{stroke:var(--ld-ink)}
+.ld-rule .base{stroke:var(--ld-ink);stroke-width:1.1}
+.ld-rule .mark{fill:var(--ld-qing)}
+.ld-num{font-family:var(--display);font-size:clamp(15px,1.9vw,18px);letter-spacing:.16em;min-width:5.2em;text-align:right;white-space:nowrap;line-height:1}
+.ld-num.err{letter-spacing:.04em;font-size:14px;white-space:normal;min-width:0}
+@media (prefers-reduced-motion:reduce){.ld-steps li.on::before{animation:none}}
 @media (max-width:760px){
   .dock{flex-wrap:wrap}
   .card h2{font-size:17px}
@@ -140,13 +150,12 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <div class="stick" id="stick" hidden aria-hidden="true"><div class="knob" id="stickKnob"></div></div>
   <div class="loading" id="loading" role="status" aria-live="polite">
     <div class="ld">
-      <svg viewBox="-40 0 370 120" aria-hidden="true">
-        <g id="ldMao"><path class="w2" d="M170 20H290V100H170V75H230V45H170Z"/><path class="gr" d="M180 32H282M238 52H284M240 68H282M178 88H284"/></g>
-        <g id="ldSun"><path class="w1" d="M50 20H170V45H230V75H170V100H50Z"/><path class="gr" d="M58 32H162M56 52H222M60 68H224M58 88H160"/></g>
-        <circle id="ldPin" cx="200" cy="60" r="4.5"/>
-      </svg>
-      <div class="ld-bar"><i id="ldFill"></i></div>
-      <div class="ld-row"><span id="ldMsg">取料</span><span id="ldPct">0%</span></div>
+      <svg class="ld-draw" id="ldDraw" viewBox="-98 -166 330 276" aria-hidden="true"></svg>
+      <ol class="ld-steps" id="ldSteps"><li>取料</li><li>开榫</li><li>合榫</li></ol>
+      <div class="ld-foot">
+        <svg class="ld-rule" id="ldRule" viewBox="0 0 400 26" aria-hidden="true"></svg>
+        <div class="ld-num" id="ldNum">〇分</div>
+      </div>
     </div>
   </div>
 </div>
@@ -843,14 +852,65 @@ return MeshoptDecoder; })();
 const $ = id => document.getElementById(id);
 const loadingEl = $('loading');
 /* loading: a tenon slides home into its mortise as progress goes 0 → 1 */
-const LD = { cur: 0, tgt: 0, sun: $('ldSun'), fill: $('ldFill'), pct: $('ldPct'), msg: $('ldMsg') };
-const progress = (p, msg) => { LD.tgt = Math.max(LD.tgt, Math.min(1, p)); if (msg && LD.msg) LD.msg.textContent = msg; };
-(function ldTick() {
-  LD.cur += (LD.tgt - LD.cur) * (LD.tgt >= 1 ? .3 : .18); if (LD.tgt - LD.cur < .002) LD.cur = LD.tgt;
-  if (LD.sun) { LD.sun.setAttribute('transform', `translate(${(-(1 - LD.cur) * 74).toFixed(2)} 0)`); LD.fill.style.width = (LD.cur * 100).toFixed(1) + '%'; LD.pct.textContent = Math.round(LD.cur * 100) + '%'; }
-  if (LD.cur >= 1) { loadingEl.classList.add('joined'); return; }
-  requestAnimationFrame(ldTick);
+const LD = { cur: 0, tgt: 0, step: 0, draw: $('ldDraw'), rule: $('ldRule'), num: $('ldNum'), steps: $('ldSteps') };
+const progress = (p, msg) => { LD.tgt = Math.max(LD.tgt, Math.min(1, p)); const i = ['取料', '开榫', '合榫'].indexOf(msg); if (i >= 0) LD.step = Math.max(LD.step, i); };
+(function () {
+  if (!LD.draw) return;
+  const NS = 'http://www.w3.org/2000/svg', C = .866, P = (x, y, z) => ((x - y) * C).toFixed(1) + ' ' + ((x + y) * .5 - z).toFixed(1);
+  const el = (par, tag, at) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); par.appendChild(e); return e; };
+  const quad = (a, b, c, d) => 'M' + P(...a) + 'L' + P(...b) + 'L' + P(...c) + 'L' + P(...d) + 'Z';
+  /* a box seen from above-front: its top, its y-max face and its x-max face; grain runs along `ax` */
+  const box = (g, x0, x1, y0, y1, z0, z1, col, ax) => {
+    g.textContent = '';
+    if (x1 - x0 < .05 || y1 - y0 < .05) return;
+    el(g, 'path', { class: 'ink', fill: col[0], d: quad([x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]) });
+    el(g, 'path', { class: 'ink', fill: col[1], d: quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]) });
+    el(g, 'path', { class: 'ink', fill: col[2], d: quad([x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]) });
+    let d = '';
+    if (ax === 'x') { for (const f of [.3, .62]) d += 'M' + P(x0 + 3, y0 + (y1 - y0) * f, z1) + 'L' + P(x1 - 4, y0 + (y1 - y0) * f, z1); for (const f of [.26, .52, .8]) d += 'M' + P(x0 + 3, y1, z0 + (z1 - z0) * f) + 'L' + P(x1 - 5, y1, z0 + (z1 - z0) * f); }
+    if (ax === 'z') { for (const f of [.28, .7]) d += 'M' + P(x1, y0 + (y1 - y0) * f, z0 + 4) + 'L' + P(x1, y0 + (y1 - y0) * f, z1 - 4); for (const f of [.3, .64]) d += 'M' + P(x0 + (x1 - x0) * f, y1, z0 + 4) + 'L' + P(x0 + (x1 - x0) * f, y1, z1 - 4); }
+    if (ax === 'y') d += 'M' + P((x0 + x1) / 2, y0 + 2, z1) + 'L' + P((x0 + x1) / 2, y1 - 2, z1);
+    if (d) el(g, 'path', { class: 'gr', d });
+  };
+  const SUN = ['#e0c9a2', '#cdb184', '#b8996b'], MAO = ['#b98f66', '#a2774d', '#8a6240'], PEG = ['#d9c7a0', '#3f6f72', '#345c60'];
+  const S = LD.draw;
+  el(S, 'ellipse', { cx: 0, cy: 22, rx: 62, ry: 15, fill: '#2a221b', opacity: .1 });
+  box(el(S, 'g', {}), 0, 40, 0, 40, 0, 150, MAO, 'z');                                                       // 卯：立柱
+  el(S, 'path', { class: 'hole', d: quad([40, 13, 62], [40, 27, 62], [40, 27, 88], [40, 13, 88]) });        // 卯眼
+  el(S, 'path', { class: 'hole', d: quad([16, 40, 71], [24, 40, 71], [24, 40, 79], [16, 40, 79]) });        // 销孔
+  const gT = el(S, 'g', {}), gB = el(S, 'g', {}), gP = el(S, 'g', {});
+  box(gB, 40, 150, 0, 40, 50, 100, SUN, 'x');                                                               // 榫：横枋（榫肩以外）
+  el(gB, 'path', { class: 'gr', d: [8, 15].map(r => 'M' + P(150, 20 - r, 75 - r * .8) + 'L' + P(150, 20 + r, 75 - r * .8) + 'L' + P(150, 20 + r, 75 + r * .8) + 'L' + P(150, 20 - r, 75 + r * .8) + 'Z').join('') });
+  /* rule: ten 寸, each halved */
+  const R = LD.rule, ticks = [];
+  el(R, 'line', { class: 'base', x1: 2, y1: 20, x2: 398, y2: 20 });
+  for (let i = 0; i <= 20; i++) ticks.push(el(R, 'line', { x1: 2 + i * 19.8, x2: 2 + i * 19.8, y1: 20, y2: i % 10 === 0 ? 5 : i % 2 === 0 ? 9 : 14 }));
+  const mark = el(R, 'path', { class: 'mark', d: 'M0 0L-4.5 -7H4.5Z' });
+  const D = '〇一二三四五六七八九', lis = [...LD.steps.children];
+  let lastN = -1, lastStep = -1;
+  const paint = () => {
+    const p = LD.cur, slide = (1 - Math.min(1, p / .93)) * 96, drive = Math.min(1, Math.max(0, (p - .93) / .07));
+    const o = slide, tip = 40 + o - 46;
+    box(gT, Math.max(40, tip), 40 + o, 13, 27, 62, 88, SUN, 'x');
+    gB.setAttribute('transform', `translate(${(o * C).toFixed(2)} ${(o * .5).toFixed(2)})`);
+    const py = 40 + 44 - 70 * drive * drive * (3 - 2 * drive);
+    if (p > .5) box(gP, 16, 24, Math.max(40, py), py + 30, 71, 79, PEG, 'y'); else gP.textContent = '';
+    gP.setAttribute('opacity', Math.min(1, Math.max(0, (p - .5) / .15)).toFixed(2));
+    const n = Math.round(p * 100);
+    if (n !== lastN) { lastN = n; const c = Math.floor(n / 10), f = n % 10;
+      if (!LD.num.classList.contains('err')) LD.num.textContent = n >= 100 ? '一尺' : (c ? D[c] + '寸' : '') + (f || !c ? D[f] + '分' : '');
+      ticks.forEach((tk, i) => tk.classList.toggle('on', i * 5 <= n)); }
+    mark.setAttribute('transform', `translate(${(2 + p * 396).toFixed(1)} 3)`);
+    if (LD.step !== lastStep) { lastStep = LD.step; lis.forEach((li, i) => { li.classList.toggle('on', i === LD.step); li.classList.toggle('past', i < LD.step); }); }
+  };
+  (function tick() {
+    LD.cur += (LD.tgt - LD.cur) * (LD.tgt >= 1 ? .22 : .16); if (LD.tgt - LD.cur < .002) LD.cur = LD.tgt;
+    paint();
+    if (LD.cur >= 1) { loadingEl.classList.add('joined'); return; }
+    requestAnimationFrame(tick);
+  })();
 })();
+window.__progress = progress;
 const nextFrame = () => new Promise(r => { let d = 0; const go = () => { if (!d) { d = 1; r(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 80); });   // the timer keeps loading moving in a background tab, where rAF is paused
 if (!window.THREE || !THREE.GLTFLoader) { loadingEl.textContent = '三维库加载失败，请刷新重试'; return; }
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1232,7 +1292,7 @@ const AO = {};   // the 工笔 look is flat colour and ink line: no baked AO
 const nodeOf = o => { while (o && !/^museum_/.test(o.name)) o = o.parent; const m = o && o.name.match(/^museum_(base|roof|glass|lamps|plants)/); return m ? m[0] : ''; };
 /* the model ships as a quantized, meshopt-compressed .glb split into base64 text parts ([file, characters]) */
 const PARTS = [['compound.part1.txt', 8420920], ['compound.part2.txt', 8420920]];
-const fail = msg => { if (LD.msg) { LD.msg.textContent = msg; LD.msg.style.letterSpacing = '.05em'; LD.pct.textContent = ''; } else loadingEl.textContent = msg; };
+const fail = msg => { if (LD.num) { LD.num.classList.add('err'); LD.num.textContent = msg; } else loadingEl.textContent = msg; };
 const stall = setTimeout(() => { if (!loadingEl.classList.contains('done')) fail('加载时间过长，请检查网络后刷新'); }, 120000);
 async function fetchModel() {
   const total = PARTS.reduce((s, p) => s + p[1], 0), got = PARTS.map(() => 0);
