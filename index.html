@@ -2653,10 +2653,20 @@ function drawJoint(g, kind, cx, cy, size, k) { const th = jointThumb(kind, k); i
   if (DRAW[kind]) { g.save(); g.fillStyle = g.strokeStyle = 'rgba(42,29,20,.82)'; DRAW[kind](g, cx, cy, size * .36); g.restore(); return true; } return false; }
 function framed(mesh, w, h, depth = .05) { const g = new THREE.Group(), fr = woodT('#2e2118'); g.add(mesh); const back = boxM(w + .14, h + .14, depth, fr, 0, 0, -depth / 2 - .004); g.add(back);
   for (const [bw, bh, x, y] of [[w + .14, .05, 0, h / 2 + .045], [w + .14, .05, 0, -h / 2 - .045], [.05, h + .04, w / 2 + .045, 0], [.05, h + .04, -w / 2 - .045, 0]]) g.add(boxM(bw, bh, .03, fr, x, y, .012)); return g; }
-function labelCard(title, line, w = .62, h = .3) {
-  const t = inkCanvas(768, Math.round(768 * h / w), (g, W, H) => { paper(g, W, H); g.fillStyle = '#a3321f'; g.fillRect(52, 50, 9, 62);
-    g.fillStyle = '#2a1d14'; g.font = '700 60px "Noto Serif SC",serif'; g.textBaseline = 'top'; g.fillText(title, 78, 46); g.strokeStyle = 'rgba(107,74,46,.5)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(52, 132); g.lineTo(W - 52, 132); g.stroke();
-    g.fillStyle = '#4a3828'; g.font = '400 30px "Noto Sans SC",sans-serif'; wrapText(g, line, 52, 152, W - 104, 42); }); t.anisotropy = 8;
+/* museum-label rules: the first words point at what the visitor can see; rare characters carry pinyin; a number ties a specimen to its drawing on the wall */
+const PY = { 直榫: 'zhí sǔn', 十字搭接: 'shí zì dā jiē', 格肩榫: 'gé jiān sǔn', 透榫加楔: 'tòu sǔn jiā xiē', 燕尾榫: 'yàn wěi sǔn', 楔钉榫: 'xiē dīng sǔn', 银锭榫: 'yín dìng sǔn', 龙凤榫: 'lóng fèng sǔn' };
+function rubyText(g, text, py, x, y, size, pySize) {   // characters with their pinyin centred above; returns the width used
+  const syl = (py || '').split(' '), x0 = x; g.textBaseline = 'top';
+  [...text].forEach((ch, i) => { g.font = `700 ${size}px "Noto Serif SC","Songti SC",serif`; const cw = g.measureText(ch).width; g.font = `400 ${pySize}px "Noto Sans SC","PingFang SC",sans-serif`; const pw = syl[i] ? g.measureText(syl[i]).width : 0, adv = Math.max(cw, pw + pySize * .3) + size * .06;
+    if (syl[i]) { g.fillStyle = '#8a4a2c'; g.textAlign = 'center'; g.fillText(syl[i], x + adv / 2, y - pySize * 1.25); }
+    g.fillStyle = '#2a1d14'; g.font = `700 ${size}px "Noto Serif SC","Songti SC",serif`; g.textAlign = 'center'; g.fillText(ch, x + adv / 2, y); x += adv; });
+  g.textAlign = 'left'; return x - x0; }
+function labelCard(title, line, w = .62, h = .3, opt = {}) {
+  const t = inkCanvas(768, Math.round(768 * h / w), (g, W, H) => { paper(g, W, H); const py = opt.py, top = py ? 70 : 46, tx = opt.n ? 128 : 78;
+    if (opt.n) numDot(g, 84, top + 32, 30, opt.n); else { g.fillStyle = '#a3321f'; g.fillRect(52, top + 4, 9, 62); }
+    if (py) rubyText(g, title, py, tx, top, 60, 24); else { g.fillStyle = '#2a1d14'; g.font = '700 60px "Noto Serif SC",serif'; g.textBaseline = 'top'; g.fillText(title, tx, top); }
+    g.strokeStyle = 'rgba(107,74,46,.5)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(52, top + 86); g.lineTo(W - 52, top + 86); g.stroke();
+    g.fillStyle = '#4a3828'; g.font = '400 30px "Noto Sans SC",sans-serif'; g.textBaseline = 'top'; wrapText(g, line, 52, top + 106, W - 104, 42); }); t.anisotropy = 8;
   return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, color: 0xd8d8d8 }));
 }
 /* every specimen piece is cut from one profile (an outline with its real notches, tails and mortise holes), extruded and lightly chamfered, in grained timber */
@@ -2694,17 +2704,20 @@ const SPEC = {   // each joint as parts that pull apart along their own directio
   龙凤榫(W, D) { const a = ext([[-.42, -.03], [0, -.03], [0, -.011], [.04, -.011], [.04, .011], [0, .011], [0, .03], [-.42, .03]], .52, 'xy', W, null, .003), b = ext([[0, -.03], [.42, -.03], [.42, .03], [0, .03], [0, .011], [.04, .011], [.04, -.011], [0, -.011]], .52, 'xy', D, null, .003);
     return [[a, [-.22, 0, 0]], [b, [.22, 0, 0]]]; },
 };
-const LINES = {
+const LINES = {   // what the joint does, said plainly (used in the exhibit record)
   直榫: '方榫插入方卯，最基本的结合，梁柱、家具框架处处可见。', 十字搭接: '两料各去一半，相扣成十字，表面齐平。', 透榫加楔: '榫头穿透卯眼，再打入木楔撑紧，越用越牢。', 格肩榫: '榫头之外，肩部切成斜角互相抵住，转角干净。',
   燕尾榫: '梯形榫头只能顺一个方向推入，向外拉反而越紧。', 楔钉榫: '两料半搭，中间穿入楔钉，拉不开也错不动。', 银锭榫: '两头大中间小的木片嵌入拼缝，把两块板拉拢。', 龙凤榫: '一边起榫舌，一边开槽，拼板时咬合。' };
-function specimenTable(x, z, kinds, hall) {
+const TAGS = {   // the small tag beside each specimen: where it is used, in one line
+  直榫: '桌椅的腿和横档：方榫插进方卯。', 十字搭接: '窗格和架子：两根料各去一半，交叉后表面齐平。', 格肩榫: '椅子和柜子的转角：肩部斜切，接缝干净。', 透榫加楔: '门框和大桌：榫头穿出来，再打楔撑紧。',
+  燕尾榫: '箱角和抽屉：往外拉不开。', 楔钉榫: '圈椅的椅圈：把短弧料接成一圈。', 银锭榫: '拼板的背面：锁住板缝不裂开。', 龙凤榫: '桌面和柜门：把窄板拼成宽板。' };
+function specimenTable(x, z, kinds, hall, numbered) {
   const W = timber('#c2925e'), D = timber('#9a6238'), top = woodT('#3a2a1e'), y0 = .6 + .86;
   scene.add(boxM(.95, .06, 11, top, x, y0 - .03, z), boxM(.85, .8, 10.8, woodT('#2e221a'), x, .6 + .4, z));
   kinds.forEach((k, i) => {
-    const zz = z - 4.2 + i * (8.4 / (kinds.length - 1)); const g = new THREE.Group(), parts = [];
+    const zz = z + 4.2 - i * (8.4 / (kinds.length - 1)); const g = new THREE.Group(), parts = [];
     SPEC[k](W, D).forEach(([o, d]) => { const pg = new THREE.Group(); pg.add(o); pg.userData = { dir: new THREE.Vector3(...d) }; g.add(pg); parts.push(pg); });
     g.position.set(x - .05, y0 + .62, zz); g.rotation.y = Math.PI / 2 + .5; g.scale.setScalar(1.5); scene.add(g);
-    const lc = labelCard(k, LINES[k]); lc.position.set(x + .42, y0 + .02, zz); lc.rotation.set(-Math.PI / 2 + .6, Math.PI / 2, 0, 'YXZ'); scene.add(lc);
+    const lc = labelCard(k, TAGS[k], .62, .3, { py: PY[k], n: numbered ? i + 1 : 0 }); lc.position.set(x + .42, y0 + .02, zz); lc.rotation.set(-Math.PI / 2 + .6, Math.PI / 2, 0, 'YXZ'); scene.add(lc);
     addExhibit({ id: 'spec_' + k, hall, root: g, parts, kind: 'spec', title: k + '（样块）', p: LINES[k] + '点一下，样块沿结合方向分开；再点一下合上。', list: [], note: '工艺样块，尺寸为示意。' });
   });
 }
@@ -2758,17 +2771,30 @@ function craftWall(x, z0, z1, title, steps) {   // wall board: numbered columns,
   const t = inkCanvas(3072, 1140, (g, W, H) => { const m = paper(g, W, H); heading(g, m * 2.6, m * 2.3, ttl, sub, 104); sealAt(g, W - m * 2.6 - 96, m * 2.4, 96, '匠作');
     const cw = (W - m * 5.2) / steps.length, y0 = 330; g.strokeStyle = 'rgba(107,74,46,.45)'; g.lineWidth = 2; g.beginPath(); g.moveTo(m * 2.6, y0 - 28); g.lineTo(W - m * 2.6, y0 - 28); g.stroke();
     steps.forEach(([name, line, glyph], i) => { const x0 = m * 2.6 + i * cw; if (i) { g.strokeStyle = 'rgba(107,74,46,.28)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x0 - 20, y0); g.lineTo(x0 - 20, H - m * 2.6); g.stroke(); }
-      numDot(g, x0 + 44, y0 + 46, 40, i + 1); g.fillStyle = '#2a1d14'; g.font = '700 62px "Noto Serif SC",serif'; g.fillText(name, x0 + 104, y0 + 12);
-      g.fillStyle = '#4a3828'; g.font = '400 36px "Noto Sans SC",sans-serif'; wrapText(g, line, x0 + 10, y0 + 112, cw - 70, 48);
+      const dy = PY[name] ? 26 : 0; numDot(g, x0 + 44, y0 + 46 + dy, 40, i + 1);
+      if (PY[name]) rubyText(g, name, PY[name], x0 + 104, y0 + 12 + dy, 62, 26); else { g.fillStyle = '#2a1d14'; g.font = '700 62px "Noto Serif SC",serif'; g.fillText(name, x0 + 104, y0 + 12); }
+      g.fillStyle = '#4a3828'; g.font = '400 36px "Noto Sans SC",sans-serif'; g.textBaseline = 'top'; wrapText(g, line, x0 + 10, y0 + 112 + dy, cw - 70, 48);
       drawJoint(g, glyph, x0 + cw / 2 - 20, y0 + 470, 500, prog ? 1 - i / (steps.length - 1) : .7); }); }); t.anisotropy = 8;
   const w = (z1 - z0) * .8, h = w * 1140 / 3072, m = framed(new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, color: 0xd0d0d0 })), w, h); m.position.set(x + .04, 3.45, (z0 + z1) / 2); m.rotation.y = Math.PI / 2; scene.add(m);
 }
+function heroLabel(title, lead, body, foot, x, z) {   // the main exhibit's label: waist height, tilted, facing the visitor
+  const w = 1.0, h = .62, t = inkCanvas(1280, Math.round(1280 * h / w), (g, W, H) => { const m = paper(g, W, H), x0 = m * 2.6;
+    rubyText(g, title, PY[title], x0, 118, 96, 34); g.strokeStyle = 'rgba(107,74,46,.5)'; g.lineWidth = 2; g.beginPath(); g.moveTo(x0, 250); g.lineTo(W - x0, 250); g.stroke();
+    g.fillStyle = '#2a1d14'; g.font = '700 50px "Noto Serif SC","Songti SC",serif'; g.textBaseline = 'top'; let y = wrapText(g, lead, x0, 284, W - 2 * x0, 70);
+    g.fillStyle = '#4a3828'; g.font = '400 38px "Noto Sans SC","PingFang SC",sans-serif'; wrapText(g, body, x0, y + 16, W - 2 * x0, 58);
+    g.fillStyle = '#7a5a40'; g.font = '400 28px "Noto Sans SC","PingFang SC",sans-serif'; g.fillText(foot, x0, H - m * 2.6 - 30); }); t.anisotropy = 8;
+  const card = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, color: 0xdcdcdc })), g = new THREE.Group(), dk = woodT('#2e221a');
+  const back = boxM(w + .08, h + .08, .04, dk, 0, 0, -.025); g.add(card, back); g.rotation.set(-Math.PI / 2 + .75, Math.PI / 2, 0, 'YXZ'); g.position.set(x, 1.12, z);
+  scene.add(g, boxM(.07, .46, .07, dk, x - .1, .6 + .23, z), boxM(.5, .04, .4, dk, x - .06, .62, z));
+}
 function buildCraft() {
   specimenTable(-45.3, 24.6, ['直榫', '十字搭接', '格肩榫', '透榫加楔'], '展厅一 · 直角与交叉');
-  specimenTable(-45.3, 10.8, ['燕尾榫', '楔钉榫', '银锭榫', '龙凤榫'], '展厅二 · 拼接与延长');
+  specimenTable(-45.3, 10.8, ['燕尾榫', '楔钉榫', '银锭榫', '龙凤榫'], '展厅二 · 拼接与延长', true);
   craftWall(-46.17, 19.2, 30.0, '直角与交叉：一个节点怎么做', [['画线', '墨斗弹线，角尺定方，先在料上画出榫与卯。', '直榫'], ['开榫', '锯出榫肩，去掉余料，留下榫头。', '格肩榫'], ['凿卯', '在另一根料上凿出方卯。', '十字搭接'], ['装配打楔', '榫头入卯，再打楔撑紧。', '透榫加楔']]);
-  craftWall(-46.17, 6.4, 15.2, '拼接与延长：木料不够长、不够宽时', [['燕尾榫', '接得住拉力，越拉越紧。', '燕尾榫'], ['楔钉榫', '弧形构件对接，楔钉锁住。', '楔钉榫'], ['银锭榫', '嵌在拼缝上，把板拉拢。', '银锭榫'], ['龙凤榫', '榫舌入槽，拼成宽板。', '龙凤榫']]);
+  craftWall(-46.17, 6.4, 15.2, '拼接与延长：编号与台上的样块一一对应', [['燕尾榫', '看这排梯形榫头：外宽里窄，越往外拉，卡得越紧。', '燕尾榫'], ['楔钉榫', '看中间那枚方木楔：两段料各削一半搭上，打进它就动不了。', '楔钉榫'], ['银锭榫', '看板缝上的深色木块：两头宽、中间窄，把两块板拉住。', '银锭榫'], ['龙凤榫', '看板边的榫舌：根窄头宽，顺着槽推进去就脱不开。', '龙凤榫']]);
   heroMortise(-40.2, 24.5);
+  heroLabel('透榫加楔', '看榫头从柱子另一面穿出来：再打进两枚木楔，把它撑紧。', '这件放大的节点按画线、开榫、凿卯、装配、打楔五步，一遍遍把自己做出来。', '演示件，尺寸放大 · 点一下暂停或继续', -37.3, 24.5);
+  heroLabel('燕尾榫', '看箱角上这排梯形的榫头：外宽里窄，像燕子的尾巴。', '箱子装满东西往外撑，榫头被卡在卯口里，角就拉不开。抽屉和衣箱的角大多这样做。', '演示件，尺寸放大 · 点一下暂停或继续', -39.05, 10.75);
   toolWall(-47.6, -42.4, 17.18, .6);
   // 展厅二 hero: a dovetailed box corner drawn apart and back together
   { const g = new THREE.Group(), [[tails], [pins]] = SPEC['燕尾榫'](timber('#c2925e'), timber('#9a6238')); tails.rotation.y = pins.rotation.y = 0; tails.position.set(0, 0, 0); pins.position.set(0, 0, 0);
