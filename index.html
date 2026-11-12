@@ -851,7 +851,7 @@ const progress = (p, msg) => { LD.tgt = Math.max(LD.tgt, Math.min(1, p)); if (ms
   if (LD.cur >= 1) { loadingEl.classList.add('joined'); return; }
   requestAnimationFrame(ldTick);
 })();
-const nextFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+const nextFrame = () => new Promise(r => { let d = 0; const go = () => { if (!d) { d = 1; r(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 80); });   // the timer keeps loading moving in a background tab, where rAF is paused
 if (!window.THREE || !THREE.GLTFLoader) { loadingEl.textContent = '三维库加载失败，请刷新重试'; return; }
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
