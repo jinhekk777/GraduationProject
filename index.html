@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>木构院落</title>
+<title>木构博物馆</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500&family=Noto+Serif+SC:wght@600;700&display=swap">
@@ -130,6 +130,25 @@ button:focus-visible{outline:2px solid var(--qing);outline-offset:2px}
 .walkbar .sep{display:inline-block;width:1px;height:1em;background:var(--ink-3);margin:0 9px;vertical-align:-.15em}
 .stick{position:absolute;left:max(24px,env(safe-area-inset-left,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));width:120px;height:120px;border-radius:50%;background:rgba(219,208,182,.3);border:1px solid rgba(42,34,27,.5);box-shadow:inset 0 0 0 5px rgba(219,208,182,.25),inset 0 0 0 6px rgba(42,34,27,.2);touch-action:none;display:none}
 .stick .knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(42,34,27,.42);border:1px solid var(--ink)}
+.edit{position:absolute;top:14px;right:max(16px,env(safe-area-inset-right,0px));width:min(248px,calc(100% - 32px));padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px;font-size:13px;max-height:calc(100% - 28px);overflow:auto}
+.edit[hidden]{display:none}
+.film{z-index:7;top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.fm-opts{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--ink-2)}
+.fm-opts label{display:inline-flex;align-items:center;gap:5px}
+#fmSave:not([hidden]){display:block;margin-top:8px;color:var(--qing);font-weight:600}
+.film-view{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0b0d11;z-index:6}
+.film-view[hidden]{display:none}
+.ed-head{display:flex;align-items:center;justify-content:space-between;font-family:var(--display);font-size:16px;letter-spacing:.14em}
+.ed-tip{margin:0;color:var(--ink-2);line-height:1.6}
+.ed-name{font-family:var(--display);font-weight:700;font-size:15px;line-height:1.5;padding-bottom:8px;border-bottom:1px solid var(--ink-3);margin-bottom:8px;word-break:break-all}
+.ed-grid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 10px;align-items:center}
+.ed-grid label{color:var(--ink-2);white-space:nowrap}
+.ed-grid input{width:100%;box-sizing:border-box;font:inherit;font-variant-numeric:tabular-nums;color:var(--ink);background:rgba(255,250,236,.55);border:1px solid rgba(42,34,27,.45);border-radius:2px;padding:5px 7px}
+.ed-grid input:focus-visible{outline:2px solid var(--qing);outline-offset:1px}
+.ed-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.ed-row .btn{padding:5px 10px 6px;font-size:12.5px}
+.ed-foot{border-top:1px solid var(--ink-3);padding-top:10px;color:var(--ink-2)}
+#edOut{width:100%;box-sizing:border-box;margin-top:8px;font:11px/1.4 ui-monospace,Menlo,monospace;color:var(--ink);background:rgba(255,250,236,.55);border:1px solid rgba(42,34,27,.45);border-radius:2px;resize:vertical}
 @media (max-width:520px){
   .top{gap:10px}
   .seg button{padding:10px 8px 11px;font-size:13px;letter-spacing:.04em}
@@ -141,10 +160,10 @@ button:focus-visible{outline:2px solid var(--qing);outline-offset:2px}
 </style>
 
 <div id="app">
-  <canvas id="scene" aria-label="木构院落三维模型"></canvas>
+  <canvas id="scene" aria-label="木构博物馆三维模型"></canvas>
   <div class="labels" id="labels"></div>
   <header class="top">
-    <h1 class="brand panel">木构院落</h1>
+    <h1 class="brand panel">木构博物馆</h1>
     <div class="seg panel" id="modes" role="group" aria-label="观看方式">
       <button data-mode="ext" aria-pressed="true">外观</button>
       <button data-mode="cut" aria-pressed="false">剖视布局</button>
@@ -178,6 +197,34 @@ button:focus-visible{outline:2px solid var(--qing);outline-offset:2px}
     <span class="touch-hint">左下摇杆走动 · 拖动画面转身</span>
     <button class="btn" id="walkHome">回到山门</button>
   </div>
+  <aside class="edit panel" id="edPanel" aria-label="布展编辑" hidden>
+    <div class="ed-head"><b>布展编辑</b><button class="btn" id="edClose" type="button">退出</button></div>
+    <p class="ed-tip" id="edTip">点一下物体选中；按住已选中的物体可在地面上拖动。</p>
+    <div id="edForm" hidden>
+      <div class="ed-name" id="edName"></div>
+      <div class="ed-grid">
+        <label for="edX">东西 X</label><input id="edX" type="number" step="0.05">
+        <label for="edY">高低 Y</label><input id="edY" type="number" step="0.05">
+        <label for="edZ">南北 Z</label><input id="edZ" type="number" step="0.05">
+        <label for="edR">转向 °</label><input id="edR" type="number" step="5">
+        <label for="edS">缩放</label><input id="edS" type="number" step="0.05" min="0.05">
+      </div>
+      <div class="ed-row"><button class="btn" id="edDel" type="button">删除</button><button class="btn" id="edReset" type="button">恢复原样</button></div>
+    </div>
+    <div class="ed-foot">
+      <div id="edCount">还没有修改</div>
+      <div class="ed-row"><button class="btn" id="edUndo" type="button">撤销</button><button class="btn" id="edCopy" type="button">复制修改</button><button class="btn" id="edClear" type="button">全部还原</button></div>
+      <textarea id="edOut" rows="3" readonly hidden aria-label="修改记录"></textarea>
+    </div>
+  </aside>
+  <aside class="edit panel film" id="fmPanel" aria-label="分镜播放" hidden>
+    <div class="ed-head"><b>分镜播放</b><button class="btn" id="fmClose" type="button">关闭</button></div>
+    <p class="ed-tip" id="fmTip">按分镜表自动运镜，共 <span id="fmN"></span> 个镜头，<span id="fmLen"></span>。</p>
+    <div class="ed-row"><button class="btn" id="fmPlay" type="button">预览</button><button class="btn" id="fmExp" type="button">逐帧导出</button><button class="btn" id="fmRec" type="button">实时录制</button><button class="btn" id="fmStop" type="button" disabled>停止</button></div>
+    <div class="fm-opts"><label><input type="checkbox" id="fmSub" checked> 字幕</label><label><input type="checkbox" id="fmMap"> 小地图</label><label><input type="checkbox" id="fmTag"> 镜号</label></div>
+    <div class="ed-foot" id="fmStat">还没开始</div>
+    <a id="fmSave" hidden></a>
+  </aside>
   <div class="stick" id="stick" hidden aria-hidden="true"><div class="knob" id="stickKnob"></div></div>
   <div class="loading" id="loading" role="status" aria-live="polite">
     <div class="ld">
@@ -951,44 +998,44 @@ const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const HALLS = [
   { id: 'xu', n: 1, name: '序厅', at: [0, 3.9, 12.25],
     cam: [[2.2, 6.6, 15.8], [0, 5, 12.5]],
-    p: '主殿前半进，门高五米多。迎面一张长案，上面是本馆的「烫样」：清代样式房用纸板做给皇帝看的建筑模型，屋顶可以揭开。先在这里认一认全馆的路。案后是玻璃屏风，已经能望见中庭里那朵原大的斗拱。',
-    list: ['全馆烫样（屋顶可揭开）', '玻璃屏风后的中庭斗拱'] },
-  { id: 'e1', n: 2, name: '展厅一 · 直角与交叉', at: [-41, .6, 24.5],
+    p: '主殿前半进，门高五米多。迎面一张长案，上面是本馆的「烫样」：清代样式房用纸板做给皇帝看的建筑模型，屋顶可以揭开。先在这里认一认全馆的路。案后的玻璃屏风正中开着门，穿过去就是中庭。',
+    list: ['全馆烫样（屋顶可揭开）', '屏风门，通向中庭'] },
+  { id: 'zt', n: 2, name: '中庭 · 斗拱', at: [0, 3.9, 3.1],
+    cam: [[11, 8, -4], [0, 8.5, 2.2]],
+    p: '穿过序厅的屏风门，走进全馆最高的空间：先看榫卯能做到多大，再回头一件件拆开看。这里挑高近二十米，头顶是一口大藻井。正中立着一根五米高的柱子，柱头上是一朵原大的唐式斗拱，连檐椽一起挑出四米多，人可以走到它底下抬头看。点一下，它逐层拆开。',
+    list: ['唐式柱头铺作（原大，可拆解）', '说明牌：十二种构件', '头顶的藻井'] },
+  { id: 'e1', n: 3, name: '展厅一 · 直角与交叉', at: [-41, .6, 24.5],
     cam: [[-35.4, 2.5, 30.6], [-43.5, 1.6, 20]],
     p: '西配殿南半，讲「一个节点是怎样做出来的」。正中一件放大的透榫加楔，按画线、开榫、凿卯、装配、打楔五步反复演示；后墙下是可以点开的节点样块，隔墙上挂着做它们的工具。',
     list: ['透榫五步演示', '样块：直榫、十字搭接、格肩榫、透榫加楔', '木作工具墙'] },
-  { id: 'e2', n: 3, name: '展厅二 · 拼接与延长', at: [-41, .6, 10.75],
+  { id: 'e2', n: 4, name: '展厅二 · 拼接与延长', at: [-41, .6, 10.75],
     cam: [[-35.4, 2.5, 15.8], [-43.5, 1.6, 7]],
     p: '西配殿北半，讲木料怎样接长、拼宽、防脱。正中一个放大的燕尾榫箱角反复开合；后墙下是燕尾榫、楔钉榫、银锭榫、龙凤榫四块样块，墙上是对应的图解。',
     list: ['燕尾榫箱角演示', '样块：燕尾榫、楔钉榫、银锭榫、龙凤榫'] },
-  { id: 'e3', n: 4, name: '展厅三 · 家具', at: [0, .6, -29],
-    cam: [[9.4, 2.6, -24.2], [-1, 1.4, -31]],
+  { id: 'e3', n: 5, name: '展厅三 · 家具', at: [0, .6, -29],
+    cam: [[9.6, 3.2, -33.0], [-2, 1.6, -27.2]],
     p: '后殿，头顶是井口天花和一口藻井。两件明式家具名作各在一束光里：明式圈椅、夹头榫平头案。点一下，它们按榫卯拆成部件，编号与身后展示墙上的说明对应。',
     list: ['明式圈椅（可拆解）', '夹头榫平头案（可拆解）', '榫卯构成展示墙'] },
-  { id: 'ta', n: 5, name: '北院 · 木塔', at: [0, 1.8, -66], fov: 54,
-    cam: [[12, 1.7, -38], [0, 17, -66]],
-    p: '穿过后殿进入第二进院落。正中是一座五层木塔，高四十多米，是全馆最高的建筑：每层檐下一圈斗拱，层层收分，檐上是平座栏杆，塔刹是覆钵、七重相轮和宝珠。底层四面开门，可以走进去。',
-    list: ['五层，逐层收分', '每层檐下都有斗拱和平座', '塔刹：覆钵、相轮、宝珠'] },
-  { id: 'ti', n: 6, name: '木塔 · 塔内', at: [0, 1.82, -66], fov: 50,
-    cam: [[4.6, 3.4, -60.6], [-.6, 4.0, -66.6]],
-    p: '登上两层台基，从南门走进木塔底层。塔心是一具切开的应县木塔模型：在一座木塔里看另一座木塔是怎么搭起来的。西北墙上挂着它的立面、剖面图。从北门出去，就是通往廊桥的路。',
-    list: ['应县木塔剖面模型（可拆解）', '立面 · 剖面图', '南北两门可穿行'] },
-  { id: 'e4', n: 7, name: '展厅四 · 大木作', at: [-32, .6, -64],
+  { id: 'e4', n: 6, name: '展厅四 · 大木作', at: [-32, .6, -64],
     cam: [[-23.6, 5.4, -50.9], [-32.5, 2.4, -64]],
     p: '西厢。从节点到房屋。北圆台上是一攒清式平身科斗拱；南圆台上是一榀抬梁式屋架；西墙下是一榀穿斗式屋架，两种屋架对照着看。点一下展品，看它一层层拆开。',
     list: ['五踩单翘单昂平身科（可拆解）', '抬梁式屋架（可拆解）', '穿斗式屋架（可拆解）'] },
-  { id: 'qq', n: 8, name: '木拱廊桥', at: [0, 4.05, -106], fov: 50,
+  { id: 'ta', n: 7, name: '北院 · 木塔', at: [0, 1.8, -66], fov: 54,
+    cam: [[12, 1.7, -38], [0, 17, -66]],
+    p: '穿过后殿进入第二进院落。正中是一座五层木塔，高四十多米，是全馆最高的建筑：每层檐下一圈斗拱，层层收分，檐上是平座栏杆，塔刹是覆钵、七重相轮和宝珠。底层四面开门，可以走进去。',
+    list: ['五层，逐层收分', '每层檐下都有斗拱和平座', '塔刹：覆钵、相轮、宝珠'] },
+  { id: 'ti', n: 8, name: '木塔 · 塔内', at: [0, 1.82, -66], fov: 50,
+    cam: [[4.6, 3.4, -60.6], [-.6, 4.0, -66.6]],
+    p: '登上两层台基，从南门走进木塔底层。塔心是一具切开的应县木塔模型：在一座木塔里看另一座木塔是怎么搭起来的。西北墙上挂着它的立面、剖面图。从北门出去，就是通往廊桥的路。',
+    list: ['应县木塔剖面模型（可拆解）', '立面 · 剖面图', '南北两门可穿行'] },
+  { id: 'qq', n: 9, name: '木拱廊桥', at: [0, 4.05, -106], fov: 50,
     cam: [[17, 1.2, -103], [0, 2.4, -106]],
     p: '北院尽头的运河上架着一座木拱廊桥。桥身不用钉子，两组直木纵横穿插、互相承托：三节苗和五节苗交织成拱，横梁（牛头）把它们锁住，上面再架桥面和廊屋。可以走上去，到北岸看鲁班锁。',
     list: ['三节苗 + 五节苗编木拱', '牛头横梁', '桥上廊屋'] },
-  { id: 'e5', n: 9, name: '展厅五 · 榫卯与艺术', at: [32, .6, -64],
+  { id: 'e5', n: 10, name: '展厅五 · 榫卯与艺术', at: [32, .6, -64],
     cam: [[23.8, 3.2, -51.5], [33, 3.2, -64]],
     p: '东厢。把构件当作材料来创作：悬在半空、一呼一吸缓缓开合的斗拱；只靠互相搭压站起来的互承木构；一面窗棂纹样灯墙。点一下作品，可以让它动或停。',
-    list: ['悬浮的斗拱（装置）', '互承木构（雕塑）', '窗棂灯墙'] },
-  { id: 'zt', n: 10, name: '中庭 · 斗拱', at: [0, 3.9, 3.1],
-    cam: [[11, 8, -4], [0, 8.5, 2.2]],
-    p: '从北院回到后殿，登上主殿后阶，进入全馆的高潮。这里挑高近二十米，头顶是一口大藻井。正中立着一根五米高的柱子，柱头上是一朵原大的唐式斗拱，连檐椽一起挑出四米多，人可以走到它底下抬头看。点一下，它逐层拆开。',
-    list: ['唐式柱头铺作（原大，可拆解）', '说明牌：十二种构件', '头顶的藻井'] },
+    list: ['悬浮的斗拱（装置）', '互承木构', '窗棂灯墙'] },
   { id: 'gf', n: 11, name: '工坊', at: [41, .6, 10.75],
     cam: [[35.6, 2.8, 5.4], [43.5, 1.2, 12]],
     p: '东配殿北半。看懂之后动手做：四张工作台上凿料、拼合。东墙是一面木材墙，八种常用木料并排，比一比颜色和纹理：选料是榫卯的第一步。',
@@ -998,8 +1045,9 @@ const HALLS = [
     p: '东配殿南半。回顾与收藏：东墙一排藏品柜，中间的索引桌汇总看过的展品、做过的关卡和全馆资料来源。',
     list: ['个人图鉴', '资料来源总表'] },
 ];
-const ROUTE = [[0, 86], [0, 66], [-7.5, 63.5], [-1, 60], [0, 35], [0, 24], [0, 12.5], [-18, 10.6], [-30.5, 10.6], [-29.5, 26], [-41, 25], [-41, 17], [-41, 10.75],
-  [-41, -2], [-41, -29], [-12, -29], [0, -29], [0, -37], [0, -52], [0, -66], [0, -52], [-12, -48], [-20, -64], [-32, -64], [-20, -64], [-11.5, -70], [-11.5, -84], [0, -86], [0, -126], [0, -86], [11.5, -84], [11.5, -70], [20, -64], [32, -64], [20, -64], [12, -48], [0, -37], [0, -23], [0, -15.5], [0, -8], [0, 3.1], [0, -2], [41, -2], [41, 10.75], [41, 17], [41, 25], [34, 26], [29.5, 26], [29.5, 64], [8.4, 64], [0, 66], [0, 86]];
+const ROUTE = [[0, 86], [0, 66], [-7.5, 63.5], [-1, 60], [0, 35], [0, 24], [0, 12.5], [0, 3.1], [0, -2], [-30.5, -2], [-30.5, 10.6], [-29.5, 26], [-41, 25], [-41, 17], [-41, 10.75],
+  [-41, -2], [-41, -29], [-12, -29], [0, -29], [0, -37], [-12, -48], [-20, -64], [-32, -64], [-20, -64], [-9, -66], [0, -66], [0, -73], [0, -86], [0, -126], [0, -86], [11.5, -84], [11.5, -70], [20, -64], [32, -64], [31, -50], [31, -29], [41, -29],
+  [41, -2], [41, 10.75], [41, 17], [41, 25], [34, 26], [29.5, 26], [29.5, 64], [8.4, 64], [0, 66], [0, 86]];
 const TOUR = [
   { id: 'in', name: '山门', k: '馆外', cam: [[-4, 3.2, 94], [0, 7.5, 66]], list: [],
     p: '山门三开间，门框上做出三个燕尾榫头——进门之前，先看到一个榫卯。两侧院墙围出一座完整的院落。' },
@@ -1043,7 +1091,7 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(900, 48, 24), new THREE.Shad
 sky.renderOrder = -1; scene.add(sky);
 scene.fog = new THREE.FogExp2(0xe8cfa8, .0032);
 const sun = new THREE.DirectionalLight(0xffe2c0, 2.3); sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
-Object.assign(sun.shadow.camera, { left: -84, right: 84, top: 128, bottom: -128, near: 1, far: 520 }); sun.shadow.bias = -.0005; sun.shadow.normalBias = .05;
+Object.assign(sun.shadow.camera, { left: -128, right: 128, top: 128, bottom: -128, near: 1, far: 760 }); sun.shadow.bias = -.0005; sun.shadow.normalBias = .05;
 sun.target.position.set(0, 0, -22);
 const hemi = new THREE.HemisphereLight(0xcfdcef, 0x8a6e52, .85);
 scene.add(sun, sun.target, hemi);
@@ -1058,8 +1106,11 @@ function rippleTex() {
     const v = 208 + r * 9 + n * 6; const i = (y * 512 + x) * 4; im.data[i] = v; im.data[i + 1] = v * .91; im.data[i + 2] = v * .76; im.data[i + 3] = 255; }
   g.putImageData(im, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(90, 90); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; return t;
 }
+/* the canal is a river: straight past the north court, bending away north-east and south-west until the foothills hide it */
+function riverZ(x) { const a = Math.abs(x); if (a <= 54) return -106; const k = (1 - Math.cos(Math.min(a - 54, 330) / 330 * Math.PI)) / 2; return -106 + (x > 0 ? -70 : 96) * k; }
+function riverW(x) { const a = Math.abs(x); return a <= 54 ? 10 : 10 + Math.min(1, (a - 54) / 120) * 7; }
 const sandM = new THREE.MeshToonMaterial({ map: rippleTex(), gradientMap: RAMP_EARLY() });
-const outerG = (() => { const s = new THREE.Shape([[-800, -800], [800, -800], [800, 800], [-800, 800]].map(([x, y]) => new THREE.Vector2(x, y))), h = new THREE.Path([[-54, 96], [-54, 116], [54, 116], [54, 96]].map(([x, y]) => new THREE.Vector2(x, y))); s.holes.push(h);   // the canal is cut out of the ground
+const outerG = (() => { const s = new THREE.Shape([[-800, -800], [800, -800], [800, 800], [-800, 800]].map(([x, y]) => new THREE.Vector2(x, y))), h = new THREE.Path((() => { const xs = [], a = [], b = []; for (let x = -440; x < -54; x += 6) xs.push(x); xs.push(-54, 54); for (let x = 60; x < 440; x += 6) xs.push(x); xs.push(440); xs.forEach(x => { a.push([x, -(riverZ(x) - riverW(x))]); b.unshift([x, -(riverZ(x) + riverW(x))]); }); return a.concat(b); })().map(([x, y]) => new THREE.Vector2(x, y))); s.holes.push(h);   // the canal is cut out of the ground
   const g = new THREE.ShapeGeometry(s), u = g.attributes.uv; for (let i = 0; i < u.count; i++) u.setXY(i, u.getX(i) / 1600 + .5, u.getY(i) / 1600 + .5); return g; })();
 const outer = new THREE.Mesh(outerG, sandM);
 outer.rotation.x = -Math.PI / 2; outer.position.y = -.06; outer.receiveShadow = true; scene.add(outer);
@@ -1348,9 +1399,10 @@ async function meshopt() {   // wasm decoder, or the plain-JS reference decoder 
 fetchModel().then(async buf => { const L = new THREE.GLTFLoader(); L.setMeshoptDecoder(await meshopt()); progress(.76, '开榫'); await nextFrame();
   L.parse(buf, '', g => onModel(g).catch(e => { console.error(e); fail('场景搭建失败，请刷新重试'); }), e => { console.error(e); fail('模型解析失败，请刷新重试'); }); })
   .catch(e => { console.error(e); fail('模型下载失败，请刷新重试'); });
+let SITE_ROOT = null;
 async function onModel(gltf) {
   clearTimeout(stall); progress(.84, '合榫'); await nextFrame();
-  const root = gltf.scene;
+  const root = gltf.scene; root.userData.noEdit = true; SITE_ROOT = root;
   root.traverse(o => {
     if (!o.isMesh) return;
     if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();   // normals are not shipped: vertices are already split at hard edges
@@ -1371,12 +1423,20 @@ async function onModel(gltf) {
     m.side = THREE.DoubleSide; o.material = toToon(m, name === 'b_fang' ? 1 : /^r_(cyan|blue|gold)/.test(name) ? .25 : .38);
     o.castShadow = node !== 'museum_plants' || !/grass/.test(name); o.receiveShadow = true;
   });
+  root.updateMatrixWorld(true); root.traverse(o => {   // the screen at z = 8.5 gets a doorway on the axis
+    if (!o.isMesh || !o.geometry.index) return; const glass = o.material.name === 'glass' || glassMats.includes(o.material); if (!glass && nodeOf(o) !== 'museum_base') return;
+    const P = o.geometry.attributes.position, I = o.geometry.index, d = denorm(P), M = o.matrixWorld, v = new THREE.Vector3(), keep = []; let cut = 0;
+    const inDoor = i => { v.set(d(P.getX(i)), d(P.getY(i)), d(P.getZ(i))).applyMatrix4(M); return Math.abs(v.z - 8.5) < .25 && v.y > 3.8 && v.y < 11.6 && (glass ? Math.abs(v.x) < 15.2 : Math.abs(v.x) < .25 && v.y < 11.1); };
+    for (let k = 0; k < I.count; k += 3) { const a = I.getX(k), b = I.getX(k + 1), c = I.getX(k + 2); if (inDoor(a) && inDoor(b) && inDoor(c)) cut++; else keep.push(a, b, c); }
+    if (cut) o.geometry.setIndex(keep); });
+  for (const s of [-1, 1]) { const gm = new THREE.MeshBasicMaterial({ color: lin('#c8d4d6'), transparent: true, opacity: .08, depthWrite: false, side: THREE.DoubleSide }); glassMats.push(gm);
+    const pane = new THREE.Mesh(new THREE.PlaneGeometry(12, 7.3), gm); pane.position.set(s * 9, 7.55, 8.5); pane.renderOrder = 2; scene.add(pane); const gn = root.getObjectByName('museum_glass'); if (gn) gn.attach(pane); else pane.userData.noEdit = true; }   // under the glass node, so the walker cannot pass through the panes
   roofNode = root.getObjectByName('museum_roof');
   buildCollision(root); placeFigures();
   scene.add(root);
-  const steps = [buildExhibits, buildDisplays, buildMing, buildCeilings, buildCraft, buildOrnaments, buildStars, buildGate, buildNature, () => toonify(scene)];
+  const steps = [buildExhibits, buildDisplays, buildMing, buildCeilings, buildCraft, buildOrnaments, buildStars, buildGate, buildNature, buildSurround, () => { buildJM(); glowExhibits(); }, () => { if (!SHOW_EXHIBITS) emptySigns(); }, () => toonify(scene)];
   for (let i = 0; i < steps.length; i++) { steps[i](); progress(.86 + .13 * (i + 1) / steps.length, '合榫'); await nextFrame(); }
-  setTime('dusk'); setMode('ext'); sceneReady = true;
+  setTime('dusk'); setMode('ext'); sceneReady = true; edInit();
   progress(1, '合榫'); for (let i = 0; i < 40 && LD.cur < 1; i++) await nextFrame(); await new Promise(r => setTimeout(r, 600));
   loadingEl.classList.add('done');
 }
@@ -1405,7 +1465,7 @@ const LABELS = HALLS.map(h => { const d = document.createElement('div'); d.class
 const TIMES = {
   day:   { zen: '#9db6c3', hor: '#efe4c8', gnd: '#d9c8a2', sunCol: '#fff4de', sun: ['#fff0d8', 2.6, [-.5, .55, .65]], hemi: ['#e2e8ea', '#a89070', .95], fog: ['#e7ddc6', .0016],
            halo: .45, stars: 0, exp: .95, bloom: .16, sh: '#53607a', hi: '#fff0d0', lamp: .1, glass: 0, hall: [.35, .6], court: 0 },
-  dusk:  { zen: '#6c78a0', hor: '#f2c292', gnd: '#c9a27a', sunCol: '#ffd6a6', sun: ['#ffb27a', 2.3, [-.86, .14, .5]], hemi: ['#b6aecb', '#7a5a40', .7], fog: ['#e9caa8', .0022],
+  dusk:  { zen: '#6c78a0', hor: '#f2c292', gnd: '#c9a27a', sunCol: '#ffd6a6', sun: ['#ffb27a', 2.3, [-.86, .21, .5]], hemi: ['#b6aecb', '#7a5a40', .7], fog: ['#e9caa8', .0022],
            halo: .9, stars: 0, exp: 1.02, bloom: .3, sh: '#4c4a7c', hi: '#ffd2a0', lamp: 1.4, glass: .3, hall: [.8, 1.0], court: .6 },
   night: { zen: '#0f1630', hor: '#2c3658', gnd: '#1c2235', sunCol: '#b8c8ff', sun: ['#b8c8ff', .55, [.4, .7, -.6]], hemi: ['#56658f', '#1d1812', .55], fog: ['#1f2742', .0026],
            halo: .2, stars: 1, exp: 1.25, bloom: .55, sh: '#3c4a8a', hi: '#ffc27a', lamp: 3.4, glass: .8, hall: [1.5, 1.4], court: 1.4 },
@@ -1455,8 +1515,14 @@ function setCard(open) { cardOpen = open; cardEl.classList.toggle('collapsed', !
 $('cardTog').addEventListener('click', () => setCard(!cardOpen)); setCard(cardOpen);
 function placeCard() { const hb = document.querySelector('.top').getBoundingClientRect(); cardEl.style.top = Math.round(hb.bottom + 10) + 'px'; }
 window.addEventListener('resize', placeCard); placeCard();
+let cardEx = null;
+function hotBtn(ex) {   // the "take apart" button on a piece's card: the numbered joint dots only appear on the piece after it is pressed
+  let b = $('cardHot'); if (!b) { b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.id = 'cardHot'; b.style.marginTop = '10px'; b.hidden = true; $('cardN').parentNode.appendChild(b);
+    b.addEventListener('click', () => { const x = cardEx; if (!x || !x.hot) return; x.hotOn = !x.hotOn; x.hotSprites.forEach(s => { s.visible = x.hotOn; }); x.focus = null; if (x.hotOn) { x.on = false; x.t = 0; } showExhibit(x); }); }
+  cardEx = ex && ex.hot ? ex : null; b.hidden = !cardEx; if (cardEx) b.textContent = ex.hotOn ? '收起拆解点' : '拆解';
+}
 function card(k, t, p, list, note) {
-  $('cardK').textContent = k; $('cardT').textContent = t; $('cardP').textContent = p; $('cardN').textContent = note || '';
+  hotBtn(null); $('cardK').textContent = k; $('cardT').textContent = t; $('cardP').textContent = p; $('cardN').textContent = note || '';
   const ul = $('cardL'); ul.textContent = ''; (list || []).forEach(x => { const li = document.createElement('li'); li.textContent = x; ul.appendChild(li); }); ul.hidden = !(list && list.length);
 }
 /* ---------- 自由行走: first-person walking. Floors and walls come from the model itself, bucketed into a 2 m grid ---------- */
@@ -1545,7 +1611,85 @@ const EXH = [];
 const woodT = c => dress(stylize(new THREE.MeshToonMaterial({ color: lin(c), gradientMap: RAMP })), 'wood', .7);
 function boxM(w, h, d, m, x, y, z) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; return o; }
 function cylM(r, h, m, x, y, z, axis) { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 16), m); o.position.set(x, y, z); if (axis === 'x') o.rotation.z = Math.PI / 2; if (axis === 'z') o.rotation.x = Math.PI / 2; o.castShadow = o.receiveShadow = true; return o; }
-function addExhibit(ex) { ex.t = 0; ex.on = false; EXH.push(ex); scene.add(ex.root); return ex; }
+/* the built exhibits are held back for now: each one's place keeps a small sign with its name. Set SHOW_EXHIBITS to true to bring them all back. */
+const SHOW_EXHIBITS = true, EXH_OFF = []; let signsReady = false;
+function addExhibit(ex) { ex.t = 0; ex.on = false;
+  if (!SHOW_EXHIBITS) { EXH_OFF.push(ex); if (signsReady) emptySign(ex); return ex; }
+  EXH.push(ex); scene.add(ex.root); return ex; }
+/* ---------- pieces from the game 《匠木》, used with its developer's consent. Every part keeps its own shape and its own place, so a piece comes apart the way it was made;
+   the put-together pose and the taken-apart pose both come from the source, the wood finish and the staging are the museum's. ---------- */
+const JM = [
+  { id: 'luohanchuang', title: '罗汉床', py: 'luó hàn chuáng', hall: '展厅三 · 家具', at: [-5.2, -25.5], size: 3.3, by: 'w', yaw: 0, gain: 3.4, glow: .8, plinth: [3.9, .3, 2.1], tints: ['#ffffff'], spread: .3,
+    tag: '三面围子的坐卧具：围子攒接成透空的格子，全靠小料相互咬合。', p: '罗汉床三面装围子，可坐可卧。围子用短料攒接成透空的图案，每个交点都是一处榫卯；床面攒边装板，腿足与牙条相抱。点一下，近三百个零件各自退开；再点一下合上。' },
+  { id: 'lianggegui', title: '亮格柜', py: 'liàng gé guì', hall: '展厅三 · 家具', at: [6.4, -25.5], size: 2.5, by: 'h', yaw: .35, gain: 3.4, glow: .8, plinth: [1.9, .25, 1.3], tints: ['#ffffff'], spread: .45,
+    tag: '上面是敞开的亮格，下面是带门的柜子：九十多个零件，框架攒边，板心装槽。', p: '亮格柜上层敞开放陈设，下层对开门存物。立柱、横枨、柜帮、柜门都是先攒出边框、再把板心嵌进槽里，门轴直接做在门边上。点一下，九十多个零件各自退开；再点一下合上。' },
+  { id: 'bandeng', title: '板凳', py: 'bǎn dèng', hall: '展厅一 · 直角与交叉', at: [-46, 30.2], size: 1.25, by: 'h', yaw: Math.PI + .4, gain: 2.2, glow: .6, plinth: [1.4, .7, 1.1], tints: ['#ffffff'], spread: .6,
+    tag: '最常见的坐具：腿上的榫头穿过凳面，从上面能看到榫头的端面。', p: '一条板凳十三个零件。四条腿向外撇，腿顶的榫头穿过凳面，在凳面上露出方形的端头；腿与腿之间用横枨拉住。点一下拆开，看榫头怎样穿过凳面；再点一下合上。' },
+  { id: 'yuandeng', title: '圆凳', py: 'yuán dèng', hall: '展厅一 · 直角与交叉', at: [-43.2, 30.2], size: 1.35, by: 'h', yaw: Math.PI, gain: 2.2, glow: .6, plinth: [1.1, .7, 1.1], tints: ['#ffffff'], spread: .6,
+    tag: '四条腿收向凳面，底下的枨子交叉相搭。', p: '圆凳的四条腿上端插进凳面，下端由交叉的枨子连成一体，枨子在交点各让一半、互相搭住。点一下拆开，再点一下合上。' },
+  { id: 'tihe', title: '提盒', py: 'tí hé', hall: '展厅一 · 直角与交叉', at: [-40.4, 30.2], size: 1.25, by: 'w', yaw: Math.PI + .3, gain: 3.2, glow: .75, plinth: [1.4, .9, 1.1], tints: ['#ffffff'], spread: .55,
+    tag: '几层盒子摞在底座上，提梁和一根穿销把它们锁成一件。', p: '提盒是出门盛放食物、文具的盒子。几层盒体叠放在底座上，两侧立柱连着提梁，一根铜销或木销横穿过去，各层就不会散开。点一下，三十多个零件一层层退开；再点一下合上。' },
+  { id: 'bogujia', title: '博古架', py: 'bó gǔ jià', hall: '展厅二 · 拼接与延长', at: [-45.6, 6.4], size: 2.5, by: 'h', yaw: .3, face: 's', gain: 3.4, glow: .8, plinth: [1.7, .25, 1.1], tints: ['#ffffff'], spread: .4,
+    tag: '高低错落的格子：横竖料在每个交点相接，全靠榫卯定住。', p: '博古架用细料攒出高低错落的格子，用来陈设器物。横料和竖料在每个交点相接，搁板嵌在料间。点一下，四十多个零件退开，可以数一数有多少个交点；再点一下合上。' },
+  { id: 'qiaotouan', title: '翘头案', py: 'qiào tóu àn', hall: '展厅二 · 拼接与延长', at: [-36.6, 6.5], size: 2.7, by: 'w', yaw: 0, face: 's', gain: 3.2, glow: .75, plinth: [3.1, .3, 1.2], tints: ['#ffffff'], spread: .45,
+    tag: '案面两端翘起，腿间装着透雕的挡板。', p: '翘头案的案面两头向上翘起，腿足缩在案面之内，两腿之间装有透雕挡板，腿与案面之间有牙条和牙头托住。可以和展厅三的平头案对照着看。点一下拆开，再点一下合上。' },
+  { id: 'jiazichuang', title: '架子床', py: 'jià zi chuáng', hall: '展厅三 · 家具', at: [3.5, -25.3], size: 2.7, by: 'w', yaw: 0, gain: 2.4, glow: .6, plinth: [3.1, .25, 2.6], tints: ['#ffffff'], spread: .35,
+    tag: '床上立柱，柱顶架起顶架：九十多个零件搭成一间小屋。', p: '架子床在床面四角立柱，柱顶承托顶架，三面装围子，像一间屋中之屋。点一下，九十多个零件各自退开；再点一下合上。' },
+  { id: 'xj1', title: '方盒', hall: '工坊', at: [35.3, 7.2], size: .85, by: 'h', yaw: Math.PI / 2, face: 'e', plinth: [.7, .9, .7], tints: ['#f3d9b0', '#c88f58'], spread: .6,
+    tag: '四块侧板在转角互相钩住，底板用木销锁定。', p: '四块侧板两端各出钩形的榫头，在转角处互相扣住；底板嵌在侧板之间，由圆木销穿过锁定。点一下拆开，再点一下合上。' },
+  { id: 'xj2', title: '托盘', hall: '工坊', at: [35.3, 9.8], size: .8, by: 'w', yaw: Math.PI / 2, face: 'e', plinth: [.7, .9, .7], tints: ['#f3d9b0', '#c88f58'], spread: .6,
+    tag: '一块底板，四条边框，转角相扣。', p: '底板四周围着边框，边框在转角处相扣。拆开只有六个零件，是最容易看懂的一件。点一下拆开，再点一下合上。' },
+  { id: 'xj3', title: '盖盒', hall: '工坊', at: [35.3, 12.4], size: .8, by: 'w', yaw: Math.PI / 2, face: 'e', plinth: [.7, .9, .7], tints: ['#f3d9b0', '#c88f58'], spread: .6,
+    tag: '盒身与盒盖：十二个零件。', p: '盒身由侧板、底板拼成，上面扣着盒盖。点一下拆开，看侧板怎样咬在一起；再点一下合上。' },
+  { id: 'xj6', title: '鸟屋', hall: '工坊', at: [35.3, 15], size: .9, by: 'h', yaw: Math.PI / 2, face: 'e', plinth: [.7, .9, .7], tints: ['#f3d9b0', '#c88f58'], spread: .6,
+    tag: '几片板插成一座小屋，屋顶靠卡口搭在山墙上。', p: '前后山墙、侧板、底板和两片屋顶，全部靠板上的槽口和凸榫插在一起。点一下拆开，再点一下合上。' },
+  { id: 'huaping', title: '插接花器', hall: '尾厅', at: [38.4, 30.3], size: .95, by: 'h', yaw: Math.PI, plinth: [.7, .9, .7], tints: ['#f3d9b0', '#c88f58'], spread: .6,
+    tag: '薄板开槽，十字相插：不用胶，靠槽口互相卡住。', p: '用薄板做的花器：每块板开出半深的槽口，两两十字相插，再由底座和箍片收住。这是榫卯里“搭接”的做法，在今天的设计里用得很多。点一下拆开，再点一下合上。' },
+  { id: 'jiaowu', title: '折叠小凳', hall: '尾厅', at: [41.0, 30.3], size: .75, by: 'w', yaw: Math.PI + .4, plinth: [.9, .9, .9], tints: ['#f3d9b0', '#c88f58'], spread: .38,
+    tag: '两副框架交叉，中间一根轴：由交杌而来的折叠结构。', p: '两副框架在中间交叉，用一根横轴穿起来，凳面的横条与框架以榫头相接。它的原型是古代的交杌，也就是“马扎”。点一下拆开，再点一下合上。' },
+  { id: 'dengjia', title: '插接小架', hall: '尾厅', at: [43.6, 30.3], size: .95, by: 'h', yaw: Math.PI, plinth: [.7, .9, .7], tints: ['#f3d9b0', '#c88f58'], spread: .6,
+    tag: '几片弯板围成一圈，上下各用一块板锁住。', p: '几片曲线板围成一圈，上端和下端各有一块带卡口的板把它们锁住，拆开是九片平板。点一下拆开，再点一下合上。' }];
+const HOT = {"bandeng":[{"name":"透榫","text":"腿顶的榫头整个穿过凳面，从凳面上能看到它的端头。榫头穿透了，受力的长度最大，坐上去腿不会从凳面里退出来。","at":[0.31,1.76,0.18],"parts":[7,1]},{"name":"直榫（半榫）","text":"横枨两端的榫头插进腿上的卯眼，但不穿出去，从腿的外侧看不到榫头。四根横枨把四条腿拉成一个整体。","at":[0.42,1.06,0.0],"parts":[2,1,6]}],"tihe":[{"name":"穿销","text":"一根长销横穿过两侧立柱和盒盖上的横梁。销子插着，盒盖压住下面几层，整件提起来不会散；抽掉销子，才能一层层取下来。","at":[0.66,1.59,0.0],"parts":[13,4,5,31,21]},{"name":"提梁与立柱","text":"提梁架在两根立柱顶上，立柱下端栽在底座里。整件提盒的重量由这三根料承担。","at":[0.5,1.86,0.0],"parts":[34,4,5]},{"name":"站牙","text":"立柱前后各有一片站牙，下端落在底座上，把立柱夹住，立柱就不会前后晃动。","at":[0.62,1.2,0.16],"parts":[1,3,5,22]},{"name":"盒体的一层","text":"每一层由四块侧板围成，底下嵌一块底板。几层尺寸相同，上一层的底正好落在下一层的口上。","at":[0.5,1.27,0.36],"parts":[19,0,17,26,33]}],"luohanchuang":[{"name":"攒边装板与穿带","text":"床面不是一整块厚板：四根边框在转角相接，内侧开槽，薄薄的面心板四边嵌在槽里，背面五根穿带托住。木板随干湿胀缩时，能在槽里活动而不开裂。","at":[0.75,1.3,-0.33],"parts":[249,67,33,211,151,125,188,200,220,269],"amp":1.0},{"name":"束腰","text":"床面边框和腿足之间收进去的一圈窄板，叫束腰。它让床面看起来像托在一个座子上，也是抱肩榫所在的位置。","at":[0.0,1.19,-0.4],"parts":[14,287,93,231]},{"name":"攒接围子","text":"围子的图案不是从整板上锯出来的，而是用许多短料一段段接成，每个交点都是一处榫卯。这样用料省，图案也不容易断。","at":[0.8,1.44,-0.2],"parts":[2,3,11,12,36,39,40,41,44,48,49,52,63,68,75,85,97,103,106,108,109,121,129,132,133,140,152,154,161,169,170,174,175,177,180,183,184,186,187,194,198,199,202,207,221,225,226,228,230,236,240,243,244,245,250,257,259,264,266,267,270,272,273,280,282,283,289,291,293],"amp":0.9},{"name":"腿足","text":"弯曲的腿足上端与束腰、床面边框相接，是整张床受力最集中的地方。拆开可以看到腿顶留出的榫头。","at":[0.78,1.1,-0.4],"parts":[17,287,93,249,33]}],"yuandeng":[{"name":"十字搭接","text":"凳脚之间的两根枨子在正中相交，各在交点处让去一半，互相搭住，上下两面都是平的。","at":[0.0,0.86,0.0],"parts":[0,10]},{"name":"木销","text":"枨子端头插进腿里之后，再从侧面打进一枚小木销，把它别住，枨子就拔不出来。","at":[0.33,0.78,0.16],"parts":[5,0,9]},{"name":"腿与凳面","text":"四条腿的上端向内收，一起撑住圆形的凳面。","at":[0.26,1.86,0.12],"parts":[8,9]}],"qiaotouan":[{"name":"夹头榫","text":"腿的上端开一道口，把牙条夹在当中，腿顶再出榫头与案面相接。腿、牙条、案面三者互相牵制，案子不会左右摇晃。","at":[0.52,1.47,0.24],"parts":[5,12,6],"amp":0.8},{"name":"翘头","text":"案面两端向上翘起的部分是另装上去的，与案面边框相接。","at":[0.78,1.64,0.0],"parts":[9,7]},{"name":"挡板","text":"两条腿之间嵌着一块透雕的挡板，下面落在托子上。它不只是装饰，也把前后两条腿连在了一起。","at":[0.56,1.06,0.0],"parts":[4,10,2]},{"name":"案面攒边装板","text":"案面由边框围着面心板拼成，面心板嵌在边框的槽里。","at":[0.0,1.6,-0.19],"parts":[6,13,17,0,1,9],"amp":0.8}],"lianggegui":[{"name":"柜门","text":"柜门是一个攒出来的框，中间装板；门边上下各伸出一段门轴，直接插在柜子的横枨里，不用合页。","at":[-0.24,1.2,-0.24],"parts":[3,9,12,13,20,32,51,61,77]},{"name":"柜帮装板","text":"柜子的侧面是一块薄板，四边嵌在立柱和横枨的槽里。","at":[0.5,1.2,0.0],"parts":[36,65,21]},{"name":"亮格","text":"上层敞开的一格叫亮格，由四根立柱向上延伸，加横枨围成。","at":[0.0,2.0,-0.22],"parts":[0,1,7,16,19,37,45,49,50,54,68,76,81,85,89]}],"jiazichuang":[{"name":"立柱与顶架","text":"四角的立柱向上承托顶架，顶架的横料在柱顶相接。","at":[0.67,2.18,-0.69],"parts":[56,57,59,91,18]},{"name":"床面边框","text":"床面四周的边框把床屉围住，立柱下端落在边框上。","at":[0.67,0.92,0.0],"parts":[7,25,34,82]}],"bogujia":[{"name":"立柱与横枨","text":"四根立柱从底到顶，横枨在上下两端把它们连成一个方框。","at":[0.5,2.46,-0.19],"parts":[34,13,29,36]},{"name":"搁板","text":"搁板架在前后横枨之间，高低错落，分出大小不同的格子。","at":[0.0,2.48,0.0],"parts":[40,13,29]}]};   // joints marked on a piece: which parts make the joint, where the dot sits (in the piece's own coordinates), what to say
+function hotSprite(n) { const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d'); g.fillStyle = '#a3321f'; g.beginPath(); g.arc(48, 48, 40, 0, 7); g.fill(); g.lineWidth = 7; g.strokeStyle = '#fff8ea'; g.stroke();
+  g.fillStyle = '#fff8ea'; g.font = '700 52px "Noto Serif SC","Songti SC",serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(n), 48, 51); const tx = new THREE.CanvasTexture(c); tx.encoding = THREE.sRGBEncoding;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx, depthTest: false, transparent: true })); s.renderOrder = 50; return s; }
+async function buildJM() {
+  const TEXB = {};   // textures that travel as one bundle per pack, keyed by file name
+  const load = async n => { try { Object.assign(TEXB, await fetch(`jm/${n}.tex.json`).then(r => r.ok ? r.json() : {})); } catch (e) {} try { return await Promise.all([fetch(`jm/${n}.json`).then(r => r.json()), fetch(`jm/${n}.b64.txt`).then(r => r.text()).then(s => { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u.buffer; })]); } catch (e) { console.warn('jm', n, e); return null; } };
+  const dk = woodT('#8a7558'), mats = {};
+  const mat = (tex, tint, gain, glow) => { const key = tex + tint + gain; if (mats[key]) return mats[key]; const m = woodT('#ffffff'), c = lin(tint).multiplyScalar(gain); m.color = c; m.emissive = c.clone(); m.emissiveIntensity = glow;
+    if (tex) { const mp = texL.load(TEXB[tex] || 'jm/' + tex); mp.encoding = THREE.sRGBEncoding; mp.anisotropy = 8; m.map = mp; m.emissiveMap = mp; } return mats[key] = m; };
+  const place = (meta, buf) => JM.forEach(it => { const d = meta[it.id]; if (!d) return; const inner = new THREE.Group(), parts = [], box = new THREE.Box3(), M = new THREE.Matrix4(), s = new THREE.Vector3(); let far = 0;
+    d.parts.forEach((p, i) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(buf, p.pos, p.nv * 3), 3));
+      if (p.uv != null) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(buf, p.uv, p.nv * 2), 2)); g.setIndex(new THREE.BufferAttribute(p.i32 ? new Uint32Array(buf, p.idx, p.ni) : new Uint16Array(buf, p.idx, p.ni), 1));
+      if (p.nrm != null) g.setAttribute('normal', new THREE.InterleavedBufferAttribute(new THREE.InterleavedBuffer(new Int8Array(buf, p.nrm, p.nv * 4), 4), 3, 0, true)); else g.computeVertexNormals();
+      const o = new THREE.Mesh(g, mat(p.tex, it.tints[i % it.tints.length], it.gain || 1.5, it.glow || .42)); o.castShadow = o.receiveShadow = true;
+      const q = { o, pa: new THREE.Vector3(), qa: new THREE.Quaternion(), pe: new THREE.Vector3(), qe: new THREE.Quaternion(), d: d.parts.length > 1 ? i / (d.parts.length - 1) : 0 };
+      M.set(...p.me).decompose(q.pe, q.qe, s); M.set(...p.ma).decompose(q.pa, q.qa, s); o.position.copy(q.pa); o.quaternion.copy(q.qa); o.scale.copy(s); inner.add(o); parts.push(q); far = Math.max(far, q.pe.distanceTo(q.pa)); });
+    inner.updateMatrixWorld(true); box.setFromObject(inner); const sz = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3()), k = it.size / (it.by === 'h' ? sz.y : Math.max(sz.x, sz.z));
+    const ds = parts.map(q => q.pe.distanceTo(q.pa)).sort((a, b) => a - b), ref = Math.max(ds[Math.floor(ds.length * .7)] || 0, 1e-6), lim = it.spread * sz.length(), f = Math.min(1, lim * .7 / ref); let low = 0;
+    parts.forEach(q => { q.pe.sub(q.pa).multiplyScalar(f); if (q.pe.length() > lim) q.pe.setLength(lim); if (q.pe.y < 0) q.pe.y *= .15; q.pe.add(q.pa); });    // the taken-apart pose is pulled in to fit the stand, and lifted so nothing sinks into it
+    inner.scale.setScalar(k); inner.position.set(-c.x * k, -box.min.y * k, -c.z * k); const root = new THREE.Group(), [x, z] = it.at, [pw, ph, pd] = it.plinth; root.add(inner); root.position.set(x, .6 + ph, z); root.rotation.y = it.yaw;
+    if (SHOW_EXHIBITS) { const pl = boxM(pw, ph, pd, dk, x, .6 + ph / 2, z), lc = labelCard(it.title, it.tag, .9, .44, { py: it.py }), F = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] }[it.face || 'n'], dist = (F[0] ? pw / 2 : pd / 2) + .48, side = (F[0] ? pd / 2 : pw / 2) - .25, lx = x + F[0] * dist - F[1] * side, lz = z + F[1] * dist + F[0] * side, post = boxM(.05, .9, .05, dk, lx, 1.05, lz - F[1] * .03 - F[0] * 0);
+      lc.position.set(lx, 1.55, lz); lc.rotation.set(-.45, Math.atan2(F[0], F[1]), 0, 'YXZ'); scene.add(pl, lc, post); toonify(pl); }
+    const hot = HOT[it.id] || null, hotSprites = []; if (hot && SHOW_EXHIBITS) hot.forEach((h, i) => { h.set = new Set(h.parts); const sp = hotSprite(i + 1); sp.visible = false; hotSprites.push(sp); sp.position.set(h.at[0], h.at[1], h.at[2]); sp.scale.setScalar(.3 / k); sp.userData.hot = i; inner.add(sp); });
+    addExhibit({ id: 'jm_' + it.id, hall: it.hall, root, parts, hot, hotSprites, hotOn: false, kind: 'jm', title: it.title, p: it.p, list: [`${d.parts.length} 个零件`], note: '模型素材来源：《匠木》。零件结构保持原样，木色与陈列为本馆重做。' }); toonify(root); });
+  for (const n of ['items', 'items2']) { const r = await load(n); if (r) place(r[0], r[1]); }
+}
+function emptySign(ex) {   // take the piece out, stand a sign where it was, facing the way visitors arrive
+  const o = ex.root; if (!o.parent) scene.add(o); o.updateMatrixWorld(true); const bx = new THREE.Box3().setFromObject(o); scene.remove(o); if (bx.isEmpty()) return;
+  const c = bx.getCenter(new THREE.Vector3()), small = /^spec_/.test(ex.id), w = small ? .5 : 1.1, h = small ? .3 : .66, name = (ex.title || '').replace(/（样块）$/, '');
+  const tx = inkCanvas(880, Math.round(880 * h / w), (g, W, H) => { const m = paper(g, W, H); g.setLineDash([14, 10]); g.strokeStyle = 'rgba(163,50,31,.75)'; g.lineWidth = 3; g.strokeRect(m * 2.4, m * 2.4, W - m * 4.8, H - m * 4.8); g.setLineDash([]);
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#a3321f'; g.font = '700 46px "Noto Serif SC","Songti SC",serif'; g.fillText('展 品 待 定', W / 2, H * .3);
+    g.fillStyle = '#2a1d14'; let fs = 76; g.font = `700 ${fs}px "Noto Serif SC","Songti SC",serif`; while (g.measureText(name).width > W - m * 8 && fs > 34) { fs -= 4; g.font = `700 ${fs}px "Noto Serif SC","Songti SC",serif`; } g.fillText(name, W / 2, H * .62); g.textAlign = 'left'; g.textBaseline = 'top'; }); tx.anisotropy = 8;
+  const dk = woodT('#2e221a'), G = new THREE.Group(), card = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tx, color: 0xdcdcdc }));
+  const y0 = bx.min.y, hall = HALLS.slice().sort((a, b) => Math.hypot(a.at[0] - c.x, a.at[2] - c.z) - Math.hypot(b.at[0] - c.x, b.at[2] - c.z))[0];
+  card.position.set(0, small ? h / 2 + .02 : .95, .03); G.add(card, at(boxM(w + .08, h + .08, .04, dk), 0, card.position.y, 0)); if (!small) G.add(at(boxM(.06, .62, .06, dk), 0, .31, 0), at(boxM(.5, .04, .36, dk), 0, .02, 0));
+  G.position.set(c.x, y0, c.z); G.rotation.y = Math.atan2(hall.cam[0][0] - c.x, hall.cam[0][2] - c.z); scene.add(G); }
+function glowExhibits() {   // the pieces that sat too dark in their halls get the same case-lamp glow as the joinery specimens
+  ['tang', 'tangyang', 'reciprocal', 'hanging'].forEach(id => { const ex = EXH.find(e => e.id === id); if (!ex) return; ex.root.traverse(o => { const m = o.material; if (!o.isMesh || !m || Array.isArray(m) || !m.emissive || m.userData.lit) return;
+    m.userData.lit = 1; m.color.multiplyScalar(1.5); m.emissive.copy(m.color); m.emissiveMap = m.map || null; m.emissiveIntensity = .38; m.needsUpdate = true; }); }); }
+function emptySigns() { signsReady = true; EXH_OFF.forEach(emptySign); }
 function buildExhibits() {
   // 1) 平身科斗拱 from the verified exhibit pipeline: lifts apart course by course
   new THREE.GLTFLoader().load('pingshenke.json', g => {
@@ -1553,7 +1697,7 @@ function buildExhibits() {
       const bb = new THREE.Box3().setFromObject(r), sz = bb.getSize(new THREE.Vector3()), k = scaleH / sz.y;
       r.scale.setScalar(k); r.position.set(x - (bb.min.x + sz.x / 2) * k, y0 - bb.min.y * k, z - (bb.min.z + sz.z / 2) * k);
       const parts = []; r.traverse(o => { if (o.userData && o.userData.role === 'dynamic') parts.push({ o, base: o.position.clone(), c: o.userData.course || 1, dou: o.userData.kind === '升斗' }); });
-      const wrap = new THREE.Group(); wrap.add(r); toonify(wrap); return { wrap, parts }; };
+      const wrap = new THREE.Group(); wrap.add(r); toonify(wrap); wrap.traverse(o => { if (o.isMesh && o.material && o.material.emissive && !o.material.userData.lit) { o.material.userData.lit = 1; o.material.color.multiplyScalar(1.9); o.material.emissive.copy(o.material.color); o.material.emissiveMap = o.material.map || null; o.material.emissiveIntensity = .55; o.material.needsUpdate = true; } }); return { wrap, parts }; };
     const a = mk(2.6, -32, -57, 1.6);
     const ped = boxM(2.6, .7, 2.6, woodT('#6a4a34'), -32, 1.25, -57); scene.add(ped);
     addExhibit({ id: 'pingshenke', hall: '展厅四 · 大木作', root: a.wrap, parts: a.parts, spread: .34 * 1.7,
@@ -1577,19 +1721,20 @@ function buildExhibits() {
     add(boxM(.3, 1.0, .3, W, 0, 6.5, 0), 4);
     for (const [x, y] of [[-3.25, 4.95], [3.25, 4.95], [-1.6, 6.25], [1.6, 6.25], [0, 7.25]]) add(cylM(.17, 3.4, L, x, y, 0, 'z'), 5);
     for (let s of [-1, 1]) for (let z = -1.4; z <= 1.41; z += .7) { const r = boxM(4.0, .1, .14, W, s * 1.75, 6.2, z); r.rotation.z = -s * Math.atan2(2.3, 3.4); add(r, 6); }
+    // a finer frame, one full bay with two trusses, modelled in Blender: it takes the place of the block version above once it has loaded
+    new THREE.GLTFLoader().load('liangjia.json', q => { const WW = timber('#8a4f33'), LL = timber('#bd8656'), SS = woodT('#cfc6b4'); layers.splice(0).forEach(o => g.remove(o));
+      [...q.scene.children].forEach(o => { const m = /^L(\d)/.exec(o.name); if (!m) return; o.traverse(s => { if (s.isMesh) { s.material = /^L/.test(s.material.name) ? LL : /^S/.test(s.material.name) ? SS : WW; s.castShadow = s.receiveShadow = true; } });
+        o.userData.layer = +m[1]; o.userData.base = o.position.clone(); g.add(o); layers.push(o); }); }, undefined, () => {});
     g.scale.setScalar(.72); g.rotation.y = .5; g.position.set(-32, .95, -71);
     addExhibit({ id: 'liangjia', hall: '展厅四 · 大木作', root: g, layers, title: '抬梁式梁架（剖面）',
       p: '一榀抬梁式梁架：柱上架五架梁，梁上立瓜柱，再架三架梁和脊瓜柱，檩条压在梁头上，椽子搭在檩上。点一下，各层按搭建顺序分开。',
       list: ['柱', '五架梁 · 金瓜柱', '三架梁 · 脊瓜柱', '檩 · 椽'], note: '结构示意：尺寸与比例为示意，未按某一座建筑测绘。' }); }
-  // 3) 互承木构: sticks that only hold each other up (sculpture), turns slowly
-  { const g = new THREE.Group(), m = woodT('#9a6a44');
-    for (const [n, R, r, h0, h1, rot] of [[10, 2.9, 1.25, .35, 2.0, 0], [8, 1.6, .55, 1.75, 3.2, .3]]) for (let i = 0; i < n; i++) {
-      const a = i / n * Math.PI * 2 + rot, b = a + Math.PI * 2 / n * 1.6;
-      const A = new THREE.Vector3(Math.cos(a) * R, h0, Math.sin(a) * R), B = new THREE.Vector3(Math.cos(b) * r, h1, Math.sin(b) * r), len = A.distanceTo(B) + .5;
-      const s = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, len, 8), m); s.position.copy(A).lerp(B, .5); s.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), B.clone().sub(A).normalize()); s.castShadow = true; g.add(s); }
-    g.position.set(32, .95, -71);
-    addExhibit({ id: 'reciprocal', hall: '展厅五 · 榫卯与艺术', root: g, art: true, on: true, title: '互承木构（雕塑）',
-      p: '十八根短木，每一根都压在下一根上、又被上一根压住，首尾相接围成一圈，不靠任何连接件站了起来。这和运河上木拱廊桥“编木成拱”是同一个道理。点一下让它停转或继续。', list: ['雕塑作品', '互承原理：彼此承托，无连接件'], note: '艺术作品。' }); }
+  // 3) 互承木构: eight logs in a ring, each tip resting in a saddle notch on the next log and carrying the one before it (modelled in Blender so the notches are real cuts)
+  { const g = new THREE.Group(), parts = [], N = 8; g.position.set(32, .95, -71);
+    new THREE.GLTFLoader().load('huchen.json', q => { const WW = timber('#9a6a44'); q.scene.updateMatrixWorld(true); [...q.scene.children].forEach(o => { const m = /^B(\d+)/.exec(o.name); if (!m) return; o.traverse(c => { if (c.isMesh) { c.material = WW; c.castShadow = c.receiveShadow = true; } });
+        const th = +m[1] * Math.PI * 2 / N, grp = new THREE.Group(); grp.add(o); grp.userData = { dir: new THREE.Vector3(Math.sin(th) * .95 + Math.cos(th) * .25, .25, Math.cos(th) * .95 - Math.sin(th) * .25) }; g.add(grp); parts.push(grp); }); }, undefined, () => {});
+    addExhibit({ id: 'reciprocal', hall: '展厅五 · 榫卯与艺术', root: g, parts, kind: 'spec', art: true, title: '互承木构',
+      p: '八根原木围成一圈：每一根的脚落在地上，梢头压在下一根的身上，自己的身上又托着上一根的梢头。没有一根立柱，也没有任何连接件，八根木头互相借力就站住了。运河上木拱廊桥“编木成拱”用的是同一个道理。点一下，八根木头向外分开，可以看到梢头底面那道卡在下一根上的弧形刻口。', list: ['八根原木，首尾相压成环', '搭接处开弧形刻口（鞍口），防止滑脱', '无立柱、无连接件'], note: '结构示意，尺寸非测绘。' }); }
   // 4) 窗棂灯墙: six lattice patterns glowing on the back wall
   { const g = new THREE.Group(); const pats = ['步步锦', '冰裂纹', '龟背锦', '万字', '灯笼框', '回纹'];
     pats.forEach((name, i) => { const m = new THREE.MeshBasicMaterial({ map: latticeTex(name), toneMapped: true }); lightMats.push(m);
@@ -1598,15 +1743,19 @@ function buildExhibits() {
     addExhibit({ id: 'lattice', hall: '展厅五 · 榫卯与艺术', root: g, art: true, title: '窗棂灯墙',
       p: '六种传统窗棂纹样做成灯箱：步步锦、冰裂纹、龟背锦、万字、灯笼框、回纹。窗棂本身就是用短木条以榫卯攒接出来的，纹样越密，节点越多。点一下切换明暗。', list: pats, note: '纹样为示意绘制。' }); }
   // 5) a giant burr lock on the north bank, turning; click and the six sticks slide apart
-  { const g = new THREE.Group(), m = woodT('#9b6b45'), bars = [];
-    const sp = [[0, 1, 0, 'x'], [0, -1, 0, 'x'], [1, 0, 0, 'z'], [-1, 0, 0, 'z'], [0, 0, 1, 'y'], [0, 0, -1, 'y']];
-    sp.forEach(([x, y, z, ax]) => { const s = 1.15; const geo = ax === 'x' ? [8, 2, 2] : ax === 'y' ? [2, 8, 2] : [2, 2, 8];
-      const b = boxM(geo[0] * s * .5, geo[1] * s * .5, geo[2] * s * .5, m, x * s * .5, y * s * .5, z * s * .5);
-      b.userData.base = b.position.clone(); b.userData.dir = new THREE.Vector3(ax === 'x' ? (y > 0 ? 1 : -1) : 0, ax === 'y' ? (z > 0 ? 1 : -1) : 0, ax === 'z' ? (x > 0 ? 1 : -1) : 0); g.add(b); bars.push(b); });
+  { const g = new THREE.Group(), m = woodT('#9b6b45'), bars = [], u = .575;   // u = half a stick's thickness; every stick is 2u x 2u x 8u
+    // six sticks in three crossing pairs. Where two or three sticks would occupy the same cell, the cell goes to one of them and is cut out of the others, so every stick carries real notches and no timber overlaps
+    const ST = [['x', 1, 1], ['x', 1, -1], ['z', 0, 1], ['z', 0, -1], ['y', 2, 1], ['y', 2, -1]];   // [length axis, offset axis (0 x, 1 y, 2 z), side]
+    const inside = (st, c) => { const [ax, oa, sd] = st, la = ax === 'x' ? 0 : ax === 'y' ? 1 : 2, ta = 3 - la - oa; return c[oa] * sd > 0 && Math.abs(c[ta]) < 1; };
+    const owner = c => { let best = null, bs = -1; ST.forEach(st => { if (!inside(st, c)) return; const sc = Math.abs(c[st[1]]); if (sc > bs + 1e-6) { bs = sc; best = st; } }); return best; };
+    ST.forEach(st => { const [ax, oa, sd] = st, la = ax === 'x' ? 0 : ax === 'y' ? 1 : 2, ta = 3 - la - oa, B = batcher(), grp = new THREE.Group(), put = (c, sz) => B.box(m, sz[0] * u, sz[1] * u, sz[2] * u, c[0] * u, c[1] * u, c[2] * u);
+      for (const e of [-1, 1]) { const c = [0, 0, 0], sz = [0, 0, 0]; c[la] = e * 3; c[oa] = sd; sz[la] = 2; sz[oa] = 2; sz[ta] = 2; put(c, sz); }           // the two free ends, full section
+      for (const a of [-1.5, -.5, .5, 1.5]) for (const o of [.5, 1.5]) for (const t of [-.5, .5]) { const c = [0, 0, 0]; c[la] = a; c[oa] = o * sd; c[ta] = t; if (owner(c) === st) put(c, [1, 1, 1]); }   // the crossing: only the cells this stick keeps
+      B.build(grp); const dir = new THREE.Vector3(); dir.setComponent(oa, sd); grp.userData.base = grp.position.clone(); grp.userData.dir = dir; g.add(grp); bars.push(grp); });
     const spin = new THREE.Group(); spin.add(g); spin.position.set(0, 6.2, -131); g.rotation.set(.62, 0, .5);
     const plinth = cylM(2.2, 1.2, woodT('#b9a88a'), 0, .6, -131); scene.add(plinth);
     addExhibit({ id: 'burr', hall: '运河北岸', root: spin, inner: g, bars, art: true, on: false, title: '鲁班锁（雕塑）',
-      p: '运河北岸的巨型鲁班锁，六根木料互相卡住，在空中缓缓转动。点一下，六根木料沿各自的方向滑开；再点一下，重新锁合。', list: ['六柱鲁班锁', '雕塑尺度：单根约 4.6 米'], note: '雕塑作品，木料上的卡口做了简化。' }); }
+      p: '运河北岸的巨型鲁班锁，六根木料两两成对、三向交叉，靠各自身上的缺口互相卡住，在空中缓缓转动。点一下，六根木料向外分开，可以看到每一根中段被切掉的部分；再点一下，重新锁合。', list: ['六柱鲁班锁', '每根中段开有缺口，相互咬合', '雕塑尺度：单根约 4.6 米'], note: '雕塑作品。缺口的形状是示意，不是某一种传世鲁班锁的解法；为了看清缺口，六根木料是同时向外平移的，真实的鲁班锁要按顺序一根根抽出。' }); }
 }
 const lightMats = [];
 function latticeTex(kind) {
@@ -1631,30 +1780,34 @@ function animateExhibits(dt, now) {
   for (const ex of EXH) {
     if (ex.anim) { if (ex.on) ex.T = (ex.T || 0) + dt; ex.anim(0, ex.T || 0); continue; }
     if (ex.id === 'hanging') { if (ex.on) ex.t += dt; const k = .5 - .5 * Math.cos(ex.t * .55); ex.parts.forEach(p => { p.o.position.copy(p.base); p.o.position.y += ((p.c - 1) * ex.spread + (p.dou ? .2 : 0)) * k; }); continue; }
-    if (ex.id === 'reciprocal') { if (ex.on) ex.root.rotation.y += dt * .12; continue; }
     if (ex.id === 'lattice') { const tgt = ex.on ? .25 : 1; lightMats.forEach(m => { const v = THREE.MathUtils.lerp(m.color.r, tgt * (time === 'day' ? 1 : 1.6), Math.min(1, dt * 4)); m.color.setRGB(v, v, v); }); continue; }
-    const goal = ex.on ? 1 : 0; ex.t += Math.max(-dt * 1.2, Math.min(dt * 1.2, goal - ex.t)); const k = sm(Math.max(0, Math.min(1, ex.t)));
+    const goal = ex.on ? 1 : 0, rate = ex.kind === 'jm' ? .4 : 1.2; ex.t += Math.max(-dt * rate, Math.min(dt * rate, goal - ex.t)); const k = sm(Math.max(0, Math.min(1, ex.t)));
     if (ex.kind === 'spec') { ex.parts.forEach(g => g.position.copy(g.userData.dir).multiplyScalar(k)); continue; }
+    if (ex.kind === 'jm') { const H = ex.hot && ex.focus != null ? ex.hot[ex.focus] : null;   // a marked joint pulls only its own parts apart, and not as far; otherwise the whole piece comes apart in turn
+      ex.parts.forEach((q, i) => { const A = H ? (H.amp || .55) : .55, tgt = H ? (H.set.has(i) ? A : 0) : sm(Math.max(0, Math.min(1, ex.t * 1.5 - q.d * .5))); q.k = (q.k || 0) + Math.max(-dt * .9, Math.min(dt * .9, tgt - (q.k || 0))); const kk = H ? sm(Math.min(1, q.k / A)) * A : q.k;
+        q.o.position.lerpVectors(q.pa, q.pe, H ? kk : q.k); q.o.quaternion.copy(q.qa).slerp(q.qe, H ? kk : q.k); }); continue; }
     if (ex.kind === 'ming') { ex.parts.forEach(g => { g.position.copy(g.userData.dir).multiplyScalar(k); if (g.userData.label) g.userData.label.material.opacity = Math.max(0, k * 1.4 - .4); }); continue; }
     if (ex.id === 'pingshenke') ex.parts.forEach(p => { p.o.position.copy(p.base); p.o.position.y += ((p.c - 1) * ex.spread + (p.dou ? .2 : 0)) * k; });
     else if (ex.layers) ex.layers.forEach(o => { o.position.copy(o.userData.base); o.position.y += o.userData.layer * .55 * k; });
-    else if (ex.id === 'burr') { ex.root.rotation.y += dt * .08; ex.bars.forEach(b => { b.position.copy(b.userData.base).addScaledVector(b.userData.dir, 3.2 * k); }); }
+    else if (ex.id === 'burr') { ex.root.rotation.y += dt * .08; ex.bars.forEach(b => { b.position.copy(b.userData.base).addScaledVector(b.userData.dir, 2.4 * k); }); }
   }
 }
 function showExhibit(ex) {
-  const state = ex.art ? '' : ex.on ? '（已拆开，再点一下合上）' : '（点一下拆开）';
-  card('展品 · ' + ex.hall, ex.title + state, ex.p, ex.list, ex.note); setCard(true);
+  const state = ex.art ? '' : ex.hotOn ? '（点器物上的编号，看那一处榫卯）' : ex.on ? '（已拆开，再点一下合上）' : '（点一下拆开）';
+  card('展品 · ' + ex.hall, ex.title + state, ex.p, ex.list, ex.note); hotBtn(ex); setCard(true);
 }
 const pickRay = new THREE.Raycaster(), pickV = new THREE.Vector2(); let pickDown = null;
 function exhibitAt(e) {
   const r = canvas.getBoundingClientRect(); pickV.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   pickRay.setFromCamera(pickV, camera); pickRay.far = 90;
-  const hits = pickRay.intersectObjects(EXH.map(x => x.root), true); if (!hits.length) return null;
-  return EXH.find(x => { let p = hits[0].object; while (p) { if (p === x.root) return true; p = p.parent; } return false; }) || null;
+  const hits = pickRay.intersectObjects(EXH.map(x => x.root), true); const vis = hits.filter(h => h.object.visible); exhibitAt.hit = vis.length ? (vis.find(h => h.object.userData.hot != null) || vis[0]).object : null; if (!vis.length) return null;
+  return EXH.find(x => { let p = exhibitAt.hit; while (p) { if (p === x.root) return true; p = p.parent; } return false; }) || null;
 }
 canvas.addEventListener('pointerdown', e => { pickDown = { x: e.clientX, y: e.clientY, t: performance.now() }; });
-canvas.addEventListener('pointerup', e => { if (!pickDown) return; const d = Math.hypot(e.clientX - pickDown.x, e.clientY - pickDown.y), dtm = performance.now() - pickDown.t; pickDown = null;
-  if (d > 6 || dtm > 600) return; const ex = exhibitAt(e); if (!ex) return; ex.on = !ex.on; showExhibit(ex); });
+canvas.addEventListener('pointerup', e => { if (!pickDown || ED.on) { pickDown = null; return; } const d = Math.hypot(e.clientX - pickDown.x, e.clientY - pickDown.y), dtm = performance.now() - pickDown.t; pickDown = null;
+  if (d > 6 || dtm > 600) return; const ex = exhibitAt(e); if (!ex) return; const hi = exhibitAt.hit ? exhibitAt.hit.userData.hot : null;
+  if (ex.hot && hi != null) { ex.on = false; ex.t = 0; ex.focus = ex.focus === hi ? null : hi; const H = ex.hot[hi]; if (ex.focus != null) { card('榫卯 · ' + ex.title, H.name, H.text, [], '再点一下圆点合上。'); hotBtn(ex); setCard(true); } else showExhibit(ex); return; }
+  ex.focus = null; if (!ex.hotOn) ex.on = !ex.on; showExhibit(ex); });
 let hoverT = 0; canvas.addEventListener('pointermove', e => { if (e.buttons || performance.now() - hoverT < 120) return; hoverT = performance.now(); canvas.style.cursor = exhibitAt(e) ? 'pointer' : ''; });
 
 /* ---------- 布展: dark halls, pooled spotlights with visible beams, silk screens, hanging scrolls, a folding screen, floating installations ---------- */
@@ -2013,6 +2166,63 @@ function foliageMesh(tex, n, geo) {
   m.userData.flat = new THREE.MeshBasicMaterial({ map: tex, alphaTest: .45, side: THREE.DoubleSide, color: new THREE.Color(.5, .5, 0), fog: false }); m.userData.lit = mat;   // blue 0 marks 'leaf' for the ink pass: no line work inside foliage
   scene.add(m); FOLIAGE.push(m); return m;
 }
+function buildSurround() {   // outside the walls: an approach road with a 牌坊, the river running on past the canal, woods and meadow so the compound does not sit on bare sand
+  let sd = 9191; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647, V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const onSite = (x, z) => cast(x, 6, z, 0, -1, 0, 40) < 40;
+  let zs = 72; while (zs < 190 && onSite(0, zs + 2)) zs += 2; if (zs < 76) zs = 100;
+  const toon = c => stylize(new THREE.MeshToonMaterial({ color: lin(c), gradientMap: RAMP })), B = batcher();
+  // ---- river: bed, water and stone banks beyond the modelled canal
+  const ribbon = (x0, x1, y, grow) => { const P = [], I = []; let n = 0; for (let x = x0; ; x += 6) { const xx = Math.min(x, x1), z = riverZ(xx), w = riverW(xx) + grow; P.push(xx, y, z - w, xx, y, z + w); if (n) { const a = (n - 1) * 2; I.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } n++; if (xx >= x1) break; }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(I); g.computeVertexNormals(); return g; };
+  const bedM = toon('#33443c'), bankM = toon('#a9a294');
+  for (const [x0, x1] of [[54, 440], [-440, -54]]) {
+    const bed = new THREE.Mesh(ribbon(x0, x1, -1.5, .4), bedM); bed.receiveShadow = true; scene.add(bed);
+    const wm = new THREE.MeshStandardMaterial({ color: lin('#1d4a44') }); rippleWater(wm); waterMats.push(wm);
+    const w = new THREE.Mesh(ribbon(x0, x1, -.45, .1), wm); w.renderOrder = 1; w.receiveShadow = true; w.userData.water = true; scene.add(w);
+    for (let x = x0; x < x1; x += 6) for (const e of [-1, 1]) { const xa = x, xb = Math.min(x + 6, x1); B.seg(bankM, V(xa, -.55, riverZ(xa) + e * (riverW(xa) + .3)), V(xb, -.55, riverZ(xb) + e * (riverW(xb) + .3)), .7, 1.5); } }
+  // ---- 神道: a paved road running south from the forecourt, a 牌坊 across it
+  const zE = 234, paveA = toon('#b9b2a4'), paveB = toon('#a8a193'), kerbM = toon('#8f8a80');
+  for (let z = zs, k = 0; z < zE; z += 4, k++) B.box(k % 2 ? paveA : paveB, 9, .1, 4, 0, -.01, z + 2);
+  for (const e of [-1, 1]) B.box(kerbM, .35, .22, zE - zs, e * 4.68, .05, (zs + zE) / 2);
+  { const z = zs + 62, red = toon('#8f3a2c'), qing = toon('#2f6f6a'), tile = toon('#4a4f55'), stone = toon('#c2bbad'), gold = toon('#c9a24a'), XS = [-7.4, -2.9, 2.9, 7.4], HS = [6.6, 8.6, 8.6, 6.6];
+    XS.forEach((x, i) => { B.box(stone, 1.1, 1.3, 1.5, x, .65, z); B.box(stone, .8, .5, 2.6, x, .25, z); B.box(red, .56, HS[i], .56, x, HS[i] / 2, z); });
+    const bay = (xa, xb, h, top) => { const w = xb - xa, cx = (xa + xb) / 2; B.box(qing, w - .56, .55, .36, cx, h, z); B.box(red, w - .56, .5, .12, cx, h + .62, z); B.box(qing, w + .5, .4, .4, cx, h + 1.12, z);
+      B.box(tile, w + 2.6, .16, 2.9, cx, top, z); B.box(tile, w + 1.7, .2, 1.9, cx, top + .22, z); B.box(tile, w + 1.0, .22, 1.0, cx, top + .44, z); B.box(tile, w + 1.3, .32, .3, cx, top + .7, z);
+      for (const e of [-1, 1]) B.box(tile, .3, .5, .3, cx + e * (w / 2 + .5), top + .86, z); };
+    bay(-7.4, -2.9, 5.0, 6.7); bay(2.9, 7.4, 5.0, 6.7); bay(-2.9, 2.9, 6.9, 8.7); B.box(gold, 2.6, .9, .14, 0, 7.55, z + .08); B.box(gold, 2.6, .9, .14, 0, 7.55, z - .08); }
+  B.build(scene);
+  // ---- woods: low instanced trees (a gold round-headed kind and a dark conifer), thick near the walls and thinning into the haze
+  const merge = parts => { const P = [], N = []; parts.forEach(([g, sx, sy, sz, y]) => { const q = g.toNonIndexed().attributes.position; for (let i = 0; i < q.count; i++) { const x = q.getX(i), yy = q.getY(i), z = q.getZ(i); P.push(x * sx, yy * sy + y, z * sz); const n = V(x / sx, yy / sy, z / sz).normalize(); N.push(n.x, n.y, n.z); } });
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); return g; };
+  const ico = new THREE.IcosahedronGeometry(1, 1), cone = new THREE.ConeGeometry(1, 1, 9);
+  const roundG = merge([[ico, .25, .2, .25, .66], [ico, .19, .16, .2, .8], [ico, .2, .15, .19, .54]]), pineG = merge([[cone, .2, .34, .2, .52], [cone, .15, .3, .15, .72], [cone, .09, .26, .09, .9]]);
+  const trunkG = new THREE.CylinderGeometry(.018, .034, .6, 7); trunkG.translate(0, .3, 0);
+  const pts = [], keep = (x, z) => { if (Math.abs(x) < 9 && z > zs - 4) return false; if (Math.hypot(x, z + 20) > 238) return false; if (Math.abs(z - riverZ(x)) < riverW(x) + 5) return false; if (Math.hypot(x, z + 131) < 26) return false;
+    for (const [dx, dz] of [[0, 0], [5, 0], [-5, 0], [0, 5], [0, -5]]) if (onSite(x + dx, z + dz)) return false; return true; };
+  for (let k = 0; k < 9000 && pts.length < 230; k++) { const x = (rnd() * 2 - 1) * 240, z = -20 + (rnd() * 2 - 1) * 240, d = Math.max(Math.abs(x) - 62, Math.abs(z + 14) - 112, 0), grove = .5 + .5 * Math.sin(x * .031 + 1.3) * Math.sin(z * .027 + x * .011);
+    if (rnd() > (d < 26 ? .8 : .1 + .75 * grove * grove) * Math.exp(-d / 110)) continue; if (pts.some(p => Math.hypot(p[0] - x, p[1] - z) < 7.5) || !keep(x, z)) continue; pts.push([x, z, grove]); }
+  for (let z = zs + 10; z < zE - 6; z += 13) for (const e of [-1, 1]) if (Math.abs(z - zs - 62) > 7) pts.push([e * 10.5, z, 2]);   // an avenue of trees along the road
+  const mk = (g, n, c) => { const m = new THREE.InstancedMesh(g, toon(c), n); m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; scene.add(m); return m; };
+  const rounds = pts.filter(p => p[2] === 2 || p[2] > .42), pines = pts.filter(p => !(p[2] === 2 || p[2] > .42));
+  const rM = mk(roundG, rounds.length, '#a07a22'), pM = mk(pineG, pines.length, '#24382c'), tM = mk(trunkG, pts.length, '#4a3d34'), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e3 = new THREE.Euler(), col = new THREE.Color(), sc = new THREE.Vector3(); let ti = 0;
+  const NG = 11, NP = 9, gk = foliageMesh(leafTex1('ginkgo'), rounds.length * NG, clusterGeo('ginkgo')), pn = foliageMesh(leafTex1('pine'), pines.length * NP, clusterGeo('pine')); let gi = 0, pi = 0;
+  const card = (mesh, i, c, n, sx, sy, roll, sz2) => { const zx = V(0, 1, 0).cross(n); if (zx.lengthSq() < .01) zx.set(Math.cos(roll), 0, Math.sin(roll)); zx.normalize(); const zy = new THREE.Vector3().crossVectors(n, zx);
+    m4.makeBasis(zx, zy, n); q.setFromRotationMatrix(m4); if (Math.abs(n.y) < .9) q.multiply(new THREE.Quaternion().setFromAxisAngle(V(0, 0, 1), (roll % 1 - .5) * .7)); m4.compose(c, q, sc.set(sx, sy, sz2 || (sx + sy) / 2)); mesh.setMatrixAt(i, m4); };
+  const base = (mesh, i, x, z, H, w) => { q.setFromEuler(e3.set(0, rnd() * 6.28, 0)); m4.compose(V(x, -.06, z), q, sc.set(w, H, w)); mesh.setMatrixAt(i, m4); tM.setMatrixAt(ti++, m4); };
+  rounds.forEach(([x, z], i) => { const H = 9.5 + rnd() * 3.5, w = H * (.95 + rnd() * .25), R = .27 * w, ph = rnd() * 6.28; base(rM, i, x, z, H, w);
+    for (let k = 0; k < NG; k++) { const yy = -.3 + 1.3 * (k + .5) / NG, rr = Math.sqrt(Math.max(.05, 1 - yy * yy)), a = ph + k * 2.4, n = V(Math.cos(a) * rr, yy * .9 + .15, Math.sin(a) * rr).normalize(), sz = 3.3 + rnd() * 1.2;
+      card(gk, gi, V(x + n.x * R * .9, .68 * H + n.y * R * .75, z + n.z * R * .9), n, sz, sz, rnd() * 6.28); const green = rnd() < .2 ? .03 + rnd() * .03 : 0; col.setHSL(.106 + rnd() * .028 + green, .72 - green * 3, .29 + .1 * Math.max(0, yy) + rnd() * .07); gk.setColorAt(gi++, col); } });
+  pines.forEach(([x, z], i) => { const H = 10 + rnd() * 4, w = H * (.95 + rnd() * .2), ph = rnd() * 6.28; base(pM, i, x, z, H, w);
+    [[.5, .19, 3, 2.9], [.69, .14, 3, 2.3], [.86, .08, 2, 1.7], [.99, 0, 1, 1.3]].forEach(([ty, tr, cnt, rr], t) => { for (let k = 0; k < cnt; k++) { const a = ph + t * 1.1 + k * 6.28 / cnt, r2 = rr * w / 11;
+      card(pn, pi, V(x + Math.cos(a) * tr * w, ty * H, z + Math.sin(a) * tr * w), V(Math.cos(a) * .35, 1, Math.sin(a) * .35).normalize(), r2, r2, rnd() * 6.28, r2 * .8); col.setHSL(.36 + rnd() * .04, .5, .19 + rnd() * .08); pn.setColorAt(pi++, col); } }); });
+  gk.count = gi; pn.count = pi; [rM, pM, tM, gk, pn].forEach(m => { m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; });
+  // ---- meadow: soft-edged patches of turf under the woods
+  const pt = inkCanvas(128, 128, (g, W) => { g.clearRect(0, 0, W, W); const gr = g.createRadialGradient(64, 64, 8, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.6, 'rgba(255,255,255,.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, W, W); });
+  const pm = new THREE.MeshBasicMaterial({ map: pt, transparent: true, depthWrite: false, opacity: .5, color: lin('#8d9462'), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const pG = new THREE.CircleGeometry(1, 28); pG.rotateX(-Math.PI / 2); const N = Math.min(120, pts.length), pmM = new THREE.InstancedMesh(pG, pm, N); pmM.frustumCulled = false; pmM.renderOrder = 0; let pc = 0;
+  for (let i = 0; i < pts.length && pc < N; i += Math.max(1, Math.floor(pts.length / N))) { const [x, z, gv] = pts[i]; if (gv === 2) continue; const r = Math.min(18 + rnd() * 20, Math.abs(z - riverZ(x)) - riverW(x) - 1); if (r < 8) continue; m4.compose(V(x, -.05 + pc * .0002, z), q.identity(), V(r, 1, r)); pmM.setMatrixAt(pc++, m4); }
+  pmM.count = pc; pmM.instanceMatrix.needsUpdate = true; scene.add(pmM);
+}
 function buildNature() {
   let sd = 4242; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647, m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), s = new THREE.Vector3(), col = new THREE.Color();
   const GK = [[-14, -60, 1], [14, -60, 1], [-17, -36, 1], [17, -36, 1], [-24, 41, .9], [24, 41, .9], [-50, 12, .9], [50, 12, .9], [-28, -84, 1.2], [28, -84, 1.2], [-40, -78, 1.2], [40, -78, 1.2], [-62, -40, 1.2], [62, -40, 1.2], [-62, 10, 1.2], [62, 10, 1.2],
@@ -2142,11 +2352,11 @@ function buildGate() {
     add(rbox(2 * W2 + .5, .24, .3, RED, 0, F + .12, z, .04));                                                         // 下槛 (门槛)
     add(rbox(2 * W2 + .2, .26, .28, RED, 0, yM + .13, z));                                                            // 上槛, carrying the 门簪
     if (!full) return;
-    [-1.5, -.5, .5, 1.5].forEach((x, i) => { const hz = new THREE.Mesh(new THREE.CylinderGeometry(.135, .15, .3, 6), RED); hz.rotation.x = Math.PI / 2; hz.rotation.z = Math.PI / 6; hz.position.set(x, yM + .13, z + sg * .28); hz.castShadow = true; add(hz);      // 门簪
+    [-1.5, -.5, .5, 1.5].forEach((x, i) => { const hz = new THREE.Mesh(new THREE.CylinderGeometry(.135, .15, .3, 6), RED); hz.rotation.x = Math.PI / 2; hz.position.set(x, yM + .13, z + sg * .28);   /* the prism turns about its own axis only: a second Euler turn used to tip it over so a corner came through the painted face */ hz.castShadow = true; add(hz);      // 门簪
       const fc = new THREE.Mesh(new THREE.CircleGeometry(.12, 6), stylize(new THREE.MeshToonMaterial({ map: flowerTex([4, 5, 6, 8][i], i % 2 ? '#2f4f74' : '#2c7a62', '#d9b24a'), gradientMap: RAMP }))); fc.rotation.z = Math.PI / 6; fc.position.set(x, yM + .13, z + sg * .432); if (sg < 0) fc.rotation.y = Math.PI; add(fc);
       const rim = new THREE.Mesh(new THREE.TorusGeometry(.128, .012, 6, 6), GOLD); rim.rotation.z = Math.PI / 6; rim.position.copy(fc.position); add(rim); });
     const bt = inkCanvas(768, 256, (g, W, H) => { g.fillStyle = '#16284a'; g.fillRect(0, 0, W, H); g.strokeStyle = '#d8b24e'; g.lineWidth = 12; g.strokeRect(10, 10, W - 20, H - 20); g.lineWidth = 3; g.strokeRect(30, 30, W - 60, H - 60);
-      g.fillStyle = '#e6c56a'; g.font = '700 150px "Noto Serif SC","Songti SC",serif'; g.textAlign = 'center'; g.textBaseline = 'middle';  });
+      g.fillStyle = '#e6c56a'; g.font = '700 124px "Noto Serif SC","Songti SC",serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('木构博物馆', W / 2, H / 2 + 8); });
     const bian = new THREE.Mesh(new THREE.PlaneGeometry(1.86, .62), new THREE.MeshStandardMaterial({ map: bt, roughness: .5 })); const bg = new THREE.Group(); bg.position.set(0, 4.8, z + sg * .52); bg.rotation.x = .2; add(bg); bg.add(bian); bian.position.z = .045; bg.add(rbox(2.0, .76, .08, DK, 0, 0, 0, .02)); for (const e of [-1, 1]) bg.add(boxM(.03, .5, .03, GOLD, e * .7, .5, -.08));   // 匾, hung under the eave and tipped forward
   };
   frame(70, 1, true); frame(65.5, -1, false);
@@ -2263,21 +2473,24 @@ function pingtouan() {   // 夹头榫平头案 (recessed-leg table), metres, lon
   P([], [0, 0, 0], 3, [.7, .8, .26]);   // 夹头榫 marker sits where leg, apron and spandrel meet
   return { root, parts };
 }
-function wallTex(title, sub, items, note) { return inkCanvas(2048, 960, (g, W, H) => {
-  paper(g, W, H);
-  g.fillStyle = '#2a1d14'; g.font = '700 96px "Noto Serif SC","Songti SC",serif'; g.textBaseline = 'top'; g.fillText(title, 96, 80);
-  g.fillStyle = '#7a5a40'; g.font = '400 40px "Noto Sans SC","PingFang SC",sans-serif'; g.fillText(sub, 100, 200);
-  sealAt(g, 100, 280, 80, '明式');
-  items.forEach(([part, joint, line, glyph], i) => {
-    const col = i % 2, row = Math.floor(i / 2), x = 520 + col * 740, y = 90 + row * 196;
-    g.fillStyle = 'rgba(172,40,28,.92)'; g.beginPath(); g.arc(x + 30, y + 40, 28, 0, 7); g.fill(); g.fillStyle = '#fff4e0'; g.font = '700 34px "Noto Serif SC",serif'; g.textAlign = 'center'; g.fillText(String(i + 1), x + 30, y + 23); g.textAlign = 'left';
-    drawJoint(g, glyph, x + 130, y + 80, SPEC[glyph] ? 190 : 270, .55);
-    g.fillStyle = '#2a1d14'; g.font = '600 40px "Noto Serif SC",serif'; g.fillText(part, x + 210, y + 14);
-    g.fillStyle = '#a3321f'; g.font = '700 34px "Noto Serif SC",serif'; g.fillText(joint, x + 210, y + 66);
-    g.fillStyle = '#4a3828'; g.font = '400 25px "Noto Sans SC",sans-serif'; const words = [...line]; let ln = '', yy = y + 112;
-    for (const ch of words) { if (g.measureText(ln + ch).width > 500) { g.fillText(ln, x + 210, yy); ln = ''; yy += 32; } ln += ch; } g.fillText(ln, x + 210, yy);
-  });
-  g.fillStyle = '#8a7058'; g.font = '400 24px "Noto Sans SC",sans-serif'; g.fillText(note, 100, H - 92);
+function wrapLines(g, text, maxW) { const out = []; let ln = ''; for (const ch of text) { if (ln && g.measureText(ln + ch).width > maxW) { out.push(ln); ln = ''; } ln += ch; } if (ln) out.push(ln); return out; }
+function wallTex(title, sub, items, note) { return inkCanvas(2048, 960, (g, W, H) => {   // title column on the left, numbered items flowing in two columns; every block is measured first, and the type steps down until it all fits
+  paper(g, W, H); g.textBaseline = 'top'; const SERIF = '"Noto Serif SC","Songti SC",serif', SANS = '"Noto Sans SC","PingFang SC",sans-serif', TW = 400;
+  let ts = 96; g.font = `700 ${ts}px ${SERIF}`; while (g.measureText(title).width > TW && ts > 50) { ts -= 4; g.font = `700 ${ts}px ${SERIF}`; }
+  g.fillStyle = '#2a1d14'; g.fillText(title, 96, 88); g.fillStyle = '#7a5a40'; g.font = `400 36px ${SANS}`; let ys = 88 + ts + 30; wrapLines(g, sub, TW).forEach(l => { g.fillText(l, 100, ys); ys += 50; });
+  sealAt(g, 100, ys + 28, 80, '明式');
+  g.strokeStyle = 'rgba(107,74,46,.4)'; g.lineWidth = 2; g.beginPath(); g.moveTo(548, 92); g.lineTo(548, H - 150); g.stroke();
+  const X0 = 600, GAP = 70, colW = (W - 96 - X0 - GAP) / 2, rows = Math.ceil(items.length / 2), availH = H - 92 - 160; let k = 1, L, rh;
+  for (;;) { g.font = `400 ${Math.round(26 * k)}px ${SANS}`; L = items.map(it => wrapLines(g, it[2], colW - 205 * k)); const hs = L.map(l => 112 * k + l.length * 34 * k); rh = [];
+    for (let r = 0; r < rows; r++) rh.push(Math.max(hs[2 * r], hs[2 * r + 1] || 0) + 30 * k); if (rh.reduce((a, c) => a + c, 0) <= availH || k <= .62) break; k -= .04; }
+  const slack = Math.max(0, Math.min(36, (availH - rh.reduce((a, c) => a + c, 0)) / rows)); let y = 92;
+  for (let r = 0; r < rows; r++) { for (let c = 0; c < 2; c++) { const i = 2 * r + c, it = items[i]; if (!it) continue; const [part, joint, , glyph] = it, x = X0 + c * (colW + GAP);
+      g.fillStyle = 'rgba(172,40,28,.92)'; g.beginPath(); g.arc(x + 28 * k, y + 38 * k, 27 * k, 0, 7); g.fill(); g.fillStyle = '#fff4e0'; g.font = `700 ${Math.round(33 * k)}px ${SERIF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(i + 1), x + 28 * k, y + 40 * k); g.textAlign = 'left'; g.textBaseline = 'top';
+      drawJoint(g, glyph, x + 126 * k, y + 80 * k, (SPEC[glyph] ? 190 : 270) * k, .55);
+      g.fillStyle = '#2a1d14'; g.font = `600 ${Math.round(40 * k)}px ${SERIF}`; g.fillText(part, x + 205 * k, y + 12 * k); g.fillStyle = '#a3321f'; g.font = `700 ${Math.round(32 * k)}px ${SERIF}`; g.fillText(joint, x + 205 * k, y + 64 * k);
+      g.fillStyle = '#4a3828'; g.font = `400 ${Math.round(26 * k)}px ${SANS}`; L[i].forEach((l, j) => g.fillText(l, x + 205 * k, y + 112 * k + j * 34 * k)); }
+    y += rh[r] + slack; }
+  g.fillStyle = '#8a7058'; g.font = `400 24px ${SANS}`; wrapLines(g, note, W - 200).slice(0, 2).forEach((l, j) => g.fillText(l, 100, H - 118 + j * 34));
 }); }
 function buildMing() {
   const plinth = woodT('#2e221a');
@@ -2336,14 +2549,19 @@ function gongPts(c, L, y0, H) { const e = Math.min(.5 * H, L * .2) * 1.5, pts = 
   for (let k = 0; k < 5; k++) { const a = (4 - k) / 4 * Math.PI / 2; pts.push([c - L / 2 + e - e * Math.cos(a), y0 + H * .55 * (1 - Math.sin(a))]); } return pts; }
 function douM(a, h, mat, x, y, z) { const g = new THREE.Group();   // 斗: 耳 + 平 over a tapered 欹
   g.add(boxM(a, h * .58, a, mat, 0, h * .71, 0)); const k = new THREE.Mesh(new THREE.CylinderGeometry(a * .7, a * .52, h * .42, 4), mat); k.rotation.y = Math.PI / 4; k.position.y = h * .21; k.castShadow = true; g.add(k); g.position.set(x, y, z); return g; }
-function legendBoard(title, sub, lines, note, w, h, x, y, z, ry) {   // a free-standing caption board on two legs
-  const t = inkCanvas(1536, Math.round(1536 * h / w), (g, W, H) => { paper(g, W, H);
-    g.fillStyle = '#2a1d14'; g.textBaseline = 'top'; g.font = '700 84px "Noto Serif SC","Songti SC",serif'; g.fillText(title, 70, 56); g.fillStyle = '#7a5a40'; g.font = '400 36px "Noto Sans SC",sans-serif'; g.fillText(sub, 74, 164);
-    const cols = lines.length > 6 ? 2 : 1, per = Math.ceil(lines.length / cols); lines.forEach(([n, name, line], i) => { const cx = 74 + Math.floor(i / per) * (W - 120) / cols, cy = 250 + (i % per) * ((H - 360) / per);
-      g.fillStyle = 'rgba(172,40,28,.92)'; g.beginPath(); g.arc(cx + 30, cy + 34, 28, 0, 7); g.fill(); g.fillStyle = '#fff4e0'; g.font = '700 32px "Noto Serif SC",serif'; g.textAlign = 'center'; g.fillText(String(n), cx + 30, cy + 16); g.textAlign = 'left';
-      g.fillStyle = '#2a1d14'; g.font = '700 40px "Noto Serif SC",serif'; g.fillText(name, cx + 76, cy + 4); g.fillStyle = '#4a3828'; g.font = '400 26px "Noto Sans SC",sans-serif';
-      let ln = '', yy = cy + 58; for (const ch of line) { if (g.measureText(ln + ch).width > (W - 120) / cols - 110) { g.fillText(ln, cx + 76, yy); ln = ''; yy += 32; } ln += ch; } g.fillText(ln, cx + 76, yy); });
-    g.fillStyle = '#8a7058'; g.font = '400 24px "Noto Sans SC",sans-serif'; g.fillText(note, 74, H - 70); });
+function legendBoard(title, sub, lines, note, w, h, x, y, z, ry) {   // a free-standing caption board on two legs; rows are measured before they are drawn, so long entries push the next one down instead of running into it
+  const t = inkCanvas(1536, Math.round(1536 * h / w), (g, W, H) => { paper(g, W, H); const SERIF = '"Noto Serif SC","Songti SC",serif', SANS = '"Noto Sans SC",sans-serif'; g.textBaseline = 'top';
+    let ts = 84; g.font = `700 ${ts}px ${SERIF}`; while (g.measureText(title).width > W - 150 && ts > 46) { ts -= 4; g.font = `700 ${ts}px ${SERIF}`; } g.fillStyle = '#2a1d14'; g.fillText(title, 70, 56);
+    g.fillStyle = '#7a5a40'; g.font = `400 34px ${SANS}`; let y0 = 56 + ts + 22; wrapLines(g, sub, W - 150).slice(0, 2).forEach(l => { g.fillText(l, 74, y0); y0 += 46; }); y0 += 26;
+    g.font = `400 24px ${SANS}`; const NL = wrapLines(g, note, W - 150).slice(0, 2), availH = H - y0 - 60 - NL.length * 34;
+    const cols = lines.length > 6 ? 2 : 1, per = Math.ceil(lines.length / cols), colW = (W - 148) / cols; let k = 1, L, hs, colH;
+    for (;;) { g.font = `400 ${Math.round(27 * k)}px ${SANS}`; L = lines.map(l => wrapLines(g, l[2], colW - 76 * k - 40)); hs = L.map(l => 60 * k + l.length * 35 * k + 22 * k);
+      colH = [...Array(cols)].map((_, c) => hs.slice(c * per, (c + 1) * per).reduce((a, v) => a + v, 0)); if (Math.max(...colH) <= availH || k <= .6) break; k -= .04; }
+    for (let c = 0; c < cols; c++) { const n = Math.min(per, lines.length - c * per), slack = Math.max(0, Math.min(34, (availH - colH[c]) / Math.max(1, n))); let cy = y0; const cx = 74 + c * colW;
+      for (let i = c * per; i < c * per + n; i++) { const [num, name] = lines[i];
+        g.fillStyle = 'rgba(172,40,28,.92)'; g.beginPath(); g.arc(cx + 30 * k, cy + 32 * k, 27 * k, 0, 7); g.fill(); g.fillStyle = '#fff4e0'; g.font = `700 ${Math.round(31 * k)}px ${SERIF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(num), cx + 30 * k, cy + 34 * k); g.textAlign = 'left'; g.textBaseline = 'top';
+        g.fillStyle = '#2a1d14'; g.font = `700 ${Math.round(40 * k)}px ${SERIF}`; g.fillText(name, cx + 76 * k, cy + 6 * k); g.fillStyle = '#4a3828'; g.font = `400 ${Math.round(27 * k)}px ${SANS}`; L[i].forEach((l, j) => g.fillText(l, cx + 76 * k, cy + 60 * k + j * 35 * k)); cy += hs[i] + slack; } }
+    g.fillStyle = '#8a7058'; g.font = `400 24px ${SANS}`; NL.forEach((l, j) => g.fillText(l, 112, H - 52 - (NL.length - j) * 34)); });
   const grp = new THREE.Group(), pl = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t })); pl.position.y = h / 2 + .55; grp.add(pl);
   const fr = woodT('#3a2a1e'); grp.add(boxM(w + .1, h + .1, .05, fr, 0, h / 2 + .55, -.03)); for (const s of [-1, 1]) grp.add(boxM(.07, .6, .07, fr, s * (w / 2 - .2), .3, -.03));
   grp.position.set(x, y, z); grp.rotation.y = ry; grp.rotation.order = 'YXZ'; scene.add(grp); return grp;
@@ -2354,34 +2572,67 @@ function tangBracket() {
   const root = new THREE.Group(), parts = [], W = woodT('#8a5236'), WL = woodT('#a36a44'), WD = woodT('#6e3f2a'), ST = woodT('#b9b0a0');
   const P = (objs, dir, num, at) => { const g = partGroup(objs, root); g.userData = { dir: new THREE.Vector3(...dir) }; parts.push(g); if (num) { const s = numSprite(num); s.scale.set(.34, .34, 1); s.position.set(...at); g.add(s); g.userData.label = s; } return g; };
   const H = 5.0, cai = .3, w = .2, pit = .42, y1 = H + .28;                       // 材 30 x 20 cm, 足材 42 cm
-  const Y = k => y1 + (k - 1) * pit, arm = (c, L, k, alongX, at = 0, mat = WL) => { const m = profM(gongPts(c, L, Y(k), cai), w, mat, alongX); if (alongX) m.position.z = at; return m; };
-  const d = (x, k, z, a = .32) => douM(a, .2, WD, x, Y(k) + cai, z);
-  // 1 柱 + 柱础
-  const col = new THREE.Mesh(new THREE.CylinderGeometry(.27, .3, H, 24), W); col.position.y = H / 2; col.castShadow = true;
+  const Y = k => y1 + (k - 1) * pit;
+  // Every member is first only described (where it runs, how high it sits). Once all are known, the crossings are worked out: two members at one level are halved over each other, a member a slanting 昂 runs through is notched or parted for it, and every 斗 gets the slot (斗口) the member above sits in. Only then are the meshes made, so no two timbers share the same space
+  const MB = [], DS = [], SL = [];
+  const member = (axis, pts, bi, u0, u1, y0, h, at, mat, wd = w) => { const g = new THREE.Group(); MB.push({ g, axis, pts, bi, u0, u1, y0, y1: y0 + h, at, mat, wd, top: [], bot: [], gap: [] }); return g; };
+  const rectPts = (a, b, y0, h) => [[a, y0 + h], [b, y0 + h], [b, y0], [a, y0]];
+  const arm = (c, L, k, alongX, at = 0, mat = WL) => member(alongX ? 'x' : 'z', gongPts(c, L, Y(k), cai), 6, c - L / 2, c + L / 2, Y(k), cai, at, mat);
+  const bar = (k, z) => member('x', rectPts(-2.3, 2.3, Y(k), cai), 2, -2.3, 2.3, Y(k), cai, z, WL);
+  const d = (x, k, z, a = .32) => { const g = new THREE.Group(); DS.push({ g, x, y: Y(k) + cai, z, a, h: .2 }); return g; };
+  // 1 柱 + 柱础: the head of the column is slotted (open at the top) for the 阑额
+  const col = new THREE.Mesh(new THREE.CylinderGeometry(.2725, .3, H - .44, 24), W); col.position.y = (H - .44) / 2; col.castShadow = true;
+  const cheeks = [-1, 1].map(e => { const r = .2725, a0 = Math.asin(.105 / r), sh = new THREE.Shape(); sh.absarc(0, 0, r, a0, Math.PI - a0, false); sh.closePath(); const g = new THREE.ExtrudeGeometry(sh, { depth: .44, bevelEnabled: false, curveSegments: 12 }); g.rotateX(-Math.PI / 2); const m = new THREE.Mesh(g, W); m.rotation.y = e > 0 ? 0 : Math.PI; m.position.y = H - .44; m.castShadow = true; return m; });
   const base = new THREE.Mesh(new THREE.CylinderGeometry(.36, .5, .14, 24), ST); base.position.y = .07;
-  P([col, base, boxM(1.2, .06, 1.2, ST, 0, .0, 0)], [0, 0, 0], 1, [.5, 2.6, .5]);
-  // 2 阑额 through the column head
-  P([boxM(4.6, .42, .2, W, 0, H - .22, 0)], [0, 0, 0], 2, [1.9, H - .22, .3]);
+  P([col, ...cheeks, base, boxM(1.2, .06, 1.2, ST, 0, .0, 0)], [0, 0, 0], 1, [.5, 2.6, .5]);
+  // 2 阑额, dropped into the slot in the column head
+  P([boxM(4.6, .42, .2, W, 0, H - .22, 0)], [0, .2, 0], 2, [1.9, H - .22, .3]);
   // 3 栌斗
-  P([douM(.66, .42, WD, 0, H, 0)], [0, .45, 0], 3, [.5, H + .2, .5]);
+  { const g = new THREE.Group(); DS.push({ g, x: 0, y: H, z: 0, a: .66, h: .42 }); P([g], [0, .45, 0], 3, [.5, H + .2, .5]); }
   // 4 第一跳: 泥道栱 along the wall, 华栱 outward (偷心: no cross arm on its tip)
   P([arm(0, 1.9, 1, true), arm(-.05, 1.9, 1, false), d(-.8, 1, 0), d(.8, 1, 0), d(0, 1, .82), d(0, 1, -.86)], [0, .95, 0], 4, [0, Y(1) + .15, 1.05]);
   // 5 第二跳华栱 + first 柱头枋
-  P([arm(0, 3.3, 2, false), boxM(4.6, cai, w, WL, 0, Y(2) + cai / 2, 0), d(0, 2, 1.52), d(0, 2, -1.5), d(-1.1, 2, 0), d(1.1, 2, 0)], [0, 1.45, 0], 5, [0, Y(2) + .15, 1.8]);
+  P([arm(0, 3.3, 2, false), bar(2, 0), d(0, 2, 1.52), d(0, 2, -1.5), d(-1.1, 2, 0), d(1.1, 2, 0)], [0, 1.45, 0], 5, [0, Y(2) + .15, 1.8]);
   // 6 瓜子栱 + 慢栱 + 罗汉枋 on the second step
-  P([arm(0, 1.5, 3, true, 1.52), d(-.62, 3, 1.52), d(.62, 3, 1.52), arm(0, 2.5, 4, true, 1.52), d(-1.05, 4, 1.52), d(1.05, 4, 1.52), d(0, 4, 1.52), boxM(4.6, cai, w, WL, 0, Y(5) + cai / 2, 1.52)], [0, 1.9, .7], 6, [1.3, Y(4), 1.75]);
+  P([arm(0, 1.5, 3, true, 1.52), d(-.62, 3, 1.52), d(.62, 3, 1.52), arm(0, 2.5, 4, true, 1.52), d(-1.05, 4, 1.52), d(1.05, 4, 1.52), bar(5, 1.52)], [0, 1.9, .7], 6, [1.3, Y(4), 1.75]);
   // 7 头昂 / 8 二昂: long slanting levers, tails held down inside, beaks out under the eave
-  const ang = (uref, yb) => { const sl = .34, t = .34, tail = -1.5, tip = uref + .55, bl = u => yb + (uref - u) * sl;   // bottom line passes yb at its bearing 斗
+  const ang = (uref, yb) => { const sl = .34, t = .34, tail = -1.5, tip = uref + .55, bl = u => yb + (uref - u) * sl; SL.push({ z0: tail, z1: tip, bl, t });   // bottom line passes yb at its bearing 斗
     return profM([[tail, bl(tail)], [uref + .1, bl(uref + .1)], [tip, bl(tip) - .04], [tip + .04, bl(tip) + .03], [uref - .2, bl(uref - .2) + t], [tail, bl(tail) + t]], w, W, false); };
   P([ang(2.2, Y(3) - .12), d(0, 3, 2.2)], [0, 2.45, 1.2], 7, [0, Y(3) + .1, 2.75]);
   P([ang(2.9, Y(4) - .12), d(0, 4, 2.9)], [0, 3.0, 1.9], 8, [0, Y(4) + .1, 3.45]);
   // 9 令栱 + 耍头 + 替木 + 橑檐枋
   const lyf = new THREE.Mesh(new THREE.CylinderGeometry(.19, .19, 4.6, 14), W); lyf.rotation.z = Math.PI / 2; lyf.position.set(0, Y(6) + .36, 2.9); lyf.castShadow = true;
-  P([arm(0, 1.7, 5, true, 2.9), d(-.7, 5, 2.9), d(.7, 5, 2.9), d(0, 5, 2.9), profM([[2.2, Y(5)], [3.3, Y(5)], [3.5, Y(5) + .16], [3.3, Y(5) + cai], [2.2, Y(5) + cai]], w, WL, false), boxM(2.3, .12, .22, WL, 0, Y(6) + .06, 2.9), lyf], [0, 3.6, 2.6], 9, [1.1, Y(6) + .3, 3.1]);
+  MB.push({ fixed: true, axis: 'x', u0: -1.15, u1: 1.15, y0: Y(6), y1: Y(6) + .12, at: 2.9, wd: .22, top: [], bot: [], gap: [] });
+  P([arm(0, 1.7, 5, true, 2.9), d(-.7, 5, 2.9), d(.7, 5, 2.9), member('z', [[2.2, Y(5) + cai], [3.3, Y(5) + cai], [3.5, Y(5) + .16], [3.3, Y(5)], [2.2, Y(5)]], 3, 2.2, 3.5, Y(5), cai, 0, WL), boxM(2.3, .12, .22, WL, 0, Y(6) + .06, 2.9), lyf], [0, 3.6, 2.6], 9, [1.1, Y(6) + .3, 3.1]);
   // 10 柱头枋 (upper courses, stacked on 散斗)
-  P([3, 4, 5].flatMap(k => [boxM(4.6, cai, w, WL, 0, Y(k) + cai / 2, 0), d(-1.5, k, 0), d(1.5, k, 0), d(0, k, 0)]).concat([boxM(4.6, cai, w, WL, 0, Y(6) + cai / 2, 0)]), [0, 2.7, -.9], 10, [-1.9, Y(4), -.3]);
+  P([3, 4, 5].flatMap(k => [bar(k, 0), d(-1.5, k, 0), d(1.5, k, 0)]).concat([d(0, 3, 0), bar(6, 0)]), [0, 2.7, -.9], 10, [-1.9, Y(4), -.3]);
   // 11 明栿: the great beam running into the hall, riding on the inner 华栱
-  P([profM([[-3.6, Y(3)], [-.2, Y(3)], [-.2, Y(3) + .56], [-3.6, Y(3) + .56]], .34, W, false), d(0, 2, -1.5, .36)], [0, 1.7, -1.9], 11, [.3, Y(3) + .3, -2.6]);
+  P([member('z', rectPts(-3.6, -.2, Y(3), .56), 2, -3.6, -.2, Y(3), .56, 0, W, .34)], [0, 1.7, -1.9], 11, [.3, Y(3) + .3, -2.6]);
+  // ---- work out the joints, then make the timbers
+  const X = MB.filter(m => m.axis === 'x'), Z = MB.filter(m => m.axis === 'z'), EPS = .012;
+  X.forEach(a => Z.forEach(b => { if (b.at < a.u0 || b.at > a.u1 || a.at < b.u0 || a.at > b.u1) return; const lo = Math.max(a.y0, b.y0), hi = Math.min(a.y1, b.y1); if (hi - lo < .01) return;
+    if (Math.abs(a.y0 - b.y0) < .02) { const m = (lo + hi) / 2; a.top.push({ u: b.at, d: a.y1 - m + .002, w: b.wd + EPS }); b.bot.push({ u: a.at, d: m - b.y0 + .002, w: a.wd + EPS }); }   // same level: halved over each other
+    else if (a.y0 < b.y0) a.top.push({ u: b.at, d: a.y1 - b.y0 + .004, w: b.wd + EPS }); else b.top.push({ u: a.at, d: b.y1 - a.y0 + .004, w: a.wd + EPS }); }));
+  X.forEach(a => SL.forEach(sl => { if (a.at < sl.z0 || a.at > sl.z1 || 0 < a.u0 || 0 > a.u1) return; const s0 = sl.bl(a.at) - .045, s1 = sl.bl(a.at) + sl.t + .045; if (s1 <= a.y0 || s0 >= a.y1) return;
+    if (s0 <= a.y0 + .05 && s1 >= a.y1 - .05) a.gap.push({ u: 0, w: w + EPS }); else if (s1 >= a.y1 - .001) a.top.push({ u: 0, d: a.y1 - s0, w: w + EPS }); else if (s0 <= a.y0 + .001) a.bot.push({ u: 0, d: s1 - a.y0, w: w + EPS }); else a.gap.push({ u: 0, w: w + EPS }); }));
+  const clip = (pts, u, keepLeft) => { const out = [], inside = p => keepLeft ? p[0] <= u : p[0] >= u; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length], ia = inside(a), ib = inside(b); if (ia) out.push(a); if (ia !== ib) { const t = (u - a[0]) / (b[0] - a[0]); out.push([u, a[1] + (b[1] - a[1]) * t]); } } return out; };
+  MB.forEach(m => { if (m.fixed) return; let pts = m.pts.map(p => p.slice()); const cap = m.y1 - m.y0 - .03;
+    const bot = m.bot.slice().sort((p, q2) => q2.u - p.u).flatMap(n => { const dd = Math.min(n.d, cap); return [[n.u + n.w / 2, m.y0], [n.u + n.w / 2, m.y0 + dd], [n.u - n.w / 2, m.y0 + dd], [n.u - n.w / 2, m.y0]]; });
+    const top = m.top.slice().sort((p, q2) => p.u - q2.u).flatMap(n => { const dd = Math.min(n.d, cap); return [[n.u - n.w / 2, m.y1], [n.u - n.w / 2, m.y1 - dd], [n.u + n.w / 2, m.y1 - dd], [n.u + n.w / 2, m.y1]]; });
+    pts.splice(m.bi + 1, 0, ...bot); pts.splice(1, 0, ...top);
+    let polys = [pts]; m.gap.forEach(gp => { polys = polys.flatMap(pp => [clip(pp, gp.u - gp.w / 2, true), clip(pp, gp.u + gp.w / 2, false)]).filter(pp => pp.length > 2); });
+    polys.forEach(pp => { const o = profM(pp, m.wd, m.mat, m.axis === 'x'); if (m.axis === 'x') o.position.z = m.at; else o.position.x = m.at; m.g.add(o); }); });
+  DS.forEach(q => { const top = q.y + q.h, hb = q.h * .58; let sx = 0, sz = 0, wx = 0, wz = 0;
+    X.forEach(m => { if (Math.abs(m.at - q.z) > .06 || q.x < m.u0 - .01 || q.x > m.u1 + .01 || m.y0 >= top - .004 || m.y1 <= top - hb) return; sx = Math.max(sx, top - m.y0); wx = Math.max(wx, m.wd + EPS); });
+    Z.forEach(m => { if (Math.abs(m.at - q.x) > .06 || q.z < m.u0 - .01 || q.z > m.u1 + .01 || m.y0 >= top - .004 || m.y1 <= top - hb) return; sz = Math.max(sz, top - m.y0); wz = Math.max(wz, m.wd + EPS); });
+    if (Math.abs(q.x) < .06) SL.forEach(sl => { if (q.z < sl.z0 || q.z > sl.z1) return; const b = sl.bl(q.z) - .02; if (b >= top - .004 || b + sl.t <= top - hb) return; sz = Math.max(sz, top - b); wz = Math.max(wz, w + EPS); });
+    const sd = Math.min(Math.max(sx, sz), hb - .02), a = q.a, g = q.g; g.position.set(q.x, q.y, q.z);
+    const k = new THREE.Mesh(new THREE.CylinderGeometry(a * .7, a * .52, q.h * .42, 4), WD); k.rotation.y = Math.PI / 4; k.position.y = q.h * .21; k.castShadow = true; g.add(k);
+    if (sd < .01) { g.add(boxM(a, hb, a, WD, 0, q.h * .42 + hb / 2, 0)); return; }
+    g.add(boxM(a, hb - sd, a, WD, 0, q.h * .42 + (hb - sd) / 2, 0)); const ex = sz ? (a - wz) / 2 : a / 2, ez = sx ? (a - wx) / 2 : a / 2, yy = q.h - sd / 2;   // 斗耳 left standing beside the slot(s)
+    if (sx && sz) { if (ex > .012 && ez > .012) for (const e1 of [-1, 1]) for (const e2 of [-1, 1]) g.add(boxM(ex, sd, ez, WD, e1 * (a / 2 - ex / 2), yy, e2 * (a / 2 - ez / 2))); }
+    else if (sx) { if (ez > .012) for (const e of [-1, 1]) g.add(boxM(a, sd, ez, WD, 0, yy, e * (a / 2 - ez / 2))); }
+    else if (ex > .012) for (const e of [-1, 1]) g.add(boxM(ex, sd, a, WD, e * (a / 2 - ex / 2), yy, 0)); });
   // 12 檐椽 + 望板
   const rf = [], sl = Math.atan2(1.45, 4.6); for (let x = -2.1; x <= 2.11; x += .42) { const r = new THREE.Mesh(new THREE.CylinderGeometry(.075, .075, 5.4, 8), WL); r.rotation.x = Math.PI / 2 + sl; r.position.set(x, Y(6) + .95, 2.05); r.castShadow = true; rf.push(r); }
   const wb = boxM(4.7, .04, 5.4, WD, 0, Y(6) + 1.05, 2.05); wb.rotation.x = sl; rf.push(wb);
@@ -2402,24 +2653,38 @@ function towerModel() {
   const corner = (R, k) => new THREE.Vector3(Math.cos(k * Math.PI / 4 + Math.PI / 8) * R, 0, -Math.sin(k * Math.PI / 4 + Math.PI / 8) * R);
   // platform
   level([ring(ST, 1.5, 1.56, T.plat, 0, false), disc(ST, 0, 1.5, T.plat, false)], 0);
-  let y = T.plat, lv = 1;
+  let y = T.plat, lv = 1; const LVS = [];
   for (let i = 0; i < 5; i++) {
     const R = T.R[i], Ri = R * .56, h = T.ming[i], b = batcher(), objs = [];
     cols(b, R, .022, y, h); cols(b, Ri, .026, y, h, 8, 0);                              // 外槽 + 内槽 column rings
     for (let k = 0; k < 8; k++) { b.seg(WL, corner(R, k).setY(y + h - .02), corner(R, k + 1).setY(y + h - .02), .03, .04); b.seg(WL, corner(Ri, k).setY(y + h - .02), corner(Ri, k + 1).setY(y + h - .02), .03, .04);
       b.seg(WL, corner(R, k).setY(y + h - .05), corner(Ri, k).setY(y + h - .05), .028, .05); }                                    // 乳栿 tying the two rings
+    const hb = batcher(), rb = batcher(), old = []; let fr = null;
+    for (let k = 0; k < 8; k++) { const ye = y + h + .06;
+      for (let j = 0; j < 3; j++) { const P = corner(R, k).lerp(corner(R, k + 1), j / 3), n = P.clone().setY(0).normalize(), tg = new THREE.Vector3(-n.z, 0, n.x);   // 斗拱: three tiers stepping out under the eave, one set over every column
+        for (let s = 0; s < 3; s++) { const yy = y + h + .014 + s * .02, A = P.clone().addScaledVector(n, -.01).setY(yy), Q = P.clone().addScaledVector(n, .04 + s * .032).setY(yy), half = .03 + s * .013;
+          b.seg(WL, A, Q, .015, .014); b.seg(WL, Q.clone().addScaledVector(tg, -half), Q.clone().addScaledVector(tg, half), .015, .014); } }
+      for (let j = 0; j <= 10; j++) { const u = j / 10; rb.seg(W, corner(R + .03, k).lerp(corner(R + .03, k + 1), u).setY(y + h + .176), corner(R + .365, k).lerp(corner(R + .365, k + 1), u).setY(ye - .014), .011, .012); }   // 檐椽
+      hb.seg(TI, corner(R + .04, k).setY(y + h + .2), corner(R + .37, k).setY(ye + .012), .028, .03); hb.seg(TI, corner(R + .37, k).setY(ye + .012), corner(R + .44, k).setY(ye + .055), .022, .026);   // 垂脊, turned up at the corner
+      if (i === 0) { for (let j = 0; j <= 10; j++) { const u = j / 10; rb.seg(W, corner(R + .2, k).lerp(corner(R + .2, k + 1), u).setY(y + h * .52 + .092), corner(R + .525, k).lerp(corner(R + .525, k + 1), u).setY(y + h * .52 - .012), .011, .012); }
+        hb.seg(TI, corner(R + .2, k).setY(y + h * .52 + .112), corner(R + .53, k).setY(y + h * .52 + .012), .028, .03); hb.seg(TI, corner(R + .53, k).setY(y + h * .52 + .012), corner(R + .6, k).setY(y + h * .52 + .055), .022, .026); } }
+    const gh = new THREE.Group(); hb.build(gh); const gr = new THREE.Group(); rb.build(gr); objs.push(gh, gr); old.push(gr);
     const g0 = new THREE.Group(); b.build(g0); objs.push(g0, disc(WL, i ? Ri * .96 : 0, R * 1.02, y + .004));
     if (i === 0) objs.push(ring(PL, R * 1.0, R * 1.0, h * .8, y));                       // ground storey: thick wall
     objs.push(ring(GR, R + .1, R + .01, .07, y + h));                                    // bracket zone under the eave
-    objs.push(ring(TI, R + .04, R + .34, .13, y + h + .06));                             // eave
-    if (i === 0) objs.push(ring(TI, R + .2, R + .5, .1, y + h * .52), ring(GR, R + .22, R + .02, .05, y + h * .52 - .04));   // 副阶 eave round the ground storey
-    level(objs, lv++); y += h + .07;
+    { const er = ring(TI, R + .04, R + .34, .13, y + h + .06); objs.push(er); old.push(er, gh); }                             // eave
+    if (i === 0) { fr = ring(TI, R + .2, R + .5, .1, y + h * .52); objs.push(fr); }
+    if (i === 0) objs.push(ring(GR, R + .22, R + .02, .05, y + h * .52 - .04));   // 副阶 eave round the ground storey
+    LVS.push({ g: level(objs, lv++), old, fr }); y += h + .07;
     if (i < 4) {   // 暗层 (平座): short posts, diagonal braces, and the balcony it carries
       const Rn = T.R[i + 1], bb = batcher(), ob = [], ha = T.an; cols(bb, (R + Rn) / 2, .02, y, ha, 8, 2);
       for (let k = 0; k < 8; k++) { const A = corner((R + Rn) / 2, k), B = corner((R + Rn) / 2, k + 1), M = A.clone().lerp(B, .5);
         bb.seg(WL, A.clone().setY(y + .01), M.clone().setY(y + ha - .01), .016, .022); bb.seg(WL, B.clone().setY(y + .01), M.clone().setY(y + ha - .01), .016, .022);          // 斜撑
         const Ai = corner(Ri * .95, k); bb.seg(WL, A.clone().setY(y + .01), Ai.clone().setY(y + ha - .01), .016, .022);
         bb.seg(W, A.clone().setY(y + ha), B.clone().setY(y + ha), .024, .03); bb.seg(W, A.clone().setY(y), B.clone().setY(y), .024, .03); }
+      for (let k = 0; k < 8; k++) { const Rr = Rn + .15, yr = y + ha + .06;   // 平座栏杆: posts, a handrail and a lower rail
+        for (let j = 0; j < 4; j++) { const P = corner(Rr, k).lerp(corner(Rr, k + 1), j / 4); bb.cyl(W, .008, .075, P.x, yr + .0375, P.z); }
+        bb.seg(W, corner(Rr, k).setY(yr + .075), corner(Rr, k + 1).setY(yr + .075), .014, .012); bb.seg(W, corner(Rr, k).setY(yr + .035), corner(Rr, k + 1).setY(yr + .035), .008, .008); }
       const g1 = new THREE.Group(); bb.build(g1); ob.push(g1, ring(GR, Rn + .14, Rn + .02, .05, y + ha - .05), disc(WL, Rn * .5, Rn + .15, y + ha), ring(W, Rn + .15, Rn + .15, .06, y + ha));
       level(ob, lv++); y += ha;
     }
@@ -2427,8 +2692,15 @@ function towerModel() {
   // 攒尖顶 + 塔刹
   const cone = new THREE.Mesh(new THREE.ConeGeometry(T.R[4] + .34, T.roof, 5, 1, true, th0, thL), TI); cone.position.y = y + T.roof / 2 - .04; cone.castShadow = true;
   const sb = batcher(); sb.cyl(GD, .09, .1, 0, y + T.roof, 0); sb.cyl(GD, .012, T.sha, 0, y + T.roof + T.sha / 2, 0); for (let k = 0; k < 6; k++) sb.cyl(GD, .075 - k * .008, .014, 0, y + T.roof + .16 + k * .065, 0);
+  const tb = batcher(); for (let k = 0; k < 8; k++) { tb.seg(TI, new THREE.Vector3(0, y + T.roof - .02, 0), corner(T.R[4] + .36, k).setY(y - .03), .028, .03); tb.seg(TI, corner(T.R[4] + .36, k).setY(y - .03), corner(T.R[4] + .43, k).setY(y + .012), .022, .026); }
+  const tgp = new THREE.Group(); tb.build(tgp);
   const sg = new THREE.Group(); sb.build(sg); const orb = new THREE.Mesh(new THREE.SphereGeometry(.04, 10, 8), GD); orb.position.y = y + T.roof + T.sha;
-  level([cone, sg, orb], lv++);
+  const topG = level([cone, sg, orb, tgp], lv++);
+  // curved, tiled roofs modelled in Blender replace the plain cones once they arrive; until then (or if the file is missing) the cones stay
+  new THREE.GLTFLoader().load('tower_roofs.json', g => { const RD = woodT('#3d4147'); RD.side = THREE.DoubleSide; g.scene.updateMatrixWorld(true);
+    [...g.scene.children].forEach(o => { const m = /^roof_(\d|F|T)$/.exec(o.name); if (!m) return; const L = m[1] === 'T' ? { g: topG, old: [cone, tgp] } : m[1] === 'F' ? LVS[0] : LVS[+m[1]]; if (!L) return;
+      if (m[1] !== 'F') L.old.forEach(x => { if (x.parent) x.parent.remove(x); }); else if (L.fr && L.fr.parent) L.fr.parent.remove(L.fr);
+      o.traverse(q => { if (q.isMesh) { q.material = /ridge/.test(q.material.name) ? RD : /wood/.test(q.material.name) ? W : TI; q.castShadow = true; } }); L.g.add(o); }); }, undefined, () => {});
   return { root, parts, top: y + T.roof + T.sha };
 }
 function towerDrawing() {   // a measured-drawing style sheet of the same tower: elevation on the left of the axis, section on the right
@@ -2458,27 +2730,25 @@ function towerDrawing() {   // a measured-drawing style sheet of the same tower:
 }
 
 /* 序厅: 烫样 — a card model of the whole museum on a table; roofs lift off, as on the 样式雷 models */
-function tangyang() {
-  const root = new THREE.Group(), parts = [], K = 1 / 50, PA = woodT('#e6dcc2'), PB = woodT('#d2c4a2'), RF = woodT('#8e9aa0'), RG = woodT('#c7b06a'), RD = woodT('#b56a55'), GRN = woodT('#9fb08a'), WT = woodT('#9fbfc4');
-  const base = new THREE.Group(), roofs = new THREE.Group(), bb = batcher(), rb = batcher(); root.add(base, roofs);
-  const L = (xs, zs) => [(zs + 2) * K, -xs * K];                                  // site (x east, z south) -> table (X, Z)
-  const hipRoof = (cx, cz, wx, wz, y, h, mat = RF) => { const [X, Z] = L(cx, cz), a = wz * K, b = wx * K; const m = new THREE.Mesh(new THREE.CylinderGeometry(.18, .7071, h, 4, 1), mat); m.rotation.y = Math.PI / 4; const g = new THREE.Group(); g.add(m); g.scale.set(a, 1, b); g.position.set(X, y + h / 2, Z); m.castShadow = true; roofs.add(g); };
-  const bld = (cx, cz, wx, wz, h, rh, ov = 2.4, mat = RD) => { const [X, Z] = L(cx, cz); bb.box(mat, wz * K, h, wx * K, X, .02 + h / 2, Z); bb.box(PA, wz * K * .96, .004, wx * K * .96, X, .024, Z); hipRoof(cx, cz, wx + 2 * ov, wz + 2 * ov, .02 + h, rh); };
-  bb.box(PB, 3.3, .02, 2.1, 0, .01, 0);
-  bb.box(PA, 40 * K, .02, 54 * K, L(0, 6)[0], .03, L(0, 6)[1]);                                    // terrace of the main hall
-  bld(0, 67.75, 14, 4.5, .1, .06); bld(0, 4, 40, 28, .16, .05, 3); bld(0, 4, 30, 18, .36, .12, 3.2, PA);          // 山门, 主殿 lower + upper
-  for (const s of [-1, 1]) { bld(s * 41, 18.25, 14, 27.5, .12, .07); bld(s * 32, -64, 20, 28, .15, .08); }       // 配殿, 展厅四 / 五
-  bld(0, -29, 24, 12, .13, .07);                                                                               // 后殿
-  [[7, .1], [6.2, .07], [5.4, .07], [4.6, .07], [3.8, .07]].reduce((y, [w2, h], i) => { const [X, Z] = L(0, -66); bb.box(RD, 2 * w2 * K, h, 2 * w2 * K, X, y + h / 2, Z); const m = new THREE.Mesh(new THREE.CylinderGeometry(w2 * K * 1.2, (w2 + 2.2) * K * 1.414, .035, 4, 1), RF); m.rotation.y = Math.PI / 4; m.position.set(X, y + h + .017, Z); (i === 4 ? roofs : base).add(m); if (i === 4) { const c = new THREE.Mesh(new THREE.ConeGeometry(.012, .2, 6), RG); c.position.set(X, y + h + .13, Z); roofs.add(c); } return y + h + .03; }, .04);
-  const cor = (a, b2) => { const [X0, Z0] = L(...a), [X1, Z1] = L(...b2); bb.box(PA, Math.abs(X1 - X0) + .06, .05, Math.abs(Z1 - Z0) + .06, (X0 + X1) / 2, .045, (Z0 + Z1) / 2); rb.box(RF, Math.abs(X1 - X0) + .08, .012, Math.abs(Z1 - Z0) + .08, (X0 + X1) / 2, .078, (Z0 + Z1) / 2); };
-  [[[-31, 64], [-7, 64]], [[7, 64], [31, 64]], [[-31, 64], [-31, 10.6]], [[31, 64], [31, 10.6]], [[-41, -2], [-41, -29]], [[41, -2], [41, -29]], [[-41, -29], [-12, -29]], [[12, -29], [41, -29]], [[-32, -30.5], [-32, -50]], [[32, -30.5], [32, -50]]].forEach(([a, b2]) => cor(a, b2));
-  for (const s of [-1, 1]) { const [X, Z] = L(s * 10, 38); bb.box(WT, 16 * K, .006, 12 * K, X, .023, Z); }                                        // pools
-  for (const [a, b2] of [[[-48, 78], [48, 78]], [[-48, 78], [-48, -80]], [[48, 78], [48, -80]]]) { const [X0, Z0] = L(...a), [X1, Z1] = L(...b2); bb.box(PA, Math.abs(X1 - X0) + .012, .05, Math.abs(Z1 - Z0) + .012, (X0 + X1) / 2, .045, (Z0 + Z1) / 2); }
-  bb.build(base); rb.build(roofs);
-  const tag = (txt, xs, zs, y) => { const t = inkCanvas(160, 64, (g) => { g.fillStyle = '#e8c95a'; g.fillRect(0, 0, 160, 64); g.strokeStyle = '#7a5a1e'; g.lineWidth = 3; g.strokeRect(2, 2, 156, 60); g.fillStyle = '#2a1d14'; g.font = '700 34px "Noto Serif SC",serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, 80, 34); });   // 黄签
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(.2, .08), new THREE.MeshBasicMaterial({ map: t, side: THREE.DoubleSide })); const [X, Z] = L(xs, zs); m.position.set(X, y, Z + .0); m.rotation.x = -.5; base.add(m); };
-  [['山门', 0, 77, .2], ['主殿', 17, 4, .3], ['展厅一二', -41, 34, .2], ['工坊尾厅', 41, 34, .2], ['后殿', 14, -29, .22], ['木塔', 9, -66, .3], ['展厅四', -32, -46, .22], ['展厅五', 32, -46, .22]].forEach(a => tag(...a));
-  base.userData = { dir: new THREE.Vector3() }; roofs.userData = { dir: new THREE.Vector3(0, .5, 0) }; parts.push(base, roofs);
+function tangyang() {   // the model on the table is the museum itself at 1 : 82 - the same walls, brackets and tiles as the real thing - with roofs that lift off
+  const root = new THREE.Group(), parts = [], K = 1 / 82, ZC = -13.5, PB = woodT('#d2c4a2'), ED = woodT('#3a2a1e'), RG = woodT('#c9a13e'), TK = woodT('#5a4634'), WT = new THREE.MeshStandardMaterial({ color: lin('#2c6a62'), roughness: .25, metalness: 0 });
+  const base = new THREE.Group(), roofs = new THREE.Group(), bb = batcher(); root.add(base, roofs);
+  const L = (xs, zs) => [(zs - ZC) * K, -xs * K];                                  // site (x east, z south) -> table (X, Z)
+  bb.box(PB, 3.3, .02, 2.1, 0, .01, 0); for (const e of [-1, 1]) { bb.box(ED, 3.34, .034, .02, 0, .017, e * 1.06); bb.box(ED, .02, .034, 2.14, e * 1.66, .017, 0); }   // the board and its rim
+  const mini = (name, into) => { const src = SITE_ROOT && SITE_ROOT.getObjectByName(name); if (!src) return; const c = src.clone(true), kill = []; c.name = 'mini_' + name;
+    c.traverse(o => { if (o !== c && o.name) o.name = 'mini_' + o.name; if (o.isLight) kill.push(o); if (o.isMesh) { o.castShadow = false; o.receiveShadow = true; o.userData.mini = true; if (o.userData.water) { o.userData.water = false; o.material = WT; o.renderOrder = 0; } } });
+    kill.forEach(o => o.parent && o.parent.remove(o)); const h = new THREE.Group(); h.rotation.y = Math.PI / 2; h.scale.setScalar(K); h.position.set(-ZC * K, .0215, 0); h.add(c); into.add(h); };
+  mini('museum_base', base); mini('museum_glass', base); mini('museum_roof', roofs);
+  // paper trees where the ginkgos and pines stand
+  { const TR = [[-14, -60], [14, -60], [-17, -36], [17, -36], [-24, 41], [24, 41], [-50, 12], [50, 12], [-28, -84], [28, -84], [-40, -78], [40, -78], [-16, 88], [16, 88], [-30, 90], [30, 90], [-44, 90], [44, 90], [-12, -76], [12, -76], [-14, 58], [14, 58], [-14, 74], [14, 74]];
+    const cg = new THREE.IcosahedronGeometry(1, 1), crown = new THREE.InstancedMesh(cg, RG, TR.length), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), tb = batcher();
+    TR.forEach(([x, by], i) => { const [X, Z] = L(x, -by), r = .034 + (i % 3) * .004; m4.compose(new THREE.Vector3(X, .0215 + .085, Z), q, new THREE.Vector3(r, r * .9, r)); crown.setMatrixAt(i, m4); tb.cyl(TK, .004, .07, X, .0215 + .035, Z); });
+    crown.instanceMatrix.needsUpdate = true; crown.castShadow = true; base.add(crown); tb.build(base); }
+  const tb2 = batcher(), tag = (txt, xs, zs, y) => { const t = inkCanvas(160, 64, (g) => { g.fillStyle = '#e8c95a'; g.fillRect(0, 0, 160, 64); g.strokeStyle = '#7a5a1e'; g.lineWidth = 3; g.strokeRect(2, 2, 156, 60); g.fillStyle = '#2a1d14'; g.font = '700 34px "Noto Serif SC",serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, 80, 34); });   // 黄签 on a pin
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(.15, .06), new THREE.MeshBasicMaterial({ map: t, side: THREE.DoubleSide })); const [X, Z] = L(xs, zs); m.position.set(X, y, Z); m.rotation.x = -.5; base.add(m); tb2.cyl(TK, .0025, y - .03, X, (y - .03) / 2 + .01, Z + .012); };
+  [['山门', 16, 74, .17], ['主殿', 30, 4, .2], ['展厅一二', -50, 26, .15], ['工坊尾厅', 50, 26, .15], ['后殿', 22, -29, .17], ['木塔', 16, -66, .2], ['展厅四', -46, -60, .15], ['展厅五', 46, -60, .15], ['运河', 30, -106, .1]].forEach(a => tag(...a));
+  bb.build(base); tb2.build(base);
+  base.userData = { dir: new THREE.Vector3() }; roofs.userData = { dir: new THREE.Vector3(0, .45, 0) }; parts.push(base, roofs);
   return { root, parts };
 }
 
@@ -2607,7 +2877,10 @@ function buildStars() {
   const dr = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 4.5), new THREE.MeshBasicMaterial({ map: towerDrawing() })); dr.position.set(-4.2, 4.2, -72.78); scene.add(dr);
   scene.add(boxM(3.2, 4.7, .08, woodT('#3a2a1e'), -4.2, 4.2, -72.84));
   // 展厅四: 抬梁 vs 穿斗
-  const C = chuandou(); C.g.scale.setScalar(.55); C.g.rotation.y = Math.PI / 2; C.g.position.set(-39.2, .9, -64); scene.add(boxM(2.6, .3, 4.6, woodT('#2e221a'), -39.2, .75, -64));
+  const C = chuandou(); C.g.traverse(o => { if (o.isMesh && o.material && o.material.emissive && !o.material.userData.lit) { o.material = o.material.clone(); o.material.userData.lit = 1; o.material.emissive.copy(o.material.color); o.material.emissiveIntensity = .35; } }); C.g.scale.setScalar(.55); C.g.rotation.y = Math.PI / 2; C.g.position.set(-39.2, .9, -64); scene.add(boxM(2.6, .3, 4.6, woodT('#2e221a'), -39.2, .75, -64));
+  new THREE.GLTFLoader().load('chuandou.json', q => { const WW = timber('#8a4f33'), LL = timber('#bd8656'), SS = woodT('#cfc6b4'); C.layers.splice(0).forEach(o => C.g.remove(o));   // the finer frame from Blender: two trusses, every purlin on its own column, ties passing through
+    [...q.scene.children].forEach(o => { const m = /^L(\d)/.exec(o.name); if (!m) return; o.traverse(s => { if (s.isMesh) { s.material = /^L/.test(s.material.name) ? LL : /^S/.test(s.material.name) ? SS : WW; s.castShadow = s.receiveShadow = true; } });
+      o.userData.layer = +m[1]; o.userData.base = o.position.clone(); C.g.add(o); C.layers.push(o); }); }, undefined, () => {});
   addExhibit({ id: 'chuandou', hall: '展厅四 · 大木作', root: C.g, layers: C.layers, kind: 'layers', title: '穿斗式屋架',
     p: '南方民居常见的做法：每根柱子都直接顶到檩条，柱与柱之间用薄薄的穿枋穿过柱身连起来。用料细、省大木，但柱子密。和旁边的抬梁式对照着看：抬梁是梁上叠梁、室内无柱；穿斗是柱柱落地。点一下按搭建顺序分开。',
     list: ['柱直接承檩', '穿枋穿过柱身', '短柱骑在穿枋上'], note: '结构示意，尺寸非测绘。' });
@@ -2616,7 +2889,7 @@ function buildStars() {
   const tb = batcher(), tw = woodT('#4a3222'); tb.box(tw, 3.6, .08, 2.4, 0, 4.94, 12.55); for (const sx of [-1, 1]) for (const sz of [-1, 1]) tb.box(tw, .1, .82, .1, sx * 1.65, 4.49, 12.55 + sz * 1.05); for (const sz of [-1, 1]) tb.box(tw, 3.3, .08, .05, 0, 4.78, 12.55 + sz * 1.05); tb.build(scene);
   addExhibit({ id: 'tangyang', hall: '序厅', root: D.root, parts: D.parts, kind: 'spec', title: '全馆烫样',
     p: '清代皇家建筑开工之前，样式房先用纸板、秫秸和木头做一具可以层层揭开的模型呈给皇帝看，叫「烫样」；主持其事的雷氏一家世称「样式雷」。这里按同样的办法做了本馆的烫样：黄签标着殿名，点一下，所有屋顶一起揭开。先在这里认一认路，再往里走。',
-    list: ['全馆两进院落', '屋顶可揭开', '黄签标注殿名'], note: '烫样的形式参考样式雷烫样；本件为示意模型，比例约 1 : 50。' });
+    list: ['全馆两进院落，连同北面的运河', '屋顶可揭开，看到每座殿的平面', '黄签标注殿名'], note: '烫样的形式参考样式雷烫样；本件是把全馆建筑按约 1 : 82 缩小的模型，真正的烫样是纸板和秫秸做的，没有这么细。' });
   // 工坊: 木材墙
   woodWall(46.14, 6.4, 14.6, .6);
 }
@@ -2654,7 +2927,7 @@ function drawJoint(g, kind, cx, cy, size, k) { const th = jointThumb(kind, k); i
 function framed(mesh, w, h, depth = .05) { const g = new THREE.Group(), fr = woodT('#2e2118'); g.add(mesh); const back = boxM(w + .14, h + .14, depth, fr, 0, 0, -depth / 2 - .004); g.add(back);
   for (const [bw, bh, x, y] of [[w + .14, .05, 0, h / 2 + .045], [w + .14, .05, 0, -h / 2 - .045], [.05, h + .04, w / 2 + .045, 0], [.05, h + .04, -w / 2 - .045, 0]]) g.add(boxM(bw, bh, .03, fr, x, y, .012)); return g; }
 /* museum-label rules: the first words point at what the visitor can see; rare characters carry pinyin; a number ties a specimen to its drawing on the wall */
-const PY = { 直榫: 'zhí sǔn', 十字搭接: 'shí zì dā jiē', 格肩榫: 'gé jiān sǔn', 透榫加楔: 'tòu sǔn jiā xiē', 燕尾榫: 'yàn wěi sǔn', 楔钉榫: 'xiē dīng sǔn', 银锭榫: 'yín dìng sǔn', 龙凤榫: 'lóng fèng sǔn' };
+const PY = { 直榫: 'zhí sǔn', 十字搭接: 'shí zì dā jiē', 格肩榫: 'gé jiān sǔn', 透榫加楔: 'tòu sǔn jiā xiē', 燕尾榫: 'yàn wěi sǔn', 楔钉榫: 'xiē dīng sǔn', 银锭榫: 'yín dìng sǔn', 龙凤榫: 'lóng fèng sǔn', 粽角榫: 'zòng jiǎo sǔn' };
 function rubyText(g, text, py, x, y, size, pySize) {   // characters with their pinyin centred above; returns the width used
   const syl = (py || '').split(' '), x0 = x; g.textBaseline = 'top';
   [...text].forEach((ch, i) => { g.font = `700 ${size}px "Noto Serif SC","Songti SC",serif`; const cw = g.measureText(ch).width; g.font = `400 ${pySize}px "Noto Sans SC","PingFang SC",sans-serif`; const pw = syl[i] ? g.measureText(syl[i]).width : 0, adv = Math.max(cw, pw + pySize * .3) + size * .06;
@@ -2711,12 +2984,13 @@ const TAGS = {   // the small tag beside each specimen: where it is used, in one
   直榫: '桌椅的腿和横档：方榫插进方卯。', 十字搭接: '窗格和架子：两根料各去一半，交叉后表面齐平。', 格肩榫: '椅子和柜子的转角：肩部斜切，接缝干净。', 透榫加楔: '门框和大桌：榫头穿出来，再打楔撑紧。',
   燕尾榫: '箱角和抽屉：往外拉不开。', 楔钉榫: '圈椅的椅圈：把短弧料接成一圈。', 银锭榫: '拼板的背面：锁住板缝不裂开。', 龙凤榫: '桌面和柜门：把窄板拼成宽板。' };
 function specimenTable(x, z, kinds, hall, numbered) {
+  return;   // the bare joint specimens are retired: the joints are now shown on the furniture that uses them
   const W = timber('#c2925e'), D = timber('#9a6238'), top = woodT('#3a2a1e'), y0 = .6 + .86;
   scene.add(boxM(.95, .06, 11, top, x, y0 - .03, z), boxM(.85, .8, 10.8, woodT('#2e221a'), x, .6 + .4, z));
   kinds.forEach((k, i) => {
     const zz = z + 4.2 - i * (8.4 / (kinds.length - 1)); const g = new THREE.Group(), parts = [];
     SPEC[k](W, D).forEach(([o, d]) => { const pg = new THREE.Group(); pg.add(o); pg.userData = { dir: new THREE.Vector3(...d) }; g.add(pg); parts.push(pg); });
-    g.position.set(x - .05, y0 + .62, zz); g.rotation.y = Math.PI / 2 + .5; g.scale.setScalar(1.5); scene.add(g);
+    g.position.set(x - .05, y0 + .82, zz); g.rotation.y = Math.PI / 2 + .5; g.scale.setScalar(2.0); scene.add(g);
     const lc = labelCard(k, TAGS[k], .62, .3, { py: PY[k], n: numbered ? i + 1 : 0 }); lc.position.set(x + .4, y0 + .1, zz);   // whole card clear of the table top lc.rotation.set(-Math.PI / 2 + .6, Math.PI / 2, 0, 'YXZ'); scene.add(lc);
     addExhibit({ id: 'spec_' + k, hall, root: g, parts, kind: 'spec', title: k + '（样块）', p: LINES[k] + '点一下，样块沿结合方向分开；再点一下合上。', list: [], note: '工艺样块，尺寸为示意。' });
   });
@@ -2791,11 +3065,36 @@ function buildCraft() {
   specimenTable(-45.3, 24.6, ['直榫', '十字搭接', '格肩榫', '透榫加楔'], '展厅一 · 直角与交叉');
   specimenTable(-45.3, 10.8, ['燕尾榫', '楔钉榫', '银锭榫', '龙凤榫'], '展厅二 · 拼接与延长', true);
   craftWall(-46.17, 19.2, 30.0, '直角与交叉：一个节点怎么做', [['画线', '墨斗弹线，角尺定方，先在料上画出榫与卯。', '直榫'], ['开榫', '锯出榫肩，去掉余料，留下榫头。', '格肩榫'], ['凿卯', '在另一根料上凿出方卯。', '十字搭接'], ['装配打楔', '榫头入卯，再打楔撑紧。', '透榫加楔']]);
-  craftWall(-46.17, 6.4, 15.2, '拼接与延长：编号与台上的样块一一对应', [['燕尾榫', '看这排梯形榫头：外宽里窄，越往外拉，卡得越紧。', '燕尾榫'], ['楔钉榫', '看中间那枚方木楔：两段料各削一半搭上，打进它就动不了。', '楔钉榫'], ['银锭榫', '看板缝上的深色木块：两头宽、中间窄，把两块板拉住。', '银锭榫'], ['龙凤榫', '看板边的榫舌：根窄头宽，顺着槽推进去就脱不开。', '龙凤榫']]);
+  craftWall(-46.17, 6.4, 15.2, '器物里的榫卯：这几种榫卯，在哪件家具上', [['透榫', '看展厅一的板凳：腿顶的榫头穿出凳面，有的还会再打进木楔撑紧。', '透榫加楔'], ['直榫', '看板凳的横枨：榫头插进腿里就停住，从外面看不到。', '直榫'], ['楔钉榫', '看展厅三圈椅的椅圈：几段弧形料靠它接成一整圈。', '楔钉榫'], ['燕尾榫', '看本厅中央的箱角：梯形榫头外宽里窄，越拉越紧。', '燕尾榫']]);
   heroMortise(-40.2, 24.5);
-  heroLabel('透榫加楔', '看榫头从柱子另一面穿出来：再打进两枚木楔，把它撑紧。', '这件放大的节点按画线、开榫、凿卯、装配、打楔五步，一遍遍把自己做出来。', '演示件，尺寸放大 · 点一下暂停或继续', -37.3, 24.5);
-  heroLabel('燕尾榫', '看箱角上这排梯形的榫头：外宽里窄，像燕子的尾巴。', '箱子装满东西往外撑，榫头被卡在卯口里，角就拉不开。抽屉和衣箱的角大多这样做。', '演示件，尺寸放大 · 点一下暂停或继续', -39.05, 10.75);
+  if (SHOW_EXHIBITS) heroLabel('透榫加楔', '看榫头从柱子另一面穿出来：再打进两枚木楔，把它撑紧。', '这件放大的节点按画线、开榫、凿卯、装配、打楔五步，一遍遍把自己做出来。', '演示件，尺寸放大 · 点一下暂停或继续', -37.3, 24.5);
+  if (SHOW_EXHIBITS) heroLabel('燕尾榫', '看箱角上这排梯形的榫头：外宽里窄，像燕子的尾巴。', '箱子装满东西往外撑，榫头被卡在卯口里，角就拉不开。抽屉和衣箱的角大多这样做。', '演示件，尺寸放大 · 点一下暂停或继续', -39.05, 10.75);
   toolWall(-47.6, -42.4, 17.18, .6);
+  // 展厅三: 粽角榫, the three-way mitre at the corner of a table or cabinet. Modelled from the joint's own construction: the corner block is split into three
+  // pyramids that meet at the outer corner, so each face shows one 45° seam; the leg carries a long and a short tenon up into the two rails.
+  if (0) { const s = .36, L = .86, W = timber('#c2925e'), D = timber('#9a6238'), E = timber('#d4ad7a'), dark = new THREE.MeshBasicMaterial({ color: 0x0d0907, side: THREE.DoubleSide });
+    const O = [0, 0, 0], A = [s, 0, 0], B = [s, s, 0], C = [s, s, s], Dv = [s, 0, s], A2 = [s + L, 0, 0], B2 = [s + L, s, 0], C2 = [s + L, s, s], D2 = [s + L, 0, s];
+    const faces = [[O, B, A], [A, B, B2, A2], [O, A, Dv], [A, A2, D2, Dv], [O, C, B], [O, Dv, C], [B, C, C2, B2], [Dv, D2, C2, C], [A2, B2, C2, D2]];
+    const poly = (fs, mat, turn) => { const pos = [], uv = [], P = v => turn === 1 ? [v[2], v[0], v[1]] : turn === 2 ? [v[1], v[2], v[0]] : v, ax = turn || 0, o1 = (ax + 1) % 3, o2 = (ax + 2) % 3;
+      fs.forEach(f => { const q = f.map(P), tr = q.length === 4 ? [q[0], q[1], q[2], q[0], q[2], q[3]] : q;
+        const e1 = [0, 1, 2].map(i => q[1][i] - q[0][i]), e2 = [0, 1, 2].map(i => q[2][i] - q[0][i]), n = [Math.abs(e1[1] * e2[2] - e1[2] * e2[1]), Math.abs(e1[2] * e2[0] - e1[0] * e2[2]), Math.abs(e1[0] * e2[1] - e1[1] * e2[0])];
+        const side = n[o1] >= n[o2] ? o2 : o1, end = n[ax] > n[o1] && n[ax] > n[o2];   // grain runs along the member; the far end shows end grain
+        tr.forEach(v => { pos.push(v[0], v[1], v[2]); uv.push(end ? v[o1] * 2 : v[ax] * .9, end ? v[o2] * 2 : v[side] * 2); }); });
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, mat); m.castShadow = m.receiveShadow = true; return m; };
+    const quad = (pts) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([0, 1, 2, 0, 2, 3].flatMap(i => pts[i]), 3)); return new THREE.Mesh(g, dark); };
+    const lt = [.62 * s, .8 * s, .2 * s, .5 * s], st = [.2 * s, .5 * s, .62 * s, .8 * s], e = .0025;   // long tenon into the x rail, short tenon into the y rail: [x0, x1, y0, y1]
+    const railX = grp(poly(faces, W, 0), quad([[lt[0] - e, lt[2], lt[0] + e], [lt[1] - e, lt[2], lt[1] + e], [lt[1] - e, lt[3], lt[1] + e], [lt[0] - e, lt[3], lt[0] + e]]));
+    const railY = grp(poly(faces, D, 1), quad([[st[0], st[2] - e, st[2] + e], [st[1], st[2] - e, st[2] + e], [st[1], st[3] - e, st[3] + e], [st[0], st[3] - e, st[3] + e]]));
+    const leg = grp(poly(faces, W, 2), at(boxM(lt[1] - lt[0], lt[3] - lt[2], .68 * s, E), (lt[0] + lt[1]) / 2, (lt[2] + lt[3]) / 2, .48 * s), at(boxM(st[1] - st[0], st[3] - st[2], .42 * s, E), (st[0] + st[1]) / 2, (st[2] + st[3]) / 2, .61 * s));
+    const inner = new THREE.Group(), parts = []; inner.rotation.x = Math.PI / 2;   // leg down, the mitred corner up
+    [[railX, [.34, 0, -.1]], [railY, [0, .34, -.1]], [leg, [0, 0, .5]]].forEach(([o, d]) => { const pg = new THREE.Group(); pg.add(o); pg.userData = { dir: new THREE.Vector3(...d) }; inner.add(pg); parts.push(pg); });
+    const root = new THREE.Group(), X0 = 3.6, Z0 = -26.3; root.add(inner); root.position.set(X0, 1.2 + s + L + .5, Z0); root.rotation.y = -Math.PI / 2 - .12;
+    if (SHOW_EXHIBITS) { scene.add(boxM(1.0, .6, 1.0, woodT('#8a7558'), X0 - .12, .9, Z0 + .18), boxM(.42, .5, .42, woodT('#6f5d46'), X0 - .12, 1.45, Z0 + .18));
+      const lc = labelCard('粽角榫', '桌柜的转角：三根料各削成斜面，在角上合出三道 45° 的缝，形如粽子角。', .9, .44, { py: PY['粽角榫'] }); lc.position.set(X0 + 1.0, 1.5, Z0 - .5); lc.rotation.set(-.45, 2.2, 0, 'YXZ');
+      scene.add(lc, boxM(.05, .9, .05, woodT('#2e221a'), X0 + 1.03, 1.02, Z0 - .47)); }
+    addExhibit({ id: 'zongjiao', hall: '展厅三 · 家具', root, parts, kind: 'spec', title: '粽角榫（放大）', p: '桌子、柜子的三根料在转角相交，每根都削成斜面，三个看面上各留一道 45° 的缝，交在同一个角上。腿上一长一短两个榫头向上插进两根横料，把三根料锁在一起。点一下，三根料分开；再点一下合上。',
+      list: ['腿：长短榫各一', '横料：两根，端头斜切', '看面：三道 45° 格角缝'], note: '工艺演示，尺寸放大，内部卡口做了简化。' }); }
   // 展厅二 hero: a dovetailed box corner drawn apart and back together
   { const g = new THREE.Group(), [[tails], [pins]] = SPEC['燕尾榫'](timber('#c2925e'), timber('#9a6238')); tails.rotation.y = pins.rotation.y = 0; tails.position.set(0, 0, 0); pins.position.set(0, 0, 0);
     g.add(tails, pins); g.scale.setScalar(3.0); g.position.set(-39.9, 1.75, 11.0); g.rotation.set(0, .7, 0); scene.add(g); scene.add(boxM(1.6, .5, 1.6, woodT('#2e221a'), -40.2, .85, 10.75));
@@ -2878,7 +3177,7 @@ function setMode(m) {
     aim([10, 6.5, 104], [0, 14, 6]);
   } else if (m === 'cut') {
     card('剖视布局', '两进院落，十二处展区', '掀掉屋顶看平面：进主殿序厅后向西，看完西配殿的两个展厅，沿北回廊进后殿，穿过后殿进入北院：走进木塔底层、西厢展厅四、运河上的木拱廊桥、东厢展厅五；再回到主殿中庭，最后经东配殿的工坊、尾厅回到山门。橙色线是参观路线。',
-      HALLS.map(h => `${h.n} ${h.name}`), '序厅与中庭之间隔着玻璃屏风：进门就能望见斗拱，但路线把中庭留到第五站。');
+      HALLS.map(h => `${h.n} ${h.name}`), '进门沿中轴直入主殿，先看中庭的原大斗拱，再顺时针绕院一周，每个展厅只进一次。');
     aim([8, 230, 70], [-4, 0, -30]);
   } else if (m === 'walk') { walkStart(); }
   else { goTour(tourIdx); }
@@ -2897,7 +3196,164 @@ document.querySelectorAll('#modes button').forEach(b => b.addEventListener('clic
 document.querySelectorAll('#times button').forEach(b => b.addEventListener('click', () => setTime(b.dataset.t)));
 $('prev').addEventListener('click', () => goTour(tourIdx - 1));
 $('next').addEventListener('click', () => goTour(tourIdx + 1));
-window.__t = { fangTex, ink: () => ink, EXH, setMode, setTime, goTour, aim, camera, controls, scene, walker, floorAt, walkUpdate, cast, getTri: () => TRI, GRID, dbg: () => ({ n: TRI && TRI.length, cells: GRID.size, s: TRI && Array.from(TRI.slice(0, 9)) }) };
+/* ---------- layout editor: open with #edit in the address or Ctrl+Shift+E. Moves, turns, scales and removes the things placed in the halls;
+   changes are kept in this browser, and "复制修改" gives a record that can be baked into EDITS below so every visitor sees them ---------- */
+const EDITS = {};
+const ED = { on: false, sel: null, items: new Map(), local: {}, undo: [], box: null, drag: null };
+const edRay = new THREE.Raycaster(), edV = new THREE.Vector2(), edBox3 = new THREE.Box3(), edV3 = new THREE.Vector3();
+function edScan() {   // register everything placed in the scene so far; things that load late (the bracket set) are picked up on the next scan
+  const seen = ED.seen || (ED.seen = {});
+  scene.children.forEach(o => {
+    if (o.userData.ek || o.userData.noEdit || o.isLight || o.isCamera || !o.visible) return; let has = false; o.traverse(c => { if (c.isMesh || c.isSprite) has = true; }); if (!has) return;
+    edBox3.setFromObject(o); if (edBox3.isEmpty()) return; const c = edBox3.getCenter(new THREE.Vector3()), s = edBox3.getSize(new THREE.Vector3()); if (Math.max(s.x, s.y, s.z) > 150) return;   // sky, ground, far hills stay put
+    let k = [c.x, c.y, c.z].map(v => Math.round(v * 10)).join('_') + '_' + Math.round((s.x + s.y + s.z) * 10); seen[k] = (seen[k] || 0) + 1; if (seen[k] > 1) k += '~' + seen[k];
+    const ex = EXH.find(e => e.root === o);
+    o.userData.ek = k; o.userData.e0 = { p: o.position.toArray(), ry: o.rotation.y, sc: o.scale.clone(), name: ex ? ex.title : `物件 ${s.x.toFixed(1)}×${s.y.toFixed(1)}×${s.z.toFixed(1)} 米` }; ED.items.set(k, o); if (EDITS[k] || ED.local[k]) edApply(k, ED.local[k] || EDITS[k]); });
+  ED.list = [...ED.items.values()];
+}
+function edInit() {
+  try { ED.local = JSON.parse(localStorage.getItem('muzao-edits') || '{}') || {}; } catch (e) { ED.local = {}; }
+  edScan(); setTimeout(edScan, 6000); setTimeout(edScan, 20000);
+  if (location.hash === '#edit') edToggle(true);
+}
+function edApply(k, e) { const o = ED.items.get(k); if (!o) return; const z = o.userData.e0; e = e || {};
+  o.position.fromArray(e.p || z.p); o.rotation.y = e.ry != null ? e.ry : z.ry; o.scale.copy(z.sc).multiplyScalar(e.s || 1);
+  if (e.del) { if (o.parent) scene.remove(o); } else if (!o.parent) scene.add(o); }
+function edSave() { try { localStorage.setItem('muzao-edits', JSON.stringify(ED.local)); } catch (e) {} const n = Object.keys(ED.local).length; $('edCount').textContent = n ? `已修改 ${n} 处（只保存在这台浏览器里）` : '还没有修改'; }
+function edChange(o, patch) { const k = o.userData.ek; ED.undo.push([k, ED.local[k] ? JSON.stringify(ED.local[k]) : null]); if (ED.undo.length > 60) ED.undo.shift();
+  if (patch === null) delete ED.local[k]; else ED.local[k] = Object.assign({}, ED.local[k], patch); edApply(k, ED.local[k]); edSave(); edShow(); }
+function edSelect(o) { ED.sel = o || null; if (ED.box) { scene.remove(ED.box); ED.box.geometry.dispose(); ED.box = null; }
+  if (o && o.parent) { ED.box = new THREE.BoxHelper(o, 0x2b6a72); ED.box.userData.noEdit = true; ED.box.material.depthTest = false; ED.box.renderOrder = 20; scene.add(ED.box); } edShow(); }
+function edShow() { const o = ED.sel; $('edForm').hidden = !o; $('edTip').hidden = !!o; if (!o) return; const e = ED.local[o.userData.ek] || {}, r2 = v => Math.round(v * 100) / 100;
+  $('edName').textContent = o.userData.e0.name + (e.del ? '（已删除）' : ''); $('edX').value = r2(o.position.x); $('edY').value = r2(o.position.y); $('edZ').value = r2(o.position.z);
+  $('edR').value = Math.round(o.rotation.y * 180 / Math.PI); $('edS').value = r2(e.s || 1); $('edDel').textContent = e.del ? '放回去' : '删除'; }
+function edToggle(v) { ED.on = v; $('edPanel').hidden = !v; if (!v) edSelect(null); else { edScan(); edSave(); edShow(); if (mode === 'walk') setMode('tour'); } canvas.style.cursor = ''; }
+function edPick(e) { const r = canvas.getBoundingClientRect(); edV.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); edRay.setFromCamera(edV, camera); edRay.camera = camera;
+  const hit = edRay.intersectObjects(ED.list.filter(o => o.parent), true)[0]; if (!hit) return null; let o = hit.object; while (o.parent && o.parent !== scene) o = o.parent; return { o, point: hit.point }; }
+canvas.addEventListener('pointerdown', e => { if (!ED.on || e.button) return; ED.down = { x: e.clientX, y: e.clientY }; const h = ED.sel && edPick(e);
+  if (h && h.o === ED.sel) { ED.drag = { plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), -h.point.y), from: h.point.clone(), p0: ED.sel.position.clone(), id: e.pointerId }; controls.enabled = false; canvas.setPointerCapture(e.pointerId); e.stopImmediatePropagation(); } }, true);
+canvas.addEventListener('pointermove', e => { const d = ED.drag; if (!d || e.pointerId !== d.id) return; const r = canvas.getBoundingClientRect(); edV.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); edRay.setFromCamera(edV, camera);
+  if (edRay.ray.intersectPlane(d.plane, edV3)) { ED.sel.position.set(d.p0.x + edV3.x - d.from.x, d.p0.y, d.p0.z + edV3.z - d.from.z); d.moved = true; edShow(); } e.stopImmediatePropagation(); }, true);
+canvas.addEventListener('pointerup', e => { if (!ED.on) return; const d = ED.drag, dn = ED.down; ED.drag = ED.down = null;
+  if (d) { controls.enabled = true; try { canvas.releasePointerCapture(d.id); } catch (er) {} if (d.moved) { const p = ED.sel.position.toArray().map(v => Math.round(v * 100) / 100); ED.sel.position.copy(d.p0); edChange(ED.sel, { p }); } e.stopImmediatePropagation(); return; }
+  if (dn && Math.hypot(e.clientX - dn.x, e.clientY - dn.y) < 6) { const h = edPick(e); edSelect(h ? h.o : null); } }, true);
+['edX', 'edY', 'edZ', 'edR', 'edS'].forEach(id => $(id).addEventListener('change', () => { const o = ED.sel; if (!o) return; const n = f => { const v = parseFloat($(f).value); return isFinite(v) ? v : 0; };
+  edChange(o, { p: [n('edX'), n('edY'), n('edZ')], ry: n('edR') * Math.PI / 180, s: Math.max(.05, n('edS') || 1) }); }));
+$('edDel').addEventListener('click', () => { const o = ED.sel; if (!o) return; const del = !(ED.local[o.userData.ek] || {}).del; edChange(o, { del: del ? 1 : 0 }); edSelect(del ? null : o); if (del) { ED.sel = o; edShow(); } });
+$('edReset').addEventListener('click', () => { if (ED.sel) { edChange(ED.sel, null); edSelect(ED.sel); } });
+$('edUndo').addEventListener('click', () => { const u = ED.undo.pop(); if (!u) return; if (u[1]) ED.local[u[0]] = JSON.parse(u[1]); else delete ED.local[u[0]]; edApply(u[0], ED.local[u[0]]); edSave(); edSelect(ED.items.get(u[0]).parent ? ED.items.get(u[0]) : null); });
+$('edClear').addEventListener('click', () => { const b = $('edClear'); if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = '再点一次确认'; setTimeout(() => { b.dataset.sure = ''; b.textContent = '全部还原'; }, 3000); return; }
+  b.dataset.sure = ''; b.textContent = '全部还原'; Object.keys(ED.local).forEach(k => { delete ED.local[k]; edApply(k, EDITS[k]); }); ED.undo.length = 0; edSave(); edSelect(null); });
+$('edCopy').addEventListener('click', () => { const txt = JSON.stringify(ED.local), out = $('edOut'); out.hidden = false; out.value = txt; const done = () => { $('edCopy').textContent = '已复制'; setTimeout(() => { $('edCopy').textContent = '复制修改'; }, 1800); };
+  const fallback = () => { out.focus(); out.select(); }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, fallback); else fallback(); });
+$('edClose').addEventListener('click', () => edToggle(false));
+window.addEventListener('keydown', e => { if (e.ctrlKey && e.shiftKey && e.code === 'KeyE') { edToggle(!ED.on); e.preventDefault(); return; } if (!ED.on || /INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) return;
+  if (e.code === 'Escape') edSelect(null); else if ((e.code === 'Delete' || e.code === 'Backspace') && ED.sel) { $('edDel').click(); e.preventDefault(); } else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ') { $('edUndo').click(); e.preventDefault(); } });
+window.addEventListener('hashchange', () => { if (location.hash === '#edit' && !ED.on) edToggle(true); });
+/* ---------- film: plays the storyboard. One list of shots drives the camera, the subtitles, the mini-map in the corner and the exported video,
+   so every frame of the video can be found on the plan. Open with #film in the address or Ctrl+Shift+V. ---------- */
+const SHOTS = [{"place":"院外东南上空","scale":"远景","lvl":"主","a":[[74,66,262],[0,4,60]],"b":[[72,62,120],[0,6,-24]],"text":"这是木构博物馆，一座讲榫卯的线上展馆。它是一组两进的院落，中轴线贯穿南北：山门、主殿、后殿、木塔，最北是运河上的廊桥。","note":"全院鸟瞰，交代布局和中轴线","open":[],"n":1,"dur":16.3,"t0":0,"subs":[[0.35,5.46,"这是木构博物馆，一座讲榫卯的线上展馆"],[5.46,10.28,"它是一组两进的院落，中轴线贯穿南北"],[10.28,13.4,"山门、主殿、后殿、木塔"],[13.4,15.95,"最北是运河上的廊桥"]]},{"place":"山门外","scale":"全景","lvl":"次","a":[[-10,4.5,99],[0,6.5,66]],"b":[[-5,3.6,88],[0,5.6,66]],"text":"参观从山门开始。山门三开间，两侧院墙围出一座完整的院落。","note":"山门正面","open":[],"n":2,"dur":8.4,"t0":16.3,"subs":[[0.35,4.2,"参观从山门开始。山门三开间"],[4.2,8.05,"两侧院墙围出一座完整的院落"]]},{"place":"山门前","scale":"特写","lvl":"次","a":[[-2.6,2.4,76.5],[0.6,3.0,70.6]],"b":[[2.2,2.2,76],[0.2,2.6,70.6]],"text":"板门上有门钉和铺首，门楣上有门簪，门前一对抱鼓石。","note":"门钉、铺首、抱鼓石","open":[],"n":3,"dur":7.6,"t0":24.7,"subs":[[0.35,5.15,"板门上有门钉和铺首，门楣上有门簪"],[5.15,7.25,"门前一对抱鼓石"]]},{"place":"前院南端","scale":"全景","lvl":"次","a":[[7,2.6,58],[0,10,12]],"b":[[1,3.0,46],[0,13,10]],"text":"绕过影壁就是前院。石道两侧各一方水池，东西回廊把院子连成一圈，尽头是主殿。","note":"进门后主殿出现","open":[],"n":4,"dur":10.7,"t0":32.3,"subs":[[0.35,5.49,"绕过影壁就是前院。石道两侧各一方水池"],[5.49,10.35,"东西回廊把院子连成一圈，尽头是主殿"]]},{"place":"前院中轴","scale":"全景","lvl":"主","a":[[0,3.4,40],[0,8,10]],"b":[[0,6.5,37],[0,21,8]],"text":"主殿是重檐屋顶，坐在两层台基上，体量是两侧配殿的一倍半，是前院的中心。","note":"主殿正面，由台基摇到屋脊","open":[],"n":5,"dur":10.2,"t0":43.0,"subs":[[0.35,4.67,"主殿是重檐屋顶，坐在两层台基上"],[4.67,9.85,"体量是两侧配殿的一倍半，是前院的中心"]]},{"place":"主殿檐下","scale":"特写","lvl":"主","a":[[13,8.5,27],[3,14.5,12]],"b":[[-5,9,26.5],[-11,14.5,12]],"text":"抬头看檐下。额枋上是青绿相间的旋子彩画，往上是一攒一攒的斗拱，再往上是檐椽和飞椽。斗拱全靠榫卯层层咬合，没有一颗钉子。","note":"彩画、斗拱、椽子，沿檐口横移","open":[],"n":6,"dur":16.3,"t0":53.2,"subs":[[0.35,5.64,"抬头看檐下。额枋上是青绿相间的旋子彩画"],[5.64,11.21,"往上是一攒一攒的斗拱，再往上是檐椽和飞椽"],[11.21,15.95,"斗拱全靠榫卯层层咬合，没有一颗钉子"]]},{"place":"序厅","scale":"中景","lvl":"次","a":[[2.6,6.6,16.2],[0,5.1,12.5]],"b":[[-2.4,6.3,15.6],[0,5.1,12.5]],"text":"进主殿先到序厅。长案上是全馆的烫样，也就是古代做给人看的建筑模型，先在这里认一认路。","note":"烫样","open":["tangyang"],"n":7,"dur":12.0,"t0":69.5,"subs":[[0.35,5.28,"进主殿先到序厅。长案上是全馆的烫样"],[5.28,9.33,"也就是古代做给人看的建筑模型"],[9.33,11.65,"先在这里认一认路"]]},{"place":"中庭东北角","scale":"全景","lvl":"主","a":[[11,8,-4],[0,8.5,2.2]],"b":[[9.5,6.4,6.4],[0,9.4,3.2]],"text":"穿过屏风门是中庭，全馆最高的空间。一根五米高的柱子，顶着一朵原大的唐式斗拱。","note":"中庭全貌和原大斗拱","open":[],"n":8,"dur":10.9,"t0":81.5,"subs":[[0.35,4.88,"穿过屏风门是中庭，全馆最高的空间"],[4.88,10.55,"一根五米高的柱子，顶着一朵原大的唐式斗拱"]]},{"place":"中庭斗拱旁","scale":"特写","lvl":"主","a":[[7,8.6,-2.6],[0,9.8,1.8]],"b":[[-6,10.2,-2],[0,10.0,1.8]],"text":"点一下，它一层层拆开。每一件构件都靠榫头和卯眼相扣，层层出挑，把屋檐托出四米多。","note":"斗拱逐层拆解","open":["tang"],"n":9,"dur":11.5,"t0":92.4,"subs":[[0.35,3.27,"点一下，它一层层拆开"],[3.27,8.81,"每一件构件都靠榫头和卯眼相扣，层层出挑"],[8.81,11.15,"把屋檐托出四米多"]]},{"place":"中庭北侧","scale":"仰拍","lvl":"次","a":[[7.5,4.4,-5.5],[0,22,2]],"b":[[6.6,4.8,-5.6],[0,22,2]],"text":"头顶是一口藻井，方井、八角井、圆井层层内收。","note":"藻井","open":[],"n":10,"dur":7.0,"t0":103.9,"subs":[[0.35,2.56,"头顶是一口藻井"],[2.56,6.65,"方井、八角井、圆井层层内收"]]},{"place":"展厅一入口","scale":"全景","lvl":"次","a":[[-35.4,2.5,30.6],[-43.5,1.6,20]],"b":[[-36.4,2.6,27.6],[-43,1.8,21.5]],"text":"出主殿向西是展厅一，从最基本的讲起：一个节点是怎样做出来的。","note":"展厅一全貌","open":[],"n":11,"dur":8.9,"t0":110.9,"subs":[[0.35,5.33,"出主殿向西是展厅一，从最基本的讲起"],[5.33,8.55,"一个节点是怎样做出来的"]]},{"place":"展厅一中央","scale":"特写","lvl":"主","a":[[-36.4,3.0,26.8],[-40.0,2.6,24.5]],"b":[[-36.8,3.1,22.4],[-40.0,2.6,24.5]],"text":"这件放大的透榫，按画线、开榫、凿卯、装配、打楔五步，一遍遍把自己做出来。","note":"透榫加楔五步演示","open":["hero_mortise"],"n":12,"dur":11,"t0":119.8,"subs":[[0.35,2.53,"这件放大的透榫"],[2.53,7.84,"按画线、开榫、凿卯、装配、打楔五步"],[7.84,10.65,"一遍遍把自己做出来"]]},{"place":"展厅一南墙","scale":"近景","lvl":"主","a":[[-41.4,2.9,26.2],[-43.2,2.0,30.2]],"b":[[-44.6,2.9,26.6],[-45.4,2.0,30.2]],"text":"沿墙是三件器物：提盒、圆凳、板凳。每件身上有编号圆点，点一下，那一处的榫卯就单独退开。看板凳，腿顶的榫头穿过了凳面。","note":"三件器物，圆点拆开局部","open":["jm_tihe#0","jm_bandeng#0"],"n":13,"dur":16.1,"t0":130.8,"subs":[[0.35,4.91,"沿墙是三件器物：提盒、圆凳、板凳"],[4.91,8.62,"每件身上有编号圆点，点一下"],[8.62,12.9,"那一处的榫卯就单独退开。看板凳"],[12.9,15.75,"腿顶的榫头穿过了凳面"]]},{"place":"展厅二中央","scale":"特写","lvl":"主","a":[[-36.5,2.8,12.8],[-40.0,1.9,10.9]],"b":[[-37.4,2.6,8.4],[-40.0,1.9,10.9]],"text":"展厅二讲木料怎样接长、拼宽。这是放大的燕尾榫箱角：梯形榫头外宽里窄，越往外拉，卡得越紧。","note":"燕尾榫箱角开合","open":["hero_dove"],"n":14,"dur":12.5,"t0":146.9,"subs":[[0.35,4.09,"展厅二讲木料怎样接长、拼宽"],[4.09,9.56,"这是放大的燕尾榫箱角：梯形榫头外宽里窄"],[9.56,12.15,"越往外拉，卡得越紧"]]},{"place":"展厅二北墙","scale":"近景","lvl":"次","a":[[-40.6,3.2,12.2],[-38.2,2.0,6.5]],"b":[[-39.4,3.0,10.4],[-36.6,1.9,6.5]],"text":"这边是博古架和翘头案。看翘头案的腿：腿顶开口，把牙条夹在当中，这叫夹头榫。","note":"翘头案，夹头榫局部拆开","open":["jm_qiaotouan#0"],"n":15,"dur":10.7,"t0":159.4,"subs":[[0.35,5.21,"这边是博古架和翘头案。看翘头案的腿"],[5.21,10.35,"腿顶开口，把牙条夹在当中，这叫夹头榫"]]},{"place":"展厅三东北角","scale":"全景","lvl":"次","a":[[9.6,3.2,-33.0],[-2,1.6,-27.2]],"b":[[7.4,3.0,-32.4],[-3,1.6,-26.6]],"text":"沿回廊向北到后殿，这里看榫卯做成的家具。","note":"展厅三全貌","open":["jm_luohanchuang","jm_lianggegui","jm_jiazichuang"],"n":16,"dur":7.0,"t0":170.1,"subs":[[0.35,6.65,"沿回廊向北到后殿，这里看榫卯做成的家具"]]},{"place":"展厅三西侧","scale":"特写","lvl":"主","a":[[-3.0,3.0,-26.0],[-5.7,2.2,-29.6]],"b":[[-8.2,3.1,-26.4],[-5.7,2.2,-29.6]],"text":"明式圈椅拆开来看：椅圈由几段弧料用楔钉榫接成，腿足、座面、靠背之间全是榫卯。","note":"圈椅拆解","open":["quanyi"],"n":17,"dur":10.9,"t0":177.1,"subs":[[0.35,2.68,"明式圈椅拆开来看"],[2.68,6.47,"椅圈由几段弧料用楔钉榫接成"],[6.47,10.55,"腿足、座面、靠背之间全是榫卯"]]},{"place":"展厅三东侧","scale":"近景","lvl":"次","a":[[8.8,2.9,-26.0],[5.7,2.0,-29.6]],"b":[[3.4,2.9,-26.2],[5.7,2.0,-29.6]],"text":"旁边的平头案用夹头榫：腿足上端开口，夹住牙条，再托起案面。","note":"平头案拆解","open":["an"],"n":18,"dur":9,"t0":188.0,"subs":[[0.35,5.58,"旁边的平头案用夹头榫：腿足上端开口"],[5.58,8.65,"夹住牙条，再托起案面"]]},{"place":"北院南侧","scale":"全景","lvl":"主","a":[[-30,9,-26],[0,21,-66]],"b":[[-30,16,-26],[0,24,-66]],"text":"穿过后殿是北院。正中是五层木塔，高四十六米，是全馆最高的建筑。","note":"木塔全貌","open":[],"n":19,"dur":9.1,"t0":197.0,"subs":[[0.35,4.69,"穿过后殿是北院。正中是五层木塔"],[4.69,8.75,"高四十六米，是全馆最高的建筑"]]},{"place":"木塔脚下","scale":"仰拍","lvl":"主","a":[[13,2.2,-50],[0,8,-66]],"b":[[13,2.2,-50],[0,25,-66]],"text":"塔身逐层收分，每层檐下都有斗拱，檐上是平座栏杆，最上面是塔刹。","note":"由下往上摇，逐层的檐和平座","open":[],"n":20,"dur":9.1,"t0":206.1,"subs":[[0.35,4.69,"塔身逐层收分，每层檐下都有斗拱"],[4.69,8.75,"檐上是平座栏杆，最上面是塔刹"]]},{"place":"展厅四入口","scale":"全景","lvl":"次","a":[[-23.6,5.4,-50.9],[-32.5,2.4,-64]],"b":[[-24.4,4.8,-53],[-32.8,2.4,-65]],"text":"先进西厢的展厅四，看榫卯怎样从一个节点长成一座房屋。","note":"展厅四全貌","open":[],"n":21,"dur":7.9,"t0":215.2,"subs":[[0.35,2.75,"先进西厢的展厅四"],[2.75,7.55,"看榫卯怎样从一个节点长成一座房屋"]]},{"place":"展厅四南圆台","scale":"特写","lvl":"主","a":[[-26.6,3.6,-53],[-32,2.6,-57]],"b":[[-27,4.0,-61],[-32,2.6,-57]],"text":"这是一攒清式的平身科斗拱，拆开是几十个构件，一件压一件。","note":"平身科斗拱拆解","open":["pingshenke"],"n":22,"dur":9,"t0":223.1,"subs":[[0.35,4.18,"这是一攒清式的平身科斗拱"],[4.18,8.65,"拆开是几十个构件，一件压一件"]]},{"place":"展厅四北侧","scale":"中景","lvl":"次","a":[[-27.6,3.4,-66.2],[-32,3.0,-71]],"b":[[-34.6,3.2,-67.6],[-39.2,2.6,-64]],"text":"旁边是抬梁和穿斗两种屋架：一个用梁层层抬起，一个用柱子直接承檩。","note":"抬梁与穿斗屋架对照","open":["liangjia","chuandou"],"n":23,"dur":9.4,"t0":232.1,"subs":[[0.35,3.83,"旁边是抬梁和穿斗两种屋架"],[3.83,9.05,"一个用梁层层抬起，一个用柱子直接承檩"]]},{"place":"木塔底层","scale":"全景","lvl":"主","a":[[4.6,3.5,-60.8],[0,3.8,-66]],"b":[[-4.6,3.8,-61],[0,4.4,-66]],"text":"再走进木塔。塔心是一具应县木塔的剖面模型：在一座木塔里，看另一座木塔是怎么搭起来的。","note":"塔内的木塔剖面模型","open":["tower"],"n":24,"dur":12.0,"t0":241.5,"subs":[[0.35,6.0,"再走进木塔。塔心是一具应县木塔的剖面模型"],[6.0,11.65,"在一座木塔里，看另一座木塔是怎么搭起来的"]]},{"place":"运河西岸","scale":"全景","lvl":"次","a":[[-36,9,-98],[2,3,-106]],"b":[[-27,6,-100],[2,3.4,-106]],"text":"从塔的北门出去是运河。桥身是编木拱，两组直木交织成拱，同样不用一颗钉子。","note":"木拱廊桥侧面","open":[],"n":25,"dur":10.4,"t0":253.5,"subs":[[0.35,5.2,"从塔的北门出去是运河。桥身是编木拱"],[5.2,10.05,"两组直木交织成拱，同样不用一颗钉子"]]},{"place":"运河北岸","scale":"中景","lvl":"次","a":[[12,3.6,-118],[0,5.6,-131]],"b":[[8,4.6,-119],[0,6,-131]],"text":"过桥到北岸，是一件放大的鲁班锁。","note":"鲁班锁雕塑","open":["burr"],"n":26,"dur":7.0,"t0":263.9,"subs":[[0.35,6.65,"过桥到北岸，是一件放大的鲁班锁"]]},{"place":"展厅五入口","scale":"中景","lvl":"次","a":[[23.8,3.2,-51.5],[33,3.2,-64]],"b":[[26.4,3.5,-56.5],[33,3.6,-66]],"text":"东厢的展厅五，把构件当作材料来创作：悬在半空的斗拱、互承木构、窗棂灯墙。","note":"展厅五的三件装置","open":[],"n":27,"dur":10.4,"t0":270.9,"subs":[[0.35,5.2,"东厢的展厅五，把构件当作材料来创作"],[5.2,10.05,"悬在半空的斗拱、互承木构、窗棂灯墙"]]},{"place":"工坊","scale":"中景","lvl":"次","a":[[40.2,2.9,8.4],[35.3,1.9,10.4]],"b":[[40.2,2.9,12.4],[35.3,1.9,12.6]],"text":"工坊里是四件用薄板插接的小件：方盒、托盘、盖盒、鸟屋。拆开来，每一件都只是几片平板。","note":"四件插接小件，拆开两件","open":["jm_xj1","jm_xj3"],"n":28,"dur":12.0,"t0":281.3,"subs":[[0.35,4.41,"工坊里是四件用薄板插接的小件"],[4.41,8.75,"方盒、托盘、盖盒、鸟屋。拆开来"],[8.75,11.65,"每一件都只是几片平板"]]},{"place":"尾厅","scale":"中景","lvl":"次","a":[[41,3.0,24.8],[41,1.9,30.3]],"b":[[39.8,2.9,26.2],[40.4,1.9,30.3]],"text":"尾厅留给今天的设计：插接的花器、折叠小凳和小架，用的还是同样的道理。","note":"三件现代小件","open":["jm_jiaowu"],"n":29,"dur":9.9,"t0":293.3,"subs":[[0.35,3.02,"尾厅留给今天的设计"],[3.02,6.88,"插接的花器、折叠小凳和小架"],[6.88,9.55,"用的还是同样的道理"]]},{"place":"院外西南上空","scale":"远景","lvl":"主","a":[[-60,48,118],[0,8,-10]],"b":[[-72,80,262],[0,6,40]],"text":"走完一圈，回到山门。从一个节点，到一件家具，到一座房屋：这就是木构。","note":"回望全院，收尾","open":[],"n":30,"dur":9.9,"t0":303.2,"subs":[[0.35,4.66,"走完一圈，回到山门。从一个节点"],[4.66,9.55,"到一件家具，到一座房屋：这就是木构"]]}];
+const FILM = { on: false, t0: 0, i: -1, comp: null, g: null, rec: null, chunks: [], ac: null, dest: null, clips: {}, src: null, map: null, opened: [], tgt: new THREE.Vector3() };
+let filmTotal = 0;
+function filmTiming() { let t = 0; SHOTS.forEach(s => { s.t0 = t; t += s.dur; }); filmTotal = t; } filmTiming();
+function filmCanvas() { if (FILM.comp) return; const c = document.createElement('canvas'); c.width = 1920; c.height = 1080; c.className = 'film-view'; c.hidden = true; $('app').appendChild(c); FILM.comp = c; FILM.g = c.getContext('2d');
+  const im = new Image(); im.onload = () => { FILM.map = im; }; im.src = 'plan_s.jpg'; }
+async function filmAudio() {   // optional narration: audio/01.m4a (or .mp3 / .wav) per shot, played at the start of its shot
+  if (FILM.ac) return; const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; FILM.ac = new AC(); FILM.dest = FILM.ac.createMediaStreamDestination();
+  await Promise.all(SHOTS.map(async s => { const nn = String(s.n).padStart(2, '0'); for (const ext of ['m4a', 'mp3', 'wav']) { try { const r = await fetch(`audio/${nn}.${ext}`); if (!r.ok) continue; FILM.clips[s.n] = await FILM.ac.decodeAudioData(await r.arrayBuffer()); return; } catch (e) {} } }));
+  for (const ext of ['m4a', 'mp3', 'wav']) { try { const r = await fetch(`audio/bgm.${ext}`); if (!r.ok) continue; FILM.bgm = await FILM.ac.decodeAudioData(await r.arrayBuffer()); break; } catch (e) {} }   // optional background music, looped quietly under the voice
+  // a shot lasts as long as its narration: the picture waits for the voice, and the subtitles are re-timed to it
+  SHOTS.forEach(s => { const c = FILM.clips[s.n]; if (!c) return; const old = s.dur - .7, len = c.duration; s.dur = Math.round((len + 1.0) * 10) / 10; s.subs = s.subs.map(q => [.3 + (q[0] - .35) / old * len, .3 + (q[1] - .35) / old * len, q[2]]); });
+  filmTiming(); $('fmLen').textContent = `${Math.floor(filmTotal / 60)} 分 ${Math.round(filmTotal % 60)} 秒`; }
+async function filmStart(record) {
+  if (FILM.on) return; if (ED.on) edToggle(false); filmCanvas(); $('fmStat').textContent = '正在准备…'; await filmAudio(); if (FILM.ac && FILM.ac.state === 'suspended') await FILM.ac.resume();
+  const nClips = Object.keys(FILM.clips).length; setMode('tour'); tween = null; controls.enabled = false; FILM.comp.hidden = false; FILM.i = -1; FILM.on = true; wakeOn(); FILM.t0 = performance.now() + 800;
+  $('fmPlay').disabled = $('fmRec').disabled = $('fmExp').disabled = true; $('fmStop').disabled = false; $('fmSave').hidden = true;
+  if (FILM.bgm) { const b = FILM.ac.createBufferSource(), gn = FILM.ac.createGain(); b.buffer = FILM.bgm; b.loop = true; gn.gain.value = BGM_GAIN; b.connect(gn); gn.connect(FILM.ac.destination); gn.connect(FILM.dest); b.start(FILM.ac.currentTime + .8); FILM.bgmSrc = b; }
+  if (record) { try { const st = FILM.comp.captureStream(30); if (FILM.dest && nClips) FILM.dest.stream.getAudioTracks().forEach(tr => st.addTrack(tr));
+      const mime = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'].find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m));
+      FILM.chunks = []; FILM.rec = new MediaRecorder(st, { mimeType: mime, videoBitsPerSecond: 12e6 }); FILM.rec.ondataavailable = e => { if (e.data.size) FILM.chunks.push(e.data); };
+      FILM.rec.onstop = () => { const blob = new Blob(FILM.chunks, { type: mime }), a = $('fmSave'); a.href = URL.createObjectURL(blob); a.download = '木构博物馆-导览.' + (/mp4/.test(mime) ? 'mp4' : 'webm'); a.textContent = `保存视频（${(blob.size / 1e6).toFixed(0)} MB）`; a.hidden = false; try { a.click(); } catch (e) {} $('fmStat').textContent = '录制完成。没有自动下载的话，点上面的“保存视频”。'; };
+      FILM.rec.start(1000); } catch (e) { console.error(e); FILM.rec = null; $('fmStat').textContent = '这个浏览器不能直接录制，请改用系统录屏。'; } }
+  FILM.note = (record && FILM.rec ? '录制中' : '预览中') + (nClips ? `，配音 ${nClips} 段` : '，无配音文件');
+}
+const BGM_GAIN = .14;
+let WAKE = null;   // keep the display awake while a film plays or exports (Screen Wake Lock); released when it stops
+const wakeOn = async () => { try { if (navigator.wakeLock && !WAKE) { WAKE = await navigator.wakeLock.request('screen'); WAKE.addEventListener('release', () => { WAKE = null; }); } } catch (e) {} }, wakeOff = () => { try { if (WAKE) WAKE.release(); } catch (e) {} WAKE = null; };
+document.addEventListener('visibilitychange', () => { if (FILM.on && document.visibilityState === 'visible') wakeOn(); });
+async function filmExport() {   // frame-by-frame export: every frame is rendered and encoded in turn, so the film is smooth however slow the machine is
+  if (FILM.on) return; const st = $('fmStat'), say = m => { st.textContent = m; };
+  if (!window.VideoEncoder || !window.VideoFrame) { say('这个浏览器不支持逐帧导出，请用最新版 Chrome，或改用“实时录制”。'); return; }
+  if (!window.Mp4Muxer) { try { await new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'mp4mux.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); }); } catch (e) { say('没有找到 mp4mux.js，无法逐帧导出。'); return; } }
+  if (ED.on) edToggle(false); filmCanvas(); say('正在准备…'); await filmAudio();
+  const FPS = 30, W = 1920, H = 1080, SR = 48000, total = Math.min(filmTotal, FILM.maxT || 1e9), NF = Math.floor(total * FPS);
+  let vc = null; for (const [codec, mux] of [['avc1.640028', 'avc'], ['avc1.4d0028', 'avc'], ['avc1.42e028', 'avc'], ['vp09.00.40.08', 'vp9']]) { const cfg = { codec, width: W, height: H, bitrate: 9e6, framerate: FPS }; try { if ((await VideoEncoder.isConfigSupported(cfg)).supported) { vc = [cfg, mux]; break; } } catch (e) {} }
+  if (!vc) { say('这个浏览器没有可用的视频编码器，请改用“实时录制”。'); return; }
+  let mix = null; const nClips = Object.keys(FILM.clips).length;
+  if (nClips || FILM.bgm) { const oc = new OfflineAudioContext(2, Math.ceil(total * SR), SR);
+    SHOTS.forEach(s => { const c = FILM.clips[s.n]; if (!c || s.t0 + .3 >= total) return; const src = oc.createBufferSource(); src.buffer = c; src.connect(oc.destination); src.start(s.t0 + .3); });
+    if (FILM.bgm) { const b = oc.createBufferSource(), gn = oc.createGain(); b.buffer = FILM.bgm; b.loop = true; gn.gain.setValueAtTime(0, 0); gn.gain.linearRampToValueAtTime(BGM_GAIN, Math.min(2, total / 2)); gn.gain.setValueAtTime(BGM_GAIN, Math.max(total / 2, total - 3)); gn.gain.linearRampToValueAtTime(0, total); b.connect(gn); gn.connect(oc.destination); b.start(0); }
+    mix = await oc.startRendering(); }
+  let ac = null; if (mix && window.AudioEncoder) for (const [codec, mux] of [['mp4a.40.2', 'aac'], ['opus', 'opus']]) { const cfg = { codec, sampleRate: SR, numberOfChannels: 2, bitrate: 160000 }; try { if ((await AudioEncoder.isConfigSupported(cfg)).supported) { ac = [cfg, mux]; break; } } catch (e) {} }
+  const target = new Mp4Muxer.ArrayBufferTarget(), mo = { target, video: { codec: vc[1], width: W, height: H, frameRate: FPS }, fastStart: false, firstTimestampBehavior: 'offset' }; if (ac) mo.audio = { codec: ac[1], numberOfChannels: 2, sampleRate: SR };
+  const muxer = new Mp4Muxer.Muxer(mo); let err = null; const ve = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => { err = e; } }); ve.configure(vc[0]);
+  const tick = () => new Promise(r => { const ch = new MessageChannel(); ch.port1.onmessage = () => r(); ch.port2.postMessage(0); }), mmss = x => Math.floor(x / 60) + ':' + String(Math.floor(x % 60)).padStart(2, '0');
+  setMode('tour'); tween = null; controls.enabled = false; FILM.comp.hidden = false; FILM.i = -1; FILM.on = true; wakeOn(); FILM.off = true; FILM.statT = Infinity; FILM.note = '逐帧导出';
+  $('fmPlay').disabled = $('fmRec').disabled = $('fmExp').disabled = true; $('fmStop').disabled = false; $('fmSave').hidden = true; await tick();
+  const base = performance.now(), wall = base; FILM.t0 = base; last = base - 1000 / FPS; let done = 0;
+  for (let i = 0; i < NF && FILM.on && !err; i++) { step(base + i * 1000 / FPS); if (!FILM.on) break;
+    const f = new VideoFrame(FILM.comp, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) }); ve.encode(f, { keyFrame: i % 60 === 0 }); f.close(); done = i + 1;
+    while (ve.encodeQueueSize > 6) await tick();
+    if (i % 2 === 0) { const el = (performance.now() - wall) / 1000; say(`逐帧导出中：${mmss(i / FPS)} / ${mmss(total)}（${(i / NF * 100).toFixed(0)}%），已用 ${mmss(el)}，预计还需 ${mmss(el / (i + 1) * (NF - i - 1))}`); await tick(); } }
+  const stopped = done < NF; if (FILM.on) filmStop(true); FILM.off = false; FILM.statT = 0;
+  try { await ve.flush(); ve.close();
+    if (ac && mix && !err) { say('正在合成配音…'); const ae = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: e => { err = e; } }); ae.configure(ac[0]);
+      const N = Math.min(mix.length, Math.round(done / FPS * SR)), CH = 4800, L = mix.getChannelData(0), R = mix.numberOfChannels > 1 ? mix.getChannelData(1) : L;
+      for (let o = 0; o < N; o += CH) { const n = Math.min(CH, N - o), d = new Float32Array(n * 2); d.set(L.subarray(o, o + n), 0); d.set(R.subarray(o, o + n), n);
+        const ad = new AudioData({ format: 'f32-planar', sampleRate: SR, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round(o / SR * 1e6), data: d }); ae.encode(ad); ad.close(); if (ae.encodeQueueSize > 20) await tick(); }
+      await ae.flush(); ae.close(); }
+    if (err) throw err; muxer.finalize();
+    const blob = new Blob([target.buffer], { type: 'video/mp4' }), a = $('fmSave'); a.href = URL.createObjectURL(blob); a.download = '木构博物馆-导览.mp4'; a.textContent = `保存视频（${(blob.size / 1e6).toFixed(0)} MB）`; a.hidden = false; try { a.click(); } catch (e) {}
+    FILM.lastExport = { bytes: blob.size, frames: done, video: vc[0].codec, audio: ac ? ac[0].codec : null };
+    say(`${stopped ? '已提前停止，导出了前 ' + mmss(done / FPS) : '导出完成'}：${done} 帧，${ac ? '含配音' : mix ? '这个浏览器不能编码音频，视频没有声音' : '没有配音文件'}。没有自动下载的话，点上面的“保存视频”。`);
+  } catch (e) { console.error(e); say('导出失败：' + (e && e.message || e)); }
+}
+function filmStop(done) { if (!FILM.on) return; FILM.on = false; wakeOff(); FILM.off = false; FILM.statT = 0; if (FILM.bgmSrc) { try { FILM.bgmSrc.stop(); } catch (e) {} FILM.bgmSrc = null; } controls.enabled = true; FILM.comp.hidden = true; if (FILM.src) { try { FILM.src.stop(); } catch (e) {} FILM.src = null; }
+  FILM.opened.forEach(ex => { ex.on = false; ex.focus = null; if (ex.hotSprites) ex.hotSprites.forEach(q => { q.visible = !!ex.hotOn; }); }); FILM.opened = []; setMode('ext'); $('fmPlay').disabled = $('fmRec').disabled = $('fmExp').disabled = false; $('fmStop').disabled = true;
+  if (FILM.rec) { const r = FILM.rec; FILM.rec = null; if (r.state !== 'inactive') r.stop(); } else $('fmStat').textContent = done ? '播放完毕' : '已停止'; }
+function filmCamera(now) {
+  tween = null; const t = FILM.pin != null ? FILM.pin : Math.max(0, (now - FILM.t0) / 1000); if (t >= filmTotal) { filmStop(true); return; }
+  const s = SHOTS.find(q => t < q.t0 + q.dur); FILM.t = t; FILM.s = s;
+  if (s.n - 1 !== FILM.i) { FILM.i = s.n - 1; FILM.opened.forEach(ex => { ex.on = false; ex.focus = null; if (ex.hotSprites) ex.hotSprites.forEach(q => { q.visible = !!ex.hotOn; }); }); FILM.opened = [];
+    s.open.forEach(id => { const [eid, hi] = id.split('#'), ex = EXH.find(e => e.id === eid); if (!ex) return; if (hi != null) { ex.on = false; ex.focus = +hi; if (ex.hotSprites) ex.hotSprites.forEach(q => { q.visible = true; }); } else ex.on = true; FILM.opened.push(ex); });
+    if (FILM.src) { try { FILM.src.stop(); } catch (e) {} FILM.src = null; }
+    if (FILM.clips[s.n] && !FILM.off) { const src = FILM.ac.createBufferSource(); src.buffer = FILM.clips[s.n]; src.connect(FILM.ac.destination); src.connect(FILM.dest); src.start(FILM.ac.currentTime + .3); FILM.src = src; } }
+  const k = Math.min(1, (t - s.t0) / s.dur), e = k * k * (3 - 2 * k), L = (a, b) => a + (b - a) * e;
+  camera.position.set(L(s.a[0][0], s.b[0][0]), L(s.a[0][1], s.b[0][1]), L(s.a[0][2], s.b[0][2])); FILM.tgt.set(L(s.a[1][0], s.b[1][0]), L(s.a[1][1], s.b[1][1]), L(s.a[1][2], s.b[1][2]));
+  if (camera.fov !== 46) { camera.fov = 46; camera.updateProjectionMatrix(); } camera.lookAt(FILM.tgt); controls.target.copy(FILM.tgt);
+}
+function filmFrame() {
+  const g = FILM.g, W = 1920, H = 1080, s = FILM.s; if (!s || !FILM.on) return; const cw = canvas.width, ch = canvas.height, k = Math.max(W / cw, H / ch), dw = cw * k, dh = ch * k;
+  g.drawImage(canvas, (W - dw) / 2, (H - dh) / 2, dw, dh); const t = FILM.t - s.t0; g.textBaseline = 'middle';
+  if ($('fmTag').checked) { const label = `镜 ${String(s.n).padStart(2, '0')}　${s.place}　${s.scale}`; g.font = '600 30px "Noto Serif SC","Songti SC",serif'; const tw = g.measureText(label).width;
+    g.fillStyle = 'rgba(219,208,182,.92)'; g.fillRect(40, 40, tw + 48, 58); g.strokeStyle = 'rgba(42,34,27,.6)'; g.lineWidth = 2; g.strokeRect(40, 40, tw + 48, 58); g.fillStyle = '#2a221b'; g.textAlign = 'left'; g.fillText(label, 64, 70); }
+  if ($('fmMap').checked && FILM.map) { const mh = 430, mw = Math.round(mh * 120 / 255), mx = W - mw - 40, my = 40; g.fillStyle = 'rgba(219,208,182,.92)'; g.fillRect(mx - 6, my - 6, mw + 12, mh + 12); g.drawImage(FILM.map, mx, my, mw, mh); g.strokeStyle = 'rgba(42,34,27,.7)'; g.lineWidth = 2; g.strokeRect(mx - 6, my - 6, mw + 12, mh + 12);
+    const px = v => mx + (v + 60) / 120 * mw, pz = v => my + (v + 150) / 255 * mh, cx = Math.max(mx, Math.min(mx + mw, px(camera.position.x))), cy = Math.max(my, Math.min(my + mh, pz(camera.position.z))), a = Math.atan2(FILM.tgt.z - camera.position.z, FILM.tgt.x - camera.position.x);
+    g.fillStyle = 'rgba(163,50,31,.38)'; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, 58, a - .42, a + .42); g.closePath(); g.fill(); g.fillStyle = '#a3321f'; g.beginPath(); g.arc(cx, cy, 8, 0, 7); g.fill(); g.strokeStyle = '#fff8ea'; g.lineWidth = 2.5; g.stroke(); }
+  if ($('fmSub').checked && s.subs.length) {   // subtitles: serif type in warm white with an ink edge, over a soft ink wash at the foot of the picture; gilt rules and a vermilion lozenge either side
+    const cl = x => Math.max(0, Math.min(1, x)), s0 = s.subs[0][0], s1 = s.subs[s.subs.length - 1][1], band = cl(Math.min((t - s0) / .4, (s1 - t) / .4)), seg = s.subs.find(q => t >= q[0] && t < q[1]);
+    if (band > 0) { const gr = g.createLinearGradient(0, H - 250, 0, H); gr.addColorStop(0, 'rgba(34,26,18,0)'); gr.addColorStop(.55, `rgba(34,26,18,${.3 * band})`); gr.addColorStop(1, `rgba(34,26,18,${.58 * band})`); g.fillStyle = gr; g.fillRect(0, H - 250, W, 250); }
+    if (seg) { g.save(); g.globalAlpha = cl(Math.min((t - seg[0]) / .18, (seg[1] - t) / .18)); g.font = '600 48px "Noto Serif SC","Songti SC","STSong",serif'; try { g.letterSpacing = '5px'; } catch (e) {} g.textAlign = 'center'; const tw = g.measureText(seg[2]).width, y = H - 98;
+      g.lineJoin = 'round'; g.strokeStyle = 'rgba(34,26,18,.85)'; g.lineWidth = 7; g.shadowColor = 'rgba(20,14,8,.6)'; g.shadowBlur = 14; g.strokeText(seg[2], W / 2, y); g.shadowBlur = 0; g.shadowColor = 'transparent'; g.fillStyle = '#fbf3df'; g.fillText(seg[2], W / 2, y);
+      for (const e of [-1, 1]) { const x0 = W / 2 + e * (tw / 2 + 36); g.strokeStyle = 'rgba(214,178,96,.92)'; g.lineWidth = 2; g.beginPath(); g.moveTo(x0, y + 2); g.lineTo(x0 + e * 44, y + 2); g.stroke(); g.fillStyle = '#b23a26'; g.save(); g.translate(x0 + e * 58, y + 2); g.rotate(Math.PI / 4); g.fillRect(-5, -5, 10, 10); g.restore(); }
+      try { g.letterSpacing = '0px'; } catch (e) {} g.restore(); g.textAlign = 'left'; } }
+  g.textBaseline = 'top'; if (!FILM.statT || performance.now() - FILM.statT > 400) { FILM.statT = performance.now(); const m = x => Math.floor(x / 60) + ':' + String(Math.floor(x % 60)).padStart(2, '0'); $('fmStat').textContent = `${FILM.note}　镜 ${s.n}/${SHOTS.length}　${m(FILM.t)} / ${m(filmTotal)}`; }
+}
+function filmToggle(v) { $('fmPanel').hidden = !v; if (!v) filmStop(false); else { $('fmN').textContent = SHOTS.length; $('fmLen').textContent = `${Math.floor(filmTotal / 60)} 分 ${Math.round(filmTotal % 60)} 秒`; } }
+$('fmPlay').addEventListener('click', () => filmStart(false)); $('fmRec').addEventListener('click', () => filmStart(true)); $('fmExp').addEventListener('click', () => filmExport()); $('fmStop').addEventListener('click', () => filmStop(false)); $('fmClose').addEventListener('click', () => filmToggle(false));
+window.addEventListener('keydown', e => { if (e.ctrlKey && e.shiftKey && e.code === 'KeyV') { filmToggle($('fmPanel').hidden); e.preventDefault(); } });
+window.addEventListener('hashchange', () => { if (location.hash === '#film') filmToggle(true); }); if (location.hash === '#film') setTimeout(() => filmToggle(true), 0);
+window.__t = { FILM, SHOTS, filmStart, filmExport, filmStop, filmToggle, ED, edSelect, edChange, renderer, sun, hemi, routeLine, arrows, fangTex, ink: () => ink, EXH, setMode, setTime, goTour, aim, camera, controls, scene, walker, floorAt, walkUpdate, cast, getTri: () => TRI, GRID, dbg: () => ({ n: TRI && TRI.length, cells: GRID.size, s: TRI && Array.from(TRI.slice(0, 9)) }) };
 
 function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false);
   if (composer) { const pr = renderer.getPixelRatio(); composer.setPixelRatio(pr); composer.setSize(w, h); normalRT.setSize(Math.round(w * pr), Math.round(h * pr));
@@ -2906,12 +3362,14 @@ function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; if (!
 window.addEventListener('resize', resize); if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas); resize();
 const v = new THREE.Vector3();
 let last = performance.now();
-function loop(now) {
-  if (!sceneReady) { requestAnimationFrame(loop); return; }   // nothing to draw behind the loading screen
+function loop(now) { if (sceneReady && !FILM.off) step(now); requestAnimationFrame(loop); }   // nothing to draw behind the loading screen; the frame-by-frame export drives step() itself
+function step(now) {
+  if (ED.box) ED.box.update();
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   if (tween) { const k = Math.min(1, (now - tween.s) / tween.d), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
     camera.position.lerpVectors(tween.p0, tween.p1, e); controls.target.lerpVectors(tween.t0, tween.t1, e); if (k >= 1) tween = null; }
   if (mode === 'walk') walkUpdate(dt); else controls.update();
+  if (FILM.on) filmCamera(now);
   sky.position.copy(camera.position); WATER_U.uT.value = now * .001;
   if (!reduce) cloudGroup.children.forEach(sp => { sp.userData.a += dt * .0025; sp.position.x = Math.cos(sp.userData.a) * sp.userData.r; sp.position.z = Math.sin(sp.userData.a) * sp.userData.r - 20; });
   animateExhibits(dt, now); updateStage(dt); SWAY.forEach(([m, i]) => { m.rotation.x = Math.sin(now * .0006 + i * 1.7) * .03; });
@@ -2922,10 +3380,10 @@ function loop(now) {
     scene.overrideMaterial = null; sky.visible = cloudGroup.visible = true; spotFX.visible = fxv; NUMS.forEach(n => n.visible = true); renderer.setRenderTarget(null); renderer.shadowMap.needsUpdate = true;
     composer.render();
   } else renderer.render(scene, camera);
+  if (FILM.on) filmFrame(now);
   const w = canvas.clientWidth, h = canvas.clientHeight, show = mode === 'cut';
   LABELS.forEach(L => { if (!show) { L.el.hidden = true; return; } v.copy(L.p).project(camera); L.el.hidden = v.z > 1;
     L.el.style.left = ((v.x + 1) / 2 * w) + 'px'; L.el.style.top = ((1 - v.y) / 2 * h) + 'px'; });
-  requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 })();

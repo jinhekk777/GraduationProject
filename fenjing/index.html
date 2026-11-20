@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html,body{margin:0}img{max-width:100%}</style>
+<title>导览视频分镜</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column; every section is a figure drawn over the model's own plan, then a short table */
+:root{--paper:#ece4d2;--card:#f5efe1;--ink:#2a221b;--ink2:#5b4f43;--line:rgba(42,34,27,.22);--qing:#2b6a72;--zhu:#a3321f;--amber:#b9791f;--moss:#4f6f37;--grey:#6b6257;
+  --display:"Songti SC","Noto Serif SC","STSong","SimSun",serif;--body:"PingFang SC","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;color-scheme:light}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:56px}
+header.cover{display:flex;flex-direction:column;gap:18px}
+.cover img{width:100%;height:auto;display:block;border:1px solid var(--ink)}
+.cover h1{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(34px,7vw,56px);letter-spacing:.16em;line-height:1.25;text-wrap:balance}
+.cover p{margin:0;color:var(--ink2)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:14px;color:var(--ink2);border-top:1px solid var(--line);padding-top:12px}
+section{display:flex;flex-direction:column;gap:18px}
+h2{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(24px,4.6vw,32px);letter-spacing:.1em;line-height:1.4;display:flex;align-items:baseline;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:8px;text-wrap:balance}
+h2 .no{font-size:.62em;letter-spacing:.2em;color:var(--qing);white-space:nowrap}
+h3{margin:6px 0 0;font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.08em}
+p{margin:0;max-width:40em}
+.lead{font-family:var(--display);font-size:19px;line-height:1.8}
+figure{margin:0;display:flex;flex-direction:column;gap:8px}
+figure svg,figure img{display:block;width:100%;height:auto;background:var(--card);border:1px solid var(--ink)}
+figcaption{font-size:13.5px;color:var(--ink2);line-height:1.7}
+.plan{max-width:560px;margin:0 auto;width:100%}
+.wide{overflow-x:auto;border:1px solid var(--ink);background:var(--card)}
+.wide svg{min-width:720px;border:0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:14px}
+.tbl{overflow-x:auto;border:1px solid var(--line);background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.6}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--display);font-weight:700;letter-spacing:.06em;white-space:nowrap;background:rgba(42,34,27,.05)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tr.sum td{font-weight:600;border-top:2px solid var(--ink)}
+.key{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13.5px;color:var(--ink2)}
+.key span{display:inline-flex;align-items:center;gap:7px}
+.key i{width:14px;height:14px;display:inline-block;border:1px solid var(--ink)}
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px}
+.sw div{display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.5;min-width:0}
+.sw i{display:block;height:64px;border:1px solid var(--ink)}
+.sw img{display:block;width:100%;aspect-ratio:1.6;object-fit:cover;border:1px solid var(--ink)}
+.sw b{font-family:var(--display);font-size:15px}
+.sw code{font:12px/1.4 ui-monospace,Menlo,monospace;color:var(--ink2)}
+ul{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px;max-width:40em}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:18px}
+.cols > div{background:var(--card);border:1px solid var(--line);padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.cols h3{margin:0}
+.note{font-size:14px;color:var(--ink2);border-left:3px solid var(--qing);padding:2px 0 2px 12px;max-width:42em}
+a{color:var(--qing)}
+footer{font-size:13px;color:var(--ink2);border-top:1px solid var(--line);padding-top:14px}
+svg text{font-family:var(--body)}
+
+.wrap{max-width:1080px}
+.planbox{display:grid;grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:28px;align-items:start}
+.planbox figure svg{border:1px solid var(--ink)}
+.mk{cursor:pointer}.mk circle,.mk path{transition:opacity .15s}
+.mk.hot circle:last-of-type{stroke:#b9791f;stroke-width:10}
+.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:18px}
+.shot{background:var(--card);border:1px solid var(--line);display:flex;flex-direction:column;min-width:0;scroll-margin-top:16px}
+.shot.main{border-color:var(--zhu);box-shadow:inset 0 3px 0 var(--zhu)}
+.shot:target,.shot.hot{outline:3px solid var(--amber);outline-offset:2px}
+.shot img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#cfc5b0}
+.sh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 9px;padding:11px 14px 0}
+.num{font-family:var(--display);font-weight:700;font-size:22px;font-variant-numeric:tabular-nums;color:var(--zhu)}
+.sh b{font-family:var(--display);font-size:17px;letter-spacing:.05em}
+.tag{font-size:12.5px;border:1px solid var(--ink);padding:0 7px;line-height:1.7;white-space:nowrap}
+.tag.key{background:var(--zhu);border-color:var(--zhu);color:#fff8ea}
+.tm{margin-left:auto;font-size:13px;color:var(--ink2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.shot p{padding:0 14px;font-size:14.5px;line-height:1.75}
+.shot .mv{color:var(--qing);padding-top:6px;font-size:13.5px}
+.shot .say{padding-bottom:14px;padding-top:4px}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.stat div{background:var(--card);border:1px solid var(--line);padding:12px 14px}
+.stat b{display:block;font-family:var(--display);font-size:28px;line-height:1.3;font-variant-numeric:tabular-nums}
+.stat span{font-size:13.5px;color:var(--ink2)}
+@media (max-width:820px){.planbox{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+<header class="cover">
+  <h1>木构博物馆<br>导览视频分镜</h1>
+  <p class="lead">一条流线，一遍走完：视频里的每个镜头，都能在平面图上找到它的机位和朝向。</p>
+  <div class="meta"><span>2026 年 11 月</span><span>在线漫游：<a href="https://sunmaomuseum.cn/">sunmaomuseum.cn</a></span></div>
+</header>
+<section>
+  <h2><span class="no">一</span>全片结构</h2>
+  <div class="stat"><div><b>5:13</b><span>全片时长</span></div><div><b>30</b><span>镜头数</span></div><div><b>14</b><span>重点镜头，共 165 秒</span></div><div><b>16</b><span>过场镜头，共 148 秒</span></div></div>
+  <p>镜头顺序就是参观顺序：从南面山门进，沿中轴到主殿，出主殿向西顺时针绕一圈，最后回到山门。重点镜头给时间、给特写、把展品拆开讲；过场镜头只交代“走到哪了”。</p>
+  <div class="tbl"><table><thead><tr><th>段落</th><th>讲什么</th><th class="n">镜头</th><th class="n">时间</th><th class="n">时长</th><th>重点镜头</th></tr></thead><tbody><tr><td><b>开场</b></td><td>院外看全貌，从山门进院</td><td class="n">镜 1–3</td><td class="n">0:00–0:32</td><td class="n">32 秒</td><td>镜 1</td></tr><tr><td><b>前院</b></td><td>沿中轴走向主殿，抬头看檐下斗拱</td><td class="n">镜 4–6</td><td class="n">0:32–1:09</td><td class="n">37 秒</td><td>镜 5、镜 6</td></tr><tr><td><b>主殿</b></td><td>序厅烫样，中庭一组拆开的唐代斗拱</td><td class="n">镜 7–10</td><td class="n">1:09–1:50</td><td class="n">41 秒</td><td>镜 8、镜 9</td></tr><tr><td><b>西配殿</b></td><td>展厅一、二：器物里的榫卯，圆点拆开局部</td><td class="n">镜 11–15</td><td class="n">1:50–2:50</td><td class="n">59 秒</td><td>镜 12、镜 13、镜 14</td></tr><tr><td><b>后殿</b></td><td>展厅三：家具</td><td class="n">镜 16–18</td><td class="n">2:50–3:17</td><td class="n">27 秒</td><td>镜 17</td></tr><tr><td><b>北院</b></td><td>木塔、展厅四的斗拱与屋架、塔内、廊桥</td><td class="n">镜 19–26</td><td class="n">3:17–4:30</td><td class="n">74 秒</td><td>镜 19、镜 20、镜 22、镜 24</td></tr><tr><td><b>东侧回程</b></td><td>展厅五、工坊、尾厅</td><td class="n">镜 27–29</td><td class="n">4:30–5:03</td><td class="n">32 秒</td><td>—</td></tr><tr><td><b>收尾</b></td><td>退到院外，回看整座院落</td><td class="n">镜 30</td><td class="n">5:03–5:13</td><td class="n">10 秒</td><td>镜 30</td></tr></tbody></table></div>
+</section>
+<section>
+  <h2><span class="no">二</span>机位图</h2>
+  <div class="planbox">
+    <figure><svg viewBox="0 0 1200 2550" role="img" aria-label="机位图：平面图上标出 30 个镜头的机位、朝向和参观流线">
+<defs><marker id="ahm" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a3321f"/></marker><marker id="ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#2a221b"/></marker></defs>
+<image href="img/plan.jpg" width="1200" height="2550"/><rect width="1200" height="2550" fill="#f5efe1" opacity=".28"/>
+<polyline points="600,2360 600,2160 525,2135 590,2100 600,1850 600,1740 600,1625 600,1531 600,1480 295,1480 295,1606 305,1760 190,1750 190,1670 190,1607 190,1480 190,1210 480,1210 600,1210 600,1130 480,1020 400,860 280,860 400,860 510,840 600,840 600,770 600,640 600,240 600,640 715,660 715,800 800,860 920,860 910,1000 910,1210 1010,1210 1010,1480 1010,1607 1010,1670 1010,1750 940,1760 895,1760 895,2140 684,2140 600,2160 600,2360" fill="none" stroke="#2b6a72" stroke-width="7" stroke-dasharray="4 14" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
+<a href="#s01" class="mk" data-n="1"><title>镜 01 院外东南上空</title><path d="M1166 2516 L1079 2478 A95 95 0 0 1 1178 2422 Z" fill="#a3321f" opacity=".3"/><circle cx="1166" cy="2516" r="8" fill="#a3321f"/><circle cx="1166" cy="2516" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="1166" y="2517" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">1</text></a>
+<a href="#s02" class="mk" data-n="2"><title>镜 02 山门外</title><path d="M500 2490 L468 2401 A95 95 0 0 1 576 2434 Z" fill="#2a221b" opacity=".3"/><line x1="500" y1="2490" x2="550" y2="2380" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><circle cx="500" cy="2490" r="8" fill="#2a221b"/><circle cx="487" cy="2516" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="487" y="2517" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">2</text></a>
+<a href="#s03" class="mk" data-n="3"><title>镜 03 山门前</title><path d="M574 2265 L560 2171 A95 95 0 0 1 660 2225 Z" fill="#2a221b" opacity=".3"/><line x1="574" y1="2265" x2="622" y2="2260" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="574" y1="2265" x2="553" y2="2304" stroke="#2a221b" stroke-width="2.5"/><circle cx="574" cy="2265" r="8" fill="#2a221b"/><circle cx="553" cy="2304" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="553" y="2305" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">3</text></a>
+<a href="#s04" class="mk" data-n="4"><title>镜 04 前院南端</title><path d="M670 2080 L602 2013 A95 95 0 0 1 715 1996 Z" fill="#2a221b" opacity=".3"/><line x1="670" y1="2080" x2="610" y2="1960" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="670" y1="2080" x2="677" y2="2123" stroke="#2a221b" stroke-width="2.5"/><circle cx="670" cy="2080" r="8" fill="#2a221b"/><circle cx="677" cy="2123" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="677" y="2124" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">4</text></a>
+<a href="#s05" class="mk" data-n="5"><title>镜 05 前院中轴</title><path d="M600 1900 L543 1824 A95 95 0 0 1 657 1824 Z" fill="#a3321f" opacity=".3"/><line x1="600" y1="1900" x2="600" y2="1870" stroke="#a3321f" stroke-width="5" marker-end="url(#ahm)"/><line x1="600" y1="1900" x2="600" y2="1944" stroke="#a3321f" stroke-width="2.5"/><circle cx="600" cy="1900" r="8" fill="#a3321f"/><circle cx="600" cy="1944" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="600" y="1945" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">5</text></a>
+<a href="#s06" class="mk" data-n="6"><title>镜 06 主殿檐下</title><path d="M730 1770 L641 1738 A95 95 0 0 1 735 1675 Z" fill="#a3321f" opacity=".3"/><line x1="730" y1="1770" x2="550" y2="1765" stroke="#a3321f" stroke-width="5" marker-end="url(#ahm)"/><line x1="730" y1="1770" x2="754" y2="1807" stroke="#a3321f" stroke-width="2.5"/><circle cx="730" cy="1770" r="8" fill="#a3321f"/><circle cx="754" cy="1807" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="754" y="1808" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">6</text></a>
+<a href="#s07" class="mk" data-n="7"><title>镜 07 序厅</title><path d="M626 1662 L536 1632 A95 95 0 0 1 629 1567 Z" fill="#2a221b" opacity=".3"/><line x1="626" y1="1662" x2="576" y2="1656" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="626" y1="1662" x2="651" y2="1698" stroke="#2a221b" stroke-width="2.5"/><circle cx="626" cy="1662" r="8" fill="#2a221b"/><circle cx="651" cy="1698" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="651" y="1699" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">7</text></a>
+<a href="#s08" class="mk" data-n="8"><title>镜 08 中庭东北角</title><path d="M710 1460 L671 1547 A95 95 0 0 1 616 1448 Z" fill="#a3321f" opacity=".3"/><line x1="710" y1="1460" x2="695" y2="1564" stroke="#a3321f" stroke-width="5" marker-end="url(#ahm)"/><line x1="710" y1="1460" x2="759" y2="1437" stroke="#a3321f" stroke-width="2.5"/><circle cx="710" cy="1460" r="8" fill="#a3321f"/><circle cx="759" cy="1437" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="759" y="1438" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">8</text></a>
+<a href="#s09" class="mk" data-n="9"><title>镜 09 中庭斗拱旁</title><path d="M670 1474 L636 1563 A95 95 0 0 1 575 1467 Z" fill="#a3321f" opacity=".3"/><line x1="670" y1="1474" x2="540" y2="1480" stroke="#a3321f" stroke-width="5" marker-end="url(#ahm)"/><circle cx="670" cy="1474" r="8" fill="#a3321f"/><circle cx="699" cy="1466" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="699" y="1467" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">9</text></a>
+<a href="#s10" class="mk" data-n="10"><title>镜 10 中庭北侧</title><path d="M675 1445 L661 1539 A95 95 0 0 1 581 1459 Z" fill="#2a221b" opacity=".3"/><line x1="675" y1="1445" x2="704" y2="1400" stroke="#2a221b" stroke-width="2.5"/><circle cx="675" cy="1445" r="8" fill="#2a221b"/><circle cx="704" cy="1400" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="704" y="1401" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">10</text></a>
+<a href="#s11" class="mk" data-n="11"><title>镜 11 展厅一入口</title><path d="M246 1806 L155 1780 A95 95 0 0 1 245 1711 Z" fill="#2a221b" opacity=".3"/><line x1="246" y1="1806" x2="236" y2="1776" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="246" y1="1806" x2="273" y2="1850" stroke="#2a221b" stroke-width="2.5"/><circle cx="246" cy="1806" r="8" fill="#2a221b"/><circle cx="273" cy="1850" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="273" y="1851" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">11</text></a>
+<a href="#s12" class="mk" data-n="12"><title>镜 12 展厅一中央</title><path d="M236 1768 L141 1775 A95 95 0 0 1 202 1679 Z" fill="#a3321f" opacity=".3"/><line x1="236" y1="1768" x2="232" y2="1724" stroke="#a3321f" stroke-width="5" marker-end="url(#ahm)"/><line x1="236" y1="1768" x2="273" y2="1783" stroke="#a3321f" stroke-width="2.5"/><circle cx="236" cy="1768" r="8" fill="#a3321f"/><circle cx="273" cy="1783" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="273" y="1784" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">12</text></a>
+<a href="#s13" class="mk" data-n="13"><title>镜 13 展厅一南墙</title><path d="M186 1762 L206 1855 A95 95 0 0 1 103 1808 Z" fill="#a3321f" opacity=".3"/><line x1="186" y1="1762" x2="154" y2="1766" stroke="#a3321f" stroke-width="5" marker-end="url(#ahm)"/><line x1="186" y1="1762" x2="204" y2="1722" stroke="#a3321f" stroke-width="2.5"/><circle cx="186" cy="1762" r="8" fill="#a3321f"/><circle cx="204" cy="1722" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="204" y="1723" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">13</text></a>
+<a href="#s14" class="mk" data-n="14"><title>镜 14 展厅二中央</title><path d="M235 1628 L141 1642 A95 95 0 0 1 195 1542 Z" fill="#a3321f" opacity=".3"/><line x1="235" y1="1628" x2="226" y2="1584" stroke="#a3321f" stroke-width="5" marker-end="url(#ahm)"/><line x1="235" y1="1628" x2="274" y2="1649" stroke="#a3321f" stroke-width="2.5"/><circle cx="235" cy="1628" r="8" fill="#a3321f"/><circle cx="274" cy="1649" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="274" y="1650" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">14</text></a>
+<a href="#s15" class="mk" data-n="15"><title>镜 15 展厅二北墙</title><path d="M194 1622 L171 1530 A95 95 0 0 1 276 1574 Z" fill="#2a221b" opacity=".3"/><line x1="194" y1="1622" x2="206" y2="1604" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="194" y1="1622" x2="177" y2="1662" stroke="#2a221b" stroke-width="2.5"/><circle cx="194" cy="1622" r="8" fill="#2a221b"/><circle cx="177" cy="1662" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="177" y="1663" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">15</text></a>
+<a href="#s16" class="mk" data-n="16"><title>镜 16 展厅三东北角</title><path d="M696 1170 L653 1255 A95 95 0 0 1 602 1153 Z" fill="#2a221b" opacity=".3"/><line x1="696" y1="1170" x2="674" y2="1176" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="696" y1="1170" x2="735" y2="1150" stroke="#2a221b" stroke-width="2.5"/><circle cx="696" cy="1170" r="8" fill="#2a221b"/><circle cx="735" cy="1150" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="735" y="1151" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">16</text></a>
+<a href="#s17" class="mk" data-n="17"><title>镜 17 展厅三西侧</title><path d="M570 1240 L479 1213 A95 95 0 0 1 570 1145 Z" fill="#a3321f" opacity=".3"/><line x1="570" y1="1240" x2="518" y2="1236" stroke="#a3321f" stroke-width="5" marker-end="url(#ahm)"/><line x1="570" y1="1240" x2="596" y2="1275" stroke="#a3321f" stroke-width="2.5"/><circle cx="570" cy="1240" r="8" fill="#a3321f"/><circle cx="596" cy="1275" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="596" y="1276" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">17</text></a>
+<a href="#s18" class="mk" data-n="18"><title>镜 18 展厅三东侧</title><path d="M688 1240 L595 1219 A95 95 0 0 1 681 1145 Z" fill="#2a221b" opacity=".3"/><line x1="688" y1="1240" x2="634" y2="1238" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="688" y1="1240" x2="717" y2="1273" stroke="#2a221b" stroke-width="2.5"/><circle cx="688" cy="1240" r="8" fill="#2a221b"/><circle cx="717" cy="1273" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="717" y="1274" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">18</text></a>
+<a href="#s19" class="mk" data-n="19"><title>镜 19 北院南侧</title><path d="M300 1240 L300 1145 A95 95 0 0 1 391 1213 Z" fill="#a3321f" opacity=".3"/><line x1="300" y1="1240" x2="274" y2="1275" stroke="#a3321f" stroke-width="2.5"/><circle cx="300" cy="1240" r="8" fill="#a3321f"/><circle cx="274" cy="1275" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="274" y="1276" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">19</text></a>
+<a href="#s20" class="mk" data-n="20"><title>镜 20 木塔脚下</title><path d="M730 1000 L638 977 A95 95 0 0 1 726 905 Z" fill="#a3321f" opacity=".3"/><line x1="730" y1="1000" x2="753" y2="1035" stroke="#a3321f" stroke-width="2.5"/><circle cx="730" cy="1000" r="8" fill="#a3321f"/><circle cx="753" cy="1035" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="753" y="1036" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">20</text></a>
+<a href="#s21" class="mk" data-n="21"><title>镜 21 展厅四入口</title><path d="M364 991 L274 960 A95 95 0 0 1 368 896 Z" fill="#2a221b" opacity=".3"/><line x1="364" y1="991" x2="356" y2="970" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="364" y1="991" x2="396" y2="1040" stroke="#2a221b" stroke-width="2.5"/><circle cx="364" cy="991" r="8" fill="#2a221b"/><circle cx="396" cy="1040" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="396" y="1041" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">21</text></a>
+<a href="#s22" class="mk" data-n="22"><title>镜 22 展厅四南圆台</title><path d="M334 970 L239 970 A95 95 0 0 1 307 879 Z" fill="#a3321f" opacity=".3"/><line x1="334" y1="970" x2="330" y2="890" stroke="#a3321f" stroke-width="5" marker-end="url(#ahm)"/><circle cx="334" cy="970" r="8" fill="#a3321f"/><circle cx="362" cy="984" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="362" y="985" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">22</text></a>
+<a href="#s23" class="mk" data-n="23"><title>镜 23 展厅四北侧</title><path d="M324 838 L231 820 A95 95 0 0 1 314 743 Z" fill="#2a221b" opacity=".3"/><line x1="324" y1="838" x2="254" y2="824" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="324" y1="838" x2="354" y2="870" stroke="#2a221b" stroke-width="2.5"/><circle cx="324" cy="838" r="8" fill="#2a221b"/><circle cx="354" cy="870" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="354" y="871" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">23</text></a>
+<a href="#s24" class="mk" data-n="24"><title>镜 24 木塔底层</title><path d="M646 892 L553 873 A95 95 0 0 1 638 797 Z" fill="#a3321f" opacity=".3"/><line x1="646" y1="892" x2="554" y2="890" stroke="#a3321f" stroke-width="5" marker-end="url(#ahm)"/><line x1="646" y1="892" x2="675" y2="925" stroke="#a3321f" stroke-width="2.5"/><circle cx="646" cy="892" r="8" fill="#a3321f"/><circle cx="675" cy="925" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="675" y="926" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">24</text></a>
+<a href="#s25" class="mk" data-n="25"><title>镜 25 运河西岸</title><path d="M240 520 L303 449 A95 95 0 0 1 326 560 Z" fill="#2a221b" opacity=".3"/><line x1="240" y1="520" x2="330" y2="500" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="240" y1="520" x2="197" y2="529" stroke="#2a221b" stroke-width="2.5"/><circle cx="240" cy="520" r="8" fill="#2a221b"/><circle cx="197" cy="529" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="197" y="530" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">25</text></a>
+<a href="#s26" class="mk" data-n="26"><title>镜 26 运河北岸</title><path d="M720 320 L627 302 A95 95 0 0 1 710 226 Z" fill="#2a221b" opacity=".3"/><line x1="720" y1="320" x2="680" y2="310" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="720" y1="320" x2="750" y2="352" stroke="#2a221b" stroke-width="2.5"/><circle cx="720" cy="320" r="8" fill="#2a221b"/><circle cx="750" cy="352" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="750" y="353" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">26</text></a>
+<a href="#s27" class="mk" data-n="27"><title>镜 27 展厅五入口</title><path d="M838 985 L837 890 A95 95 0 0 1 929 957 Z" fill="#2a221b" opacity=".3"/><line x1="838" y1="985" x2="864" y2="935" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="838" y1="985" x2="817" y2="1019" stroke="#2a221b" stroke-width="2.5"/><circle cx="838" cy="985" r="8" fill="#2a221b"/><circle cx="817" cy="1019" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="817" y="1020" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">27</text></a>
+<a href="#s28" class="mk" data-n="28"><title>镜 28 工坊</title><path d="M1002 1584 L953 1665 A95 95 0 0 1 910 1560 Z" fill="#2a221b" opacity=".3"/><line x1="1002" y1="1584" x2="1002" y2="1624" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="1002" y1="1584" x2="1043" y2="1567" stroke="#2a221b" stroke-width="2.5"/><circle cx="1002" cy="1584" r="8" fill="#2a221b"/><circle cx="1043" cy="1567" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="1043" y="1568" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">28</text></a>
+<a href="#s29" class="mk" data-n="29"><title>镜 29 尾厅</title><path d="M1010 1748 L1067 1824 A95 95 0 0 1 953 1824 Z" fill="#2a221b" opacity=".3"/><line x1="1010" y1="1748" x2="998" y2="1762" stroke="#2a221b" stroke-width="5" marker-end="url(#ahs)"/><line x1="1010" y1="1748" x2="1010" y2="1704" stroke="#2a221b" stroke-width="2.5"/><circle cx="1010" cy="1748" r="8" fill="#2a221b"/><circle cx="1010" cy="1704" r="30" fill="#f5efe1" stroke="#2a221b" stroke-width="5"/><text x="1010" y="1705" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#2a221b">29</text></a>
+<a href="#s30" class="mk" data-n="30"><title>镜 30 院外西南上空</title><path d="M34 2516 L15 2423 A95 95 0 0 1 118 2471 Z" fill="#a3321f" opacity=".3"/><circle cx="34" cy="2516" r="8" fill="#a3321f"/><circle cx="34" cy="2516" r="30" fill="#a3321f" stroke="#a3321f" stroke-width="5"/><text x="34" y="2517" text-anchor="middle" dominant-baseline="central" font-size="30" font-weight="700" fill="#fff8ea">30</text></a>
+<g font-size="30" fill="#2a221b" font-weight="600"><text x="600" y="2530" text-anchor="middle">南（入口）</text><text x="600" y="44" text-anchor="middle">北</text></g></svg><figcaption>底图是模型的正投影平面，上北下南。镜 1、镜 30 在院外高空，标在图的边缘。</figcaption></figure>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="key"><span><i style="background:#a3321f;border-radius:50%"></i>重点镜头</span><span><i style="background:#f5efe1;border-radius:50%"></i>过场镜头</span><span><i style="background:rgba(163,50,31,.3);border:0"></i>扇形：起始朝向</span><span><i style="background:none;border:0;border-top:3px solid #2a221b;height:0"></i>箭头：运镜方向</span><span><i style="background:none;border:0;border-top:3px dotted #2b6a72;height:0"></i>参观流线</span></div>
+      <p>圆圈里的数字是镜号，和下面分镜表、视频左上角的镜号一致。圆点是机位，扇形朝着镜头看的方向，箭头是镜头移动的方向和距离。</p>
+      <p>点图上的圆圈可以跳到对应的分镜。</p>
+      <p class="note">视频右上角有一张同样的小地图，红点和扇形随镜头实时移动，播放到任何一帧都能对上这张平面图。</p>
+    </div>
+  </div>
+</section>
+<section>
+  <h2><span class="no">三</span>分镜表</h2>
+  <div class="shots">
+<article class="shot main" id="s01" data-n="1"><img src="img/01.jpg" alt="镜 01 画面：院外东南上空" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">01</span><b>院外东南上空</b><span class="tag">远景</span><span class="tag key">重点</span><span class="tm">0:00–0:16　16 秒</span></div>
+<p class="mv">全院鸟瞰，交代布局和中轴线</p><p class="say">这是木构博物馆，一座讲榫卯的线上展馆。它是一组两进的院落，中轴线贯穿南北：山门、主殿、后殿、木塔，最北是运河上的廊桥。</p></article>
+<article class="shot" id="s02" data-n="2"><img src="img/02.jpg" alt="镜 02 画面：山门外" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">02</span><b>山门外</b><span class="tag">全景</span><span class="tm">0:16–0:24　8 秒</span></div>
+<p class="mv">山门正面</p><p class="say">参观从山门开始。山门三开间，两侧院墙围出一座完整的院落。</p></article>
+<article class="shot" id="s03" data-n="3"><img src="img/03.jpg" alt="镜 03 画面：山门前" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">03</span><b>山门前</b><span class="tag">特写</span><span class="tm">0:24–0:32　8 秒</span></div>
+<p class="mv">门钉、铺首、抱鼓石</p><p class="say">板门上有门钉和铺首，门楣上有门簪，门前一对抱鼓石。</p></article>
+<article class="shot" id="s04" data-n="4"><img src="img/04.jpg" alt="镜 04 画面：前院南端" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">04</span><b>前院南端</b><span class="tag">全景</span><span class="tm">0:32–0:43　11 秒</span></div>
+<p class="mv">进门后主殿出现</p><p class="say">绕过影壁就是前院。石道两侧各一方水池，东西回廊把院子连成一圈，尽头是主殿。</p></article>
+<article class="shot main" id="s05" data-n="5"><img src="img/05.jpg" alt="镜 05 画面：前院中轴" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">05</span><b>前院中轴</b><span class="tag">全景</span><span class="tag key">重点</span><span class="tm">0:43–0:53　10 秒</span></div>
+<p class="mv">主殿正面，由台基摇到屋脊</p><p class="say">主殿是重檐屋顶，坐在两层台基上，体量是两侧配殿的一倍半，是前院的中心。</p></article>
+<article class="shot main" id="s06" data-n="6"><img src="img/06.jpg" alt="镜 06 画面：主殿檐下" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">06</span><b>主殿檐下</b><span class="tag">特写</span><span class="tag key">重点</span><span class="tm">0:53–1:09　16 秒</span></div>
+<p class="mv">彩画、斗拱、椽子，沿檐口横移</p><p class="say">抬头看檐下。额枋上是青绿相间的旋子彩画，往上是一攒一攒的斗拱，再往上是檐椽和飞椽。斗拱全靠榫卯层层咬合，没有一颗钉子。</p></article>
+<article class="shot" id="s07" data-n="7"><img src="img/07.jpg" alt="镜 07 画面：序厅" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">07</span><b>序厅</b><span class="tag">中景</span><span class="tm">1:09–1:21　12 秒</span></div>
+<p class="mv">烫样</p><p class="say">进主殿先到序厅。长案上是全馆的烫样，也就是古代做给人看的建筑模型，先在这里认一认路。</p></article>
+<article class="shot main" id="s08" data-n="8"><img src="img/08.jpg" alt="镜 08 画面：中庭东北角" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">08</span><b>中庭东北角</b><span class="tag">全景</span><span class="tag key">重点</span><span class="tm">1:21–1:32　11 秒</span></div>
+<p class="mv">中庭全貌和原大斗拱</p><p class="say">穿过屏风门是中庭，全馆最高的空间。一根五米高的柱子，顶着一朵原大的唐式斗拱。</p></article>
+<article class="shot main" id="s09" data-n="9"><img src="img/09.jpg" alt="镜 09 画面：中庭斗拱旁" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">09</span><b>中庭斗拱旁</b><span class="tag">特写</span><span class="tag key">重点</span><span class="tm">1:32–1:43　12 秒</span></div>
+<p class="mv">斗拱逐层拆解</p><p class="say">点一下，它一层层拆开。每一件构件都靠榫头和卯眼相扣，层层出挑，把屋檐托出四米多。</p></article>
+<article class="shot" id="s10" data-n="10"><img src="img/10.jpg" alt="镜 10 画面：中庭北侧" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">10</span><b>中庭北侧</b><span class="tag">仰拍</span><span class="tm">1:43–1:50　7 秒</span></div>
+<p class="mv">藻井</p><p class="say">头顶是一口藻井，方井、八角井、圆井层层内收。</p></article>
+<article class="shot" id="s11" data-n="11"><img src="img/11.jpg" alt="镜 11 画面：展厅一入口" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">11</span><b>展厅一入口</b><span class="tag">全景</span><span class="tm">1:50–1:59　9 秒</span></div>
+<p class="mv">展厅一全貌</p><p class="say">出主殿向西是展厅一，从最基本的讲起：一个节点是怎样做出来的。</p></article>
+<article class="shot main" id="s12" data-n="12"><img src="img/12.jpg" alt="镜 12 画面：展厅一中央" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">12</span><b>展厅一中央</b><span class="tag">特写</span><span class="tag key">重点</span><span class="tm">1:59–2:10　11 秒</span></div>
+<p class="mv">透榫加楔五步演示</p><p class="say">这件放大的透榫，按画线、开榫、凿卯、装配、打楔五步，一遍遍把自己做出来。</p></article>
+<article class="shot main" id="s13" data-n="13"><img src="img/13.jpg" alt="镜 13 画面：展厅一南墙" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">13</span><b>展厅一南墙</b><span class="tag">近景</span><span class="tag key">重点</span><span class="tm">2:10–2:26　16 秒</span></div>
+<p class="mv">三件器物，圆点拆开局部</p><p class="say">沿墙是三件器物：提盒、圆凳、板凳。每件身上有编号圆点，点一下，那一处的榫卯就单独退开。看板凳，腿顶的榫头穿过了凳面。</p></article>
+<article class="shot main" id="s14" data-n="14"><img src="img/14.jpg" alt="镜 14 画面：展厅二中央" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">14</span><b>展厅二中央</b><span class="tag">特写</span><span class="tag key">重点</span><span class="tm">2:26–2:39　12 秒</span></div>
+<p class="mv">燕尾榫箱角开合</p><p class="say">展厅二讲木料怎样接长、拼宽。这是放大的燕尾榫箱角：梯形榫头外宽里窄，越往外拉，卡得越紧。</p></article>
+<article class="shot" id="s15" data-n="15"><img src="img/15.jpg" alt="镜 15 画面：展厅二北墙" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">15</span><b>展厅二北墙</b><span class="tag">近景</span><span class="tm">2:39–2:50　11 秒</span></div>
+<p class="mv">翘头案，夹头榫局部拆开</p><p class="say">这边是博古架和翘头案。看翘头案的腿：腿顶开口，把牙条夹在当中，这叫夹头榫。</p></article>
+<article class="shot" id="s16" data-n="16"><img src="img/16.jpg" alt="镜 16 画面：展厅三东北角" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">16</span><b>展厅三东北角</b><span class="tag">全景</span><span class="tm">2:50–2:57　7 秒</span></div>
+<p class="mv">展厅三全貌</p><p class="say">沿回廊向北到后殿，这里看榫卯做成的家具。</p></article>
+<article class="shot main" id="s17" data-n="17"><img src="img/17.jpg" alt="镜 17 画面：展厅三西侧" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">17</span><b>展厅三西侧</b><span class="tag">特写</span><span class="tag key">重点</span><span class="tm">2:57–3:08　11 秒</span></div>
+<p class="mv">圈椅拆解</p><p class="say">明式圈椅拆开来看：椅圈由几段弧料用楔钉榫接成，腿足、座面、靠背之间全是榫卯。</p></article>
+<article class="shot" id="s18" data-n="18"><img src="img/18.jpg" alt="镜 18 画面：展厅三东侧" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">18</span><b>展厅三东侧</b><span class="tag">近景</span><span class="tm">3:08–3:17　9 秒</span></div>
+<p class="mv">平头案拆解</p><p class="say">旁边的平头案用夹头榫：腿足上端开口，夹住牙条，再托起案面。</p></article>
+<article class="shot main" id="s19" data-n="19"><img src="img/19.jpg" alt="镜 19 画面：北院南侧" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">19</span><b>北院南侧</b><span class="tag">全景</span><span class="tag key">重点</span><span class="tm">3:17–3:26　9 秒</span></div>
+<p class="mv">木塔全貌</p><p class="say">穿过后殿是北院。正中是五层木塔，高四十六米，是全馆最高的建筑。</p></article>
+<article class="shot main" id="s20" data-n="20"><img src="img/20.jpg" alt="镜 20 画面：木塔脚下" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">20</span><b>木塔脚下</b><span class="tag">仰拍</span><span class="tag key">重点</span><span class="tm">3:26–3:35　9 秒</span></div>
+<p class="mv">由下往上摇，逐层的檐和平座</p><p class="say">塔身逐层收分，每层檐下都有斗拱，檐上是平座栏杆，最上面是塔刹。</p></article>
+<article class="shot" id="s21" data-n="21"><img src="img/21.jpg" alt="镜 21 画面：展厅四入口" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">21</span><b>展厅四入口</b><span class="tag">全景</span><span class="tm">3:35–3:43　8 秒</span></div>
+<p class="mv">展厅四全貌</p><p class="say">先进西厢的展厅四，看榫卯怎样从一个节点长成一座房屋。</p></article>
+<article class="shot main" id="s22" data-n="22"><img src="img/22.jpg" alt="镜 22 画面：展厅四南圆台" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">22</span><b>展厅四南圆台</b><span class="tag">特写</span><span class="tag key">重点</span><span class="tm">3:43–3:52　9 秒</span></div>
+<p class="mv">平身科斗拱拆解</p><p class="say">这是一攒清式的平身科斗拱，拆开是几十个构件，一件压一件。</p></article>
+<article class="shot" id="s23" data-n="23"><img src="img/23.jpg" alt="镜 23 画面：展厅四北侧" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">23</span><b>展厅四北侧</b><span class="tag">中景</span><span class="tm">3:52–4:01　9 秒</span></div>
+<p class="mv">抬梁与穿斗屋架对照</p><p class="say">旁边是抬梁和穿斗两种屋架：一个用梁层层抬起，一个用柱子直接承檩。</p></article>
+<article class="shot main" id="s24" data-n="24"><img src="img/24.jpg" alt="镜 24 画面：木塔底层" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">24</span><b>木塔底层</b><span class="tag">全景</span><span class="tag key">重点</span><span class="tm">4:01–4:13　12 秒</span></div>
+<p class="mv">塔内的木塔剖面模型</p><p class="say">再走进木塔。塔心是一具应县木塔的剖面模型：在一座木塔里，看另一座木塔是怎么搭起来的。</p></article>
+<article class="shot" id="s25" data-n="25"><img src="img/25.jpg" alt="镜 25 画面：运河西岸" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">25</span><b>运河西岸</b><span class="tag">全景</span><span class="tm">4:13–4:23　10 秒</span></div>
+<p class="mv">木拱廊桥侧面</p><p class="say">从塔的北门出去是运河。桥身是编木拱，两组直木交织成拱，同样不用一颗钉子。</p></article>
+<article class="shot" id="s26" data-n="26"><img src="img/26.jpg" alt="镜 26 画面：运河北岸" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">26</span><b>运河北岸</b><span class="tag">中景</span><span class="tm">4:23–4:30　7 秒</span></div>
+<p class="mv">鲁班锁雕塑</p><p class="say">过桥到北岸，是一件放大的鲁班锁。</p></article>
+<article class="shot" id="s27" data-n="27"><img src="img/27.jpg" alt="镜 27 画面：展厅五入口" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">27</span><b>展厅五入口</b><span class="tag">中景</span><span class="tm">4:30–4:41　10 秒</span></div>
+<p class="mv">展厅五的三件装置</p><p class="say">东厢的展厅五，把构件当作材料来创作：悬在半空的斗拱、互承木构、窗棂灯墙。</p></article>
+<article class="shot" id="s28" data-n="28"><img src="img/28.jpg" alt="镜 28 画面：工坊" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">28</span><b>工坊</b><span class="tag">中景</span><span class="tm">4:41–4:53　12 秒</span></div>
+<p class="mv">四件插接小件，拆开两件</p><p class="say">工坊里是四件用薄板插接的小件：方盒、托盘、盖盒、鸟屋。拆开来，每一件都只是几片平板。</p></article>
+<article class="shot" id="s29" data-n="29"><img src="img/29.jpg" alt="镜 29 画面：尾厅" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">29</span><b>尾厅</b><span class="tag">中景</span><span class="tm">4:53–5:03　10 秒</span></div>
+<p class="mv">三件现代小件</p><p class="say">尾厅留给今天的设计：插接的花器、折叠小凳和小架，用的还是同样的道理。</p></article>
+<article class="shot main" id="s30" data-n="30"><img src="img/30.jpg" alt="镜 30 画面：院外西南上空" width="640" height="360" loading="lazy">
+<div class="sh"><span class="num">30</span><b>院外西南上空</b><span class="tag">远景</span><span class="tag key">重点</span><span class="tm">5:03–5:13　10 秒</span></div>
+<p class="mv">回望全院，收尾</p><p class="say">走完一圈，回到山门。从一个节点，到一件家具，到一座房屋：这就是木构。</p></article>
+  </div>
+</section>
+<footer>木构博物馆 · 导览视频分镜。画面截自在线模型，时长以配音后的成片为准。</footer>
+</div>
+<script>
+document.querySelectorAll('.shot').forEach(c => { const m = document.querySelector('.mk[data-n="' + c.dataset.n + '"]'); if (!m) return;
+  const on = v => () => { m.classList.toggle('hot', v); }; c.addEventListener('mouseenter', on(true)); c.addEventListener('mouseleave', on(false)); });
+</script>
+
+</body></html>
