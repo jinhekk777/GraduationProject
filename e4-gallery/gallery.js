@@ -1,3 +1,36 @@
+function exhibitTextPage(title,lines) {
+    const c=document.createElement('canvas');c.width=1200;c.height=556;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#f4ebda';ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle='#30463d';ctx.fillRect(0,0,c.width,155);
+    ctx.fillStyle='#fff7e5';ctx.font='bold 62px "Songti SC",serif';ctx.fillText(title,64,102);
+    ctx.fillStyle='#382e25';ctx.font='40px "PingFang SC",sans-serif';
+    lines.forEach((line,i)=>ctx.fillText(line,64,273+i*98,1072));
+    return c;
+  }
+
+// The reading dialog reuses the decoded plate, including when the network is offline.
+const printableImages = new WeakMap();
+function showExhibitPage(key,title,source,refreshOnly=false) {
+  const dlg=document.getElementById('e4-reader');
+  if(refreshOnly && (!dlg.open || dlg.dataset.plate!==key))return;
+  let img=source;
+  if(!(source instanceof HTMLImageElement)){
+    img=printableImages.get(source);
+    if(!img){
+      let canvas=source;
+      if(!(source instanceof HTMLCanvasElement)){
+        canvas=document.createElement('canvas');canvas.width=source.width;canvas.height=source.height;
+        canvas.getContext('2d').drawImage(source,0,0);
+      }
+      img=new Image();img.src=canvas.toDataURL();printableImages.set(source,img);
+    }
+  }
+  img.alt=title;dlg.dataset.plate=key;
+  dlg.querySelector('h2').textContent=title;
+  dlg.querySelector('.plate-scroll').replaceChildren(img);
+  if(!dlg.open)dlg.showModal();
+}
 /* The fitted interior uses gallery-local metres; the entrance to the existing west wing stays on its east side. */
 function createTimberGallery(THREE) {
   const origin = new THREE.Vector3(-32, .635, -64);
@@ -6,8 +39,10 @@ function createTimberGallery(THREE) {
   const titles = {
     intro: '一榀屋架', taiwall: '抬梁式 · 轴测与投影', chuanwall: '穿斗式 · 轴测与投影',
     beam: '梁上立柱', post: '枋穿柱列', arm: '斗栱出挑', tai: '抬梁式屋架', chuan: '穿斗式屋架',
-    study: '穿枋贯柱 · 合装剖视', dou: '清式平身科', guide: '从一层构件到一榀屋架'
+    study: '穿枋贯柱 · 合装剖视', dou: '清式平身科', guide: '从一层构件到一榀屋架',
+    tairail:'抬梁式 · 分步教具', chuanrail:'穿斗式 · 分步教具'
   };
+  const sheets=new Map();
   const keyLight = new THREE.SpotLight(0xffe7c3, 1.95, 25, 1.04, .58, 1.1);
   keyLight.position.set(-8.0, 5.6, .7); keyLight.target.position.set(1.0, .3, -6.7);
   keyLight.castShadow = true; keyLight.shadow.mapSize.set(1024,1024);
@@ -32,7 +67,13 @@ function createTimberGallery(THREE) {
         if (m.map) m.map.anisotropy = Math.min(anisotropy, 8);
         if (plate) {
           m.toneMapped = false;
-          if (titles[plate]) { mesh.userData.plate = plate; panels.push(mesh); }
+          if (titles[plate]) {
+            if(!m.map?.image){
+              const sheet=exhibitTextPage(titles[plate],['大木作展厅 · 木构架研习','沿展墙可对照屋架、构件和分步教具。']);
+              m.map=new THREE.CanvasTexture(sheet);m.map.encoding=THREE.sRGBEncoding;m.needsUpdate=true;
+            }
+            sheets.set(plate,m.map.image);mesh.userData.plate=plate;panels.push(mesh);
+          }
         } else {
           mesh.castShadow = mesh.receiveShadow = true;
           if (m.emissive) { m.emissive.copy(m.color); m.emissiveMap = m.map; m.emissiveIntensity = /杉木|榆木|斗栱/.test(m.name) ? .51 : .32; }
@@ -77,12 +118,10 @@ function createTimberGallery(THREE) {
     return v.y >= .58 && v.y <= .97 && (Math.hypot(v.x+32,v.z+57)<3.23 || Math.hypot(v.x+32,v.z+71)<3.23);
   }
   function readPlate(key) {
-    const dlg=document.getElementById('e4-reader'), img=dlg.querySelector('img');
-    dlg.querySelector('h2').textContent=titles[key];
-    img.alt=titles[key]; img.src='e4-gallery/'+key+'.jpg'; dlg.showModal();
+    if(sheets.has(key))showExhibitPage(key,titles[key],sheets.get(key));
   }
   const reader=document.getElementById('e4-reader');
   reader.querySelector('button').addEventListener('click',()=>reader.close());
   reader.addEventListener('click',e=>{ if(e.target===reader) reader.close(); });
-  return {install,collision,oldPlinth,panels,readPlate,lightForVisitor(inside) { keyLight.visible = inside; }};
+  return {install,collision,oldPlinth,panels,titles,readPlate,lightForVisitor(inside) { keyLight.visible = inside; }};
 }

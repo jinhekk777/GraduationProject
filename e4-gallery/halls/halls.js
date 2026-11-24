@@ -13,14 +13,14 @@ function createStudyHalls(THREE) {
       models:[['arch','三节苗与五节苗',-1.77,1.0,.015],['joint','平苗接牛头',.39,1.05,-.10]],
       angles:{'桥腹':[[15.5,1.75,-104.5],[0,2,-106],61]}},
     e1: {overview:[[-35.65,2.58,28.7],[-43.8,2.33,24.25],57], plates:[
-      ['wedge','透榫怎样锁住横材',[-46.08,3.13,24.6],half,7.75,
+      ['wedge','透榫怎样锁住横材',[-46.08,3.56,24.6],half,7.75,
         ['横材的榫头穿过立柱，直到榫肩贴住柱面。','从出榫一侧打入木楔，使榫端撑开，抵紧卯壁。']]], samples:['透榫加楔','十字搭接','格肩榫']},
     e2: {overview:[[-35.6,2.57,14.45],[-43.35,2.1,10.25],60], plates:[
-      ['dove','燕尾锁住箱角',[-46.08,3.04,10.8],half,6.38,
+      ['dove','燕尾锁住箱角',[-46.08,3.35,10.8],half,6.38,
         ['看箱角两块板的交接处，榫头外宽内窄，形似燕尾。','沿槽口滑入才能合拢；向外拉时，斜肩抵住相邻的木料。']]], samples:['燕尾榫','银锭榫','龙凤榫']},
     e3: {overview:[[.05,2.58,-23.30],[0,2.22,-33.75],66], plates:[
-      ['chair','一圈弧木如何接长',[-5.7,2.64,-33.9],0,5.95],
-      ['desk','一张案的面、牙与足',[5.7,2.64,-33.9],0,5.95]]},
+      ['chair','一圈弧木如何接长',[-5.7,3.26,-33.9],0,5.95],
+      ['desk','一张案的面、牙与足',[5.7,3.26,-33.9],0,5.95]]},
     e5: {overview:[[27.65,3.08,-62.8],[32.25,2.47,-73.35],57], plates:[
       ['loop','八木相承',[32,3.27,-76.35],0,8.4],
       ['float','把斗栱悬在空中',[36.65,2.69,-52.05],Math.PI,4.4]]},
@@ -51,37 +51,35 @@ function createStudyHalls(THREE) {
   }
   function stand(world,pos,yaw) {const g=new THREE.Group();g.position.set(...pos);g.rotation.y=yaw;world.add(g);if(world.isScene)g.userData.studyFixture=true;return g;}
   const readingPages = new Map();
-  function textPage(title,lines) {
-    const c=document.createElement('canvas');c.width=1200;c.height=556;
-    const ctx=c.getContext('2d');
-    ctx.fillStyle='#f4ebda';ctx.fillRect(0,0,c.width,c.height);
-    ctx.fillStyle='#30463d';ctx.fillRect(0,0,c.width,155);
-    ctx.fillStyle='#fff7e5';ctx.font='bold 62px "Songti SC",serif';ctx.fillText(title,64,102);
-    ctx.fillStyle='#382e25';ctx.font='40px "PingFang SC",sans-serif';
-    lines.forEach((line,i)=>ctx.fillText(line,64,273+i*98,1072));
-    return c;
-  }
-  function surface(parent,w,h,key,anisotropy,title,lines) {
-    const basic=new THREE.MeshBasicMaterial({toneMapped:false});
-    const canvas=lines && textPage(title,lines);
-    if(canvas){
-      basic.map=new THREE.CanvasTexture(canvas);
-      basic.map.encoding=THREE.sRGBEncoding;
-      readingPages.set(key,canvas);
-    }
+  const descriptions={
+    route:['先在烫样上找山门、主殿和木塔，沿中轴认清两进院落。','进入西配殿看榫样，再经后殿前往北院。'],
+    bracket:['先找柱顶的栌斗，再沿横栱和华栱向上看。','两道斜昂向檐外伸出，可以对照中央的柱头模型辨认。'],
+    chair:['沿椅圈寻找弧形木料的分段接缝，再看靠背板的位置。','座框、腿足和横枨共同支承座面。'],
+    desk:['从案面往下找牙条，再看牙条怎样进入腿足上端的槽口。','夹头榫将案面、牙条和腿足接在一起。'],
+    pagoda:['从塔身外侧数明层，再在剖面模型中寻找夹在中间的暗层。','对照内外两圈柱子和层间的斜撑。'],
+    loop:['循着木料首尾相搭的方向，找出每根木料托住和压住的位置。','展台上的整环、相邻两木和单根教具可以互相对照。'],
+    float:['循悬线往下看，各层斗与栱在展开时显出相互承托的位置。','对照展板上的分层图，再观察装置合拢。'],
+    box:['沿盒面、侧板和底板的接缝，辨认各片木板的装配方向。','在工作台上对照燕尾榫和拼板榫样。'],
+    index:['从完整器物回看板件，再对照索引桌上的榫样。','东墙按接合方式陈列五种节点的分解图。'],
+    towereave:['先在木样上找斗口，再辨认两个方向的木件。','沿纵横交接的位置抬头对照木塔檐下。'],
+    bridgeweave:['顺着三节苗和五节苗寻找两组拱骨的交会处。','横向的牛头联系两侧拱架，台上木样可拆开对照。']
+  };
+  function surface(parent,w,h,key,anisotropy,title,lines=descriptions[key]) {
+    const canvas=exhibitTextPage(title,lines);
+    const preview=new THREE.CanvasTexture(canvas);preview.encoding=THREE.sRGBEncoding;
+    const basic=new THREE.MeshBasicMaterial({map:preview,toneMapped:false});
+    readingPages.set(key,canvas);
     const map=loader.load(directory+key+'.jpg',loaded=>{
-      if(canvas)basic.map.dispose();
-      basic.map=loaded;basic.needsUpdate=true;
-      if(canvas){
-        readingPages.delete(key);
-        const dlg=document.getElementById('e4-reader'),img=dlg.querySelector('img');
-        if(dlg.open && img.alt===title)img.src=loaded.image.src;
-      }
+      basic.map=loaded;basic.needsUpdate=true;preview.dispose();
+      readingPages.set(key,loaded.image);showExhibitPage(key,title,loaded.image,true);
     },undefined,()=>map.dispose());
     map.encoding=THREE.sRGBEncoding;map.anisotropy=Math.min(8,anisotropy);
-    if(!canvas)basic.map=map;
     const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),basic);
-    m.name='study-'+key; m.userData.plate=key;m.position.z=.035;parent.add(m);return m;
+    m.name='study-'+key;m.userData.plate=key;m.position.z=.035;parent.add(m);return m;
+  }
+  function registerPage(id,key,title,mesh) {
+    mesh.userData.plate=key;(panels[id]??=[]).push(mesh);
+    labels[key]=title;readingPages.set(key,mesh.material.map.image);
   }
   function pieceLabel(g,text,x,y,z,w) {
     const c=document.createElement('canvas');c.width=650;c.height=125;const ctx=c.getContext('2d');
@@ -176,14 +174,9 @@ function createStudyHalls(THREE) {
     const faces=panels[id]??=[];
     faces.push(mesh);
     labels[key]=title;
-    // Visitors can walk around these panels, including the two cases in the west wing.
-    if(id==='xu'||id==='zt'||id==='e1'||id==='e2'){
-      const reverse=mesh.clone();
-      reverse.rotation.y=Math.PI;
-      reverse.position.z=-.165; // just clear of the backing and its rails
-      g.add(reverse);
-      faces.push(reverse);
-    }
+    const reverse=mesh.clone();
+    reverse.rotation.y=Math.PI;reverse.position.z=-.165;
+    g.add(reverse);faces.push(reverse);
     const ground=id==='xu'||id==='zt'?3.90:id==='ti'?1.82:.60;
     displayBay(g,key,w,h,ground-pos[1]);
     const leg=pos[1]-ground-h/2;
@@ -242,12 +235,16 @@ function createStudyHalls(THREE) {
     box(g,0,.884,0,w+.02,.022,depth+.02,brass);
     box(g,0,top,0,w-.02,.022,depth-.02,green);
     const [key,title]=cfg.plates[0],pw=id==='ta'?1.63:1.79,px=w/2-pw/2-.14;
-    const panel=new THREE.Group();panel.position.set(px,1.26,-.015);panel.rotation.x=-.72;g.add(panel);
+    const panel=new THREE.Group();panel.position.set(px,1.26,.235);panel.rotation.x=-.72;g.add(panel);
     const ph=pw*1060/2260;
     for(const side of [-1,1])box(g,px+side*pw*.35,1.077,-.15,.054,.34,.082,brass);
     box(panel,0,0,-.032,pw+.07,ph+.07,.075,walnut);
     box(panel,0,0,.012,pw+.032,ph+.032,.022,brass);
-    const page=surface(panel,pw,ph,key,anisotropy);(panels[id]??=[]).push(page);labels[key]=title;
+    const page=surface(panel,pw,ph,key,anisotropy,title);(panels[id]??=[]).push(page);labels[key]=title;
+    // The return path meets the opposite side. Tilt a second face upward from that approach.
+    const other=panel.clone();other.rotation.y=Math.PI;other.rotation.order='YXZ';
+    other.position.z-=ph*Math.sin(.72)+.10;g.add(other);
+    (panels[id]).push(other.getObjectByName(page.name));
     const gltfLoader=new THREE.GLTFLoader();
     await Promise.all(cfg.models.map(async ([asset,title,x,scale,twist])=>{
       const gltf=await gltfLoader.loadAsync(directory+'out-'+asset+'.glb'), root=new THREE.Group(),parts=[];
@@ -315,19 +312,24 @@ function createStudyHalls(THREE) {
       const dist=w*.83; result[names[key]]=[[p[0]+Math.sin(yaw)*dist,p[1]+.05,p[2]+Math.cos(yaw)*dist],p,46];
     }
     if(s.samples){const p=s.plates[0][2];result['榫样台']=[[p[0]+3.3,2.38,p[2]+1.12],[p[0]+.68,1.57,p[2]],55];}
+    if(id==='xu')result['烫样图']=[[-5.45,5.40,9.25],s.plates[0][2],54];
+    if(id==='e1')result['透榫图']=[[-41.53,4.08,24.6],s.plates[0][2],62];
     if(id==='e3'){
-      result['圈椅']=[[-2.20,2.52,-27.64],[-4.8,2.09,-32.15],52];
-      result['平头案']=[[2.55,2.48,-26.89],[4.63,2.03,-32.09],53];
+      result['圈椅']=[[-8.15,3.10,-29.4],s.plates[0][2],58];
+      result['平头案']=[[8.15,3.10,-29.4],s.plates[1][2],58];
     }
-    if(id==='e5')result['悬浮斗栱']=[[28.8,3.6,-66.05],[32.65,3.6,-59.2],49];
+    if(id==='ti')result['立面与剖面']=[[-4.2,4.2,-67.7],[-4.2,4.2,-72.78],52];
+    if(id==='e5'){
+      result['悬浮装置']=[[28.8,3.6,-66.05],[32.65,3.6,-59.2],49];
+      result['窗棂灯墙']=[[31.5,2.65,-63],[41.4,2.65,-63],67];
+    }
+    if(id==='gf')result['木材墙']=[[40.7,2.65,10.5],[46.14,2.25,10.5],58];
+    if(id==='wt')result['榫卯图谱']=[[39.8,2.6,24.65],[46.5,2.05,24.65],66];
     return result;
   }
   function read(key) {
     if(!labels[key])return false;
-    const dialog=document.getElementById('e4-reader'),img=dialog.querySelector('img');
-    dialog.querySelector('h2').textContent=img.alt=labels[key];
-    const page=readingPages.get(key);
-    img.src=page?page.toDataURL():directory+key+'.jpg';dialog.showModal();return true;
+    showExhibitPage(key,labels[key],readingPages.get(key));return true;
   }
-  return {stations,panels,collision,install,views,read};
+  return {stations,panels,registerPage,collision,install,views,read};
 }

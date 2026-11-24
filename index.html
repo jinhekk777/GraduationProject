@@ -161,7 +161,7 @@ button:focus-visible{outline:2px solid var(--qing);outline-offset:2px}
 #e4-views:not([hidden]){position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);display:flex;gap:6px;white-space:nowrap;background:#f7efdd;padding:4px;border:1px solid #a59176;border-radius:3px}
 #e4-reader{width:min(92vw,1260px);max-height:92vh;box-sizing:border-box;padding:14px 18px 20px;background:#f5eddc;color:#2f3029;border:1px solid #8b775d;border-radius:3px}
 #e4-views .plate-read{background:#314a40;color:#fff3d9}
-@media(max-width:650px){#e4-views:not([hidden]){gap:2px;max-width:95vw}#e4-views .btn{padding:6px 7px;font-size:12px}}
+@media(max-width:650px){#e4-views:not([hidden]){gap:2px;width:max-content;max-width:94vw;box-sizing:border-box;flex-wrap:wrap;justify-content:center}#e4-views .btn{padding:6px 7px;font-size:12px}}
 #e4-reader .plate-scroll{overflow:auto;max-height:74vh;overscroll-behavior:contain}#e4-reader.zoomed img{max-width:none;max-height:none;width:1700px}
 #e4-reader::backdrop{background:rgba(22,22,18,.84)}
 #e4-reader header{display:flex;align-items:center;justify-content:space-between;gap:1em;margin-bottom:10px}
@@ -1057,8 +1057,8 @@ const HALLS = [
     list: ['木材墙：楠、杉、松、柏、榉、黄花梨、紫檀、樟', '工作台：十字搭接、直榫'] },
   { id: 'wt', n: 12, name: '尾厅', at: [41, .6, 24.5],
     cam: [[35.6, 2.7, 19], [44, 1.4, 26.5]],
-    p: '东配殿南半。回顾与收藏：东墙一排藏品柜，中间的索引桌汇总看过的展品、做过的关卡和全馆资料来源。',
-    list: ['个人图鉴', '资料来源总表'] },
+    p: '在索引桌旁回看木样，再沿东墙比较五种接合方式。从榫头穿柱、横木相搭，到箱角、拼板和椅圈，顺着接缝把节点认回器物上。',
+    list: ['五种榫卯分解图', '器物构造图', '索引桌木样'] },
 ];
 const ROUTE = [[0, 86], [0, 66], [-7.5, 63.5], [-1, 60], [0, 35], [0, 24], [0, 12.5], [0, 3.1], [0, -2], [-30.5, -2], [-30.5, 10.6], [-29.5, 26], [-41, 25], [-41, 17], [-41, 10.75],
   [-41, -2], [-41, -29], [-12, -29], [0, -29], [0, -37], [-12, -48], [-20, -64], [-32, -64], [-20, -64], [-9, -66], [0, -66], [0, -73], [0, -86], [0, -126], [0, -86], [11.5, -84], [11.5, -70], [20, -64], [32, -64], [31, -50], [31, -29], [41, -29],
@@ -1447,7 +1447,9 @@ async function onModel(gltf) {
     const inDoor = i => {
       v.set(d(P.getX(i)), d(P.getY(i)), d(P.getZ(i))).applyMatrix4(M);
       if (stone && galleryFour.oldPlinth(v)) return true;
-      // Two superseded wall boards in the west wing share a mesh with the active wood sample wall.
+      // Disused boards share their mesh with the active wood sample wall.
+      const rearBoard=Math.abs(v.z+34.4)<.26 && Math.abs(v.x)>2.34 && Math.abs(v.x)<9.06;
+      if(rearBoard && (panel || (o.material.name==='b_wood' && v.y>3.79 && v.y<3.89)))return true;
       if (panel && Math.abs(v.x + 46.4) < .25 && v.z > 6.4 && v.z < 30.1) return true;
       if (o.material.name === 'b_wood' && Math.abs(v.x + 46.4) < .25 &&
           v.y > 3.79 && v.y < 3.89 && ((v.z > 18.95 && v.z < 30.05) || (v.z > 6.45 && v.z < 15.05))) return true;
@@ -1549,8 +1551,8 @@ let mode = 'ext', tourIdx = 0;
 /* info card: collapsible so it never sits on top of the view; collapsed by default on narrow screens */
 const galleryViews = {
   '全厅': [[-32,3.05,-54.2],[-32,2.74,-70.7],51],
-  '抬梁图': [[-35.85,2.66,-71.97],[-33.62,3.35,-76.4],56],
-  '穿斗图': [[-27.12,2.5,-72.26],[-28.39,3.18,-76.4],58],
+  '抬梁图': [[-32.73,3.92,-73.24],[-32.73,3.9,-76.31],51],
+  '穿斗图': [[-28.67,3.92,-73.24],[-28.67,3.9,-76.31],51],
   '榫样台': [[-26.79,2.95,-62.05],[-25.03,1.67,-65],44]
 };
 let galleryLens = 51;
@@ -1578,6 +1580,13 @@ function setGalleryNav(id, title) {
     const b=document.createElement('button'); b.className='btn'; b.type='button'; b.textContent=label;
     b.onclick=()=>{camera.fov=fitGalleryLens(fov); camera.updateProjectionMatrix(); aim(pos,target,700);};
     galleryNav.appendChild(b);
+  }
+  if(id==='e4'){
+    const sel=document.createElement('select');sel.className='btn';sel.setAttribute('aria-label','选择大木作图版放大阅读');
+    sel.add(new Option('读图版',''));
+    for(const [key,title] of Object.entries(galleryFour.titles))sel.add(new Option(title,key));
+    sel.onchange=()=>{if(sel.value)galleryFour.readPlate(sel.value);sel.selectedIndex=0;};
+    galleryNav.appendChild(sel);
   }
   if (studyHalls.stations[id]) {
     const plates=studyHalls.stations[id].plates;
@@ -1796,8 +1805,12 @@ function buildExhibits() {
   // 4) 窗棂灯墙: six lattice patterns glowing on the back wall
   { const g = new THREE.Group(); const pats = ['步步锦', '冰裂纹', '龟背锦', '万字', '灯笼框', '回纹'];
     pats.forEach((name, i) => { const m = new THREE.MeshBasicMaterial({ map: latticeTex(name), toneMapped: true }); lightMats.push(m);
-      const pl = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 3.4), m); pl.position.set(41.8, 2.7, -55.2 - i * 3.1); pl.rotation.y = -Math.PI / 2; g.add(pl);
-      const fr = boxM(.12, 3.6, 2.7, woodT('#4a3020'), 41.92, 2.7, -55.2 - i * 3.1); g.add(fr); });
+      const pl = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 3.4), m); pl.position.set(41.45, 2.7, -55.2 - i * 3.1); pl.rotation.y = -Math.PI / 2; g.add(pl);
+      const fr = boxM(.12, 3.6, 2.7, woodT('#4a3020'), 41.54, 2.7, -55.2 - i * 3.1); g.add(fr);
+      const label=labelCard(name,['长短直棂层层折转。','短棂交错，围成不规则多边形。','六边形依次相连。','折线向四面连续。','长方框之间以短棂相连。','直角折线回转成纹。'][i],1.85,.54);
+      label.position.set(41.42,4.68,pl.position.z);label.rotation.y=-Math.PI/2;scene.add(label);
+      studyHalls.registerPage('e5','lattice-'+i,name,label);
+    });
     addExhibit({ id: 'lattice', hall: '展厅五 · 榫卯与艺术', root: g, art: true, title: '窗棂灯墙',
       p: '六种传统窗棂纹样做成灯箱：步步锦、冰裂纹、龟背锦、万字、灯笼框、回纹。窗棂本身就是用短木条以榫卯攒接出来的，纹样越密，节点越多。点一下切换明暗。', list: pats, note: '纹样为示意绘制。' }); }
   // 5) a giant burr lock on the north bank, turning; click and the six sticks slide apart
@@ -2621,6 +2634,7 @@ function legendBoard(title, sub, lines, note, w, h, x, y, z, ry) {   // a free-s
     g.fillStyle = '#8a7058'; g.font = `400 24px ${SANS}`; NL.forEach((l, j) => g.fillText(l, 112, H - 52 - (NL.length - j) * 34)); });
   const grp = new THREE.Group(), pl = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t })); pl.position.y = h / 2 + .55; grp.add(pl);
   const reverse = pl.clone(); reverse.rotation.y = Math.PI; reverse.position.z = -.061; grp.add(reverse);
+  for(const face of [pl,reverse])studyHalls.registerPage('zt','bracket-members',title,face);
   const fr = woodT('#3a2a1e'); grp.add(boxM(w + .1, h + .1, .05, fr, 0, h / 2 + .55, -.03)); for (const s of [-1, 1]) grp.add(boxM(.07, .6, .07, fr, s * (w / 2 - .2), .3, -.03));
   grp.position.set(x, y, z); grp.rotation.y = ry; grp.rotation.order = 'YXZ'; scene.add(grp); return grp;
 }
@@ -2833,8 +2847,8 @@ function woodWall(x, z0, z1, y0) {   // a wall of timber samples: colour and gra
       g.globalAlpha = 1; });
     const pz = z0 + (i + .5) * step, m = new THREE.Mesh(new THREE.PlaneGeometry(step * .78, 1.25), stylize(new THREE.MeshToonMaterial({ map: t, color: lin('#a8a8a8'), gradientMap: RAMP })));
     m.rotation.y = -Math.PI / 2; m.position.set(x - .06, y0 + 1.75, pz); scene.add(m); scene.add(boxM(.05, 1.31, step * .78 + .06, woodT(c1), x - .02, y0 + 1.75, pz));
-    const lc = labelCard(name, line, step * .78, step * .78 * .48); lc.position.set(x - .05, y0 + .82, pz); lc.rotation.y = -Math.PI / 2; scene.add(lc); });
-  const head = labelCard('木材', '同是木头，轻重、软硬、纹理各不相同；选料是榫卯的第一步。', 2.6, 1.0); head.position.set(x - .05, y0 + 2.85, (z0 + z1) / 2); head.rotation.y = -Math.PI / 2; scene.add(head);
+    const lc = labelCard(name, line, step * .78, step * .78 * .48); lc.position.set(x - .05, y0 + .82, pz); lc.rotation.y = -Math.PI / 2; scene.add(lc);studyHalls.registerPage('gf','wood-'+i,name,lc); });
+  const head = labelCard('木材', '同是木头，轻重、软硬、纹理各不相同；选料是榫卯的第一步。', 2.6, 1.0); head.position.set(x - .05, y0 + 2.85, (z0 + z1) / 2); head.rotation.y = -Math.PI / 2; scene.add(head);studyHalls.registerPage('gf','wood-intro','木材',head);
 }
 
 /* ---------- 旋子彩画: the painting on every 额枋, one sheet per bay (箍头 · 找头 with 旋花 · 枋心). Two rows: 青 ground / 绿 ground ---------- */
@@ -2932,7 +2946,7 @@ function buildStars() {
   addExhibit({ id: 'tower', hall: '木塔 · 塔内', root: B.root, parts: B.parts, kind: 'spec', title: '应县木塔剖面模型（1 : 15）',
     p: '山西应县佛宫寺释迦塔，建于辽清宁二年（1056 年），通高 67.31 米，全塔不用钉子。外面看是五层，里面其实是九层：每两层之间夹着一个暗层，柱间加了斜撑，像一道道箍把塔身箍紧。模型切开了三个面，可以看到内外两圈柱子。点一下，九层一层层抬起分开。',
     list: ['五个明层 + 四个暗层', '内槽、外槽两圈柱', '暗层斜撑 · 平座', '西北墙上是同一座塔的立面、剖面图'], note: '层数、年代、通高有据；各层尺寸与柱数为示意，未按测绘图制作。全塔斗拱据记载有五十四种，模型未表现。' });
-  const dr = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 4.5), new THREE.MeshBasicMaterial({ map: towerDrawing() })); dr.position.set(-4.2, 4.2, -72.78); scene.add(dr);
+  const dr = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 4.5), new THREE.MeshBasicMaterial({ map: towerDrawing() })); dr.position.set(-4.2, 4.2, -72.78); scene.add(dr);studyHalls.registerPage('ti','tower-drawing','应县木塔 · 立面与剖面',dr);
   scene.add(boxM(3.2, 4.7, .08, woodT('#3a2a1e'), -4.2, 4.2, -72.84));
   // 序厅: 烫样
   const D = tangyang(); D.root.position.set(0, 4.98, 12.55); scene.add(D.root);
@@ -2942,6 +2956,28 @@ function buildStars() {
     list: ['全馆两进院落，连同北面的运河', '屋顶可揭开，看到每座殿的平面', '黄签标注殿名'], note: '烫样的形式参考样式雷烫样；本件是把全馆建筑按约 1 : 82 缩小的模型，真正的烫样是纸板和秫秸做的，没有这么细。' });
   // 工坊: 木材墙
   woodWall(46.14, 6.4, 14.6, .6);
+  const joints=[
+    ['透榫加楔','穿过立柱','找露在柱外的榫端。木楔从这一侧打入，榫端张开，抵紧卯壁。'],
+    ['十字搭接','两木相交','两根木料各去掉一半厚度，缺口相对落下，合拢后表面齐平。'],
+    ['燕尾榫','箱角合拢','观察外宽内窄的榫形。沿槽口可以装入，向外拉时斜肩相抵。'],
+    ['银锭榫','锁住板缝','跨板缝嵌入两头宽、中间窄的木键，把相邻的两片木板牵在一起。'],
+    ['楔钉榫','弧木接长','椅圈的两段弧材在端部搭接，再穿入楔钉锁紧接头。']
+  ];
+  joints.forEach(([joint,lead,body],i)=>{
+    const tex=inkCanvas(768,896,(ctx,w,h)=>{
+      ctx.fillStyle='#f0e7d4';ctx.fillRect(0,0,w,h);
+      ctx.fillStyle='#30483e';ctx.fillRect(0,0,w,166);
+      ctx.fillStyle='#dfcba4';ctx.font='29px "Songti SC",serif';ctx.fillText('尾厅  /  榫卯图谱',46,52);
+      ctx.fillStyle='#fff5e3';ctx.font='bold 66px "Songti SC",serif';ctx.fillText(joint,43,135);
+      ctx.save();ctx.filter='brightness(.74) contrast(1.25)';drawJoint(ctx,joint,w/2,367,440,.72);ctx.restore();
+      ctx.fillStyle='#ad7847';ctx.fillRect(46,573,w-92,3);
+      ctx.font='bold 43px "Songti SC",serif';ctx.fillStyle='#403327';ctx.fillText(lead,46,649);
+      ctx.font='32px "PingFang SC",sans-serif';wrapText(ctx,body,46,712,w-92,49);
+    });
+    const page=new THREE.Mesh(new THREE.PlaneGeometry(2.08,2.42),new THREE.MeshBasicMaterial({map:tex,toneMapped:false}));
+    page.position.set(46.49,1.92,19.45+i*2.6);page.rotation.y=-Math.PI/2;scene.add(page);
+    studyHalls.registerPage('wt','index-'+i,joint,page);
+  });
 }
 
 /* ---------- 展厅一、二: 「怎么做出来的」 — specimen tables, a joint built step by step, a wall of tools ---------- */
@@ -3113,12 +3149,14 @@ function heroLabel(title, lead, body, foot, x, z) {   // the main exhibit's labe
   const opposite = g.clone(), halfSpan = (h + .08) * .5 * Math.sin(-g.rotation.x) + .03;
   opposite.rotation.y += Math.PI;
   opposite.position.x -= 2 * halfSpan;
+  const hall=title==='透榫加楔'?'e1':'e2';
+  for(const face of [card,opposite.children[0]])studyHalls.registerPage(hall,'central-'+hall,title,face);
   scene.add(g, opposite, boxM(.07, .62, .07, dk, x - halfSpan, .93, z), boxM(.5, .04, .4, dk, x - halfSpan, .62, z));
 }
 function buildCraft() {
   heroMortise(-40.2, 24.5);
   if (SHOW_EXHIBITS) heroLabel('透榫加楔', '看榫头从柱子另一面穿出来：再打进两枚木楔，把它撑紧。', '这件放大的节点按画线、开榫、凿卯、装配、打楔五步，一遍遍把自己做出来。', '演示件，尺寸放大 · 点一下暂停或继续', -37.3, 24.5);
-  if (SHOW_EXHIBITS) heroLabel('燕尾榫', '看箱角上这排梯形的榫头：外宽里窄，像燕子的尾巴。', '箱子装满东西往外撑，榫头被卡在卯口里，角就拉不开。抽屉和衣箱的角大多这样做。', '演示件，尺寸放大 · 点一下暂停或继续', -39.05, 10.75);
+  if (SHOW_EXHIBITS) heroLabel('燕尾榫', '看箱角上这排梯形的榫头：外宽里窄，像燕子的尾巴。', '箱子装满东西往外撑，榫头被卡在卯口里，角就拉不开。抽屉和衣箱的角大多这样做。', '演示件，尺寸放大 · 点一下暂停或继续', -37.55, 10.75);
   toolWall(-47.6, -42.4, 17.18, .6);
   // 展厅三: 粽角榫, the three-way mitre at the corner of a table or cabinet. Modelled from the joint's own construction: the corner block is split into three
   // pyramids that meet at the outer corner, so each face shows one 45° seam; the leg carries a long and a short tenon up into the two rails.
