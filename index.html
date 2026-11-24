@@ -1443,8 +1443,14 @@ async function onModel(gltf) {
   root.updateMatrixWorld(true); root.traverse(o => {   // the screen at z = 8.5 gets a doorway on the axis
     if (!o.isMesh || !o.geometry.index) return; const glass = o.material.name === 'glass' || glassMats.includes(o.material); if (!glass && nodeOf(o) !== 'museum_base') return;
     const P = o.geometry.attributes.position, I = o.geometry.index, d = denorm(P), M = o.matrixWorld, v = new THREE.Vector3(), keep = []; let cut = 0;
-    const stone = o.material.name === 'b_stone';
-    const inDoor = i => { v.set(d(P.getX(i)), d(P.getY(i)), d(P.getZ(i))).applyMatrix4(M); if (stone && galleryFour.oldPlinth(v)) return true; return Math.abs(v.z - 8.5) < .25 && v.y > 3.8 && v.y < 11.6 && (glass ? Math.abs(v.x) < 15.2 : Math.abs(v.x) < .25 && v.y < 11.1); };
+    const stone = o.material.name === 'b_stone', panel = o.material.name === 'b_panel';
+    const inDoor = i => {
+      v.set(d(P.getX(i)), d(P.getY(i)), d(P.getZ(i))).applyMatrix4(M);
+      if (stone && galleryFour.oldPlinth(v)) return true;
+      // Two superseded wall boards in the west wing share a mesh with the active wood sample wall.
+      if (panel && Math.abs(v.x + 46.4) < .25 && v.z > 6.4 && v.z < 30.1) return true;
+      return Math.abs(v.z - 8.5) < .25 && v.y > 3.8 && v.y < 11.6 && (glass ? Math.abs(v.x) < 15.2 : Math.abs(v.x) < .25 && v.y < 11.1);
+    };
     for (let k = 0; k < I.count; k += 3) { const a = I.getX(k), b = I.getX(k + 1), c = I.getX(k + 2); if (inDoor(a) && inDoor(b) && inDoor(c)) cut++; else keep.push(a, b, c); }
     if (cut) o.geometry.setIndex(keep); });
   for (const s of [-1, 1]) { const gm = new THREE.MeshBasicMaterial({ color: lin('#c8d4d6'), transparent: true, opacity: .08, depthWrite: false, side: THREE.DoubleSide }); glassMats.push(gm);
@@ -1742,6 +1748,8 @@ async function buildJM() {
     parts.forEach(q => { q.pe.sub(q.pa).multiplyScalar(f); if (q.pe.length() > lim) q.pe.setLength(lim); if (q.pe.y < 0) q.pe.y *= .15; q.pe.add(q.pa); });    // the taken-apart pose is pulled in to fit the stand, and lifted so nothing sinks into it
     inner.scale.setScalar(k); inner.position.set(-c.x * k, -box.min.y * k, -c.z * k); const root = new THREE.Group(), [x, z] = it.at, [pw, ph, pd] = it.plinth; root.add(inner); root.position.set(x, .6 + ph, z); root.rotation.y = it.yaw;
     if (SHOW_EXHIBITS) { const pl = boxM(pw, ph, pd, dk, x, .6 + ph / 2, z), lc = labelCard(it.title, it.tag, .9, .44, { py: it.py }), F = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] }[it.face || 'n'], dist = (F[0] ? pw / 2 : pd / 2) + .48, side = (F[0] ? pd / 2 : pw / 2) - .25, lx = x + F[0] * dist - F[1] * side, lz = z + F[1] * dist + F[0] * side, post = boxM(.05, .9, .05, dk, lx, 1.05, lz - F[1] * .03 - F[0] * 0);
+      const reverse = lc.clone();
+      reverse.rotation.y = Math.PI; reverse.position.z = -.004; lc.add(reverse);
       lc.position.set(lx, 1.55, lz); lc.rotation.set(-.45, Math.atan2(F[0], F[1]), 0, 'YXZ'); scene.add(pl, lc, post); toonify(pl); }
     const hot = HOT[it.id] || null, hotSprites = []; if (hot && SHOW_EXHIBITS) hot.forEach((h, i) => { h.set = new Set(h.parts); const sp = hotSprite(i + 1); sp.visible = false; hotSprites.push(sp); sp.position.set(h.at[0], h.at[1], h.at[2]); sp.scale.setScalar(.3 / k); sp.userData.hot = i; inner.add(sp); });
     addExhibit({ id: 'jm_' + it.id, hall: it.hall, root, parts, hot, hotSprites, hotOn: false, kind: 'jm', title: it.title, p: it.p, list: [`${d.parts.length} 个零件`], note: '模型素材来源：《匠木》。零件结构保持原样，木色与陈列为本馆重做。' }); toonify(root); });
@@ -3099,7 +3107,11 @@ function heroLabel(title, lead, body, foot, x, z) {   // the main exhibit's labe
     g.fillStyle = '#7a5a40'; g.font = '400 28px "Noto Sans SC","PingFang SC",sans-serif'; g.fillText(foot, x0, H - m * 2.6 - 30); }); t.anisotropy = 8;
   const card = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, color: 0xdcdcdc })), g = new THREE.Group(), dk = woodT('#2e221a');
   const back = boxM(w + .08, h + .08, .04, dk, 0, 0, -.025); g.add(card, back); g.rotation.set(-Math.PI / 2 + .75, Math.PI / 2, 0, 'YXZ'); g.position.set(x, 1.12, z);
-  scene.add(g, boxM(.07, .46, .07, dk, x - .1, .6 + .23, z), boxM(.5, .04, .4, dk, x - .06, .62, z));
+  // Both inclined reading faces meet at the ridge, so each faces up towards its visitor.
+  const opposite = g.clone(), halfSpan = (h + .08) * .5 * Math.sin(-g.rotation.x) + .03;
+  opposite.rotation.y += Math.PI;
+  opposite.position.x -= 2 * halfSpan;
+  scene.add(g, opposite, boxM(.07, .62, .07, dk, x - halfSpan, .93, z), boxM(.5, .04, .4, dk, x - halfSpan, .62, z));
 }
 function buildCraft() {
   heroMortise(-40.2, 24.5);

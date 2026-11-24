@@ -13,9 +13,11 @@ function createStudyHalls(THREE) {
       models:[['arch','三节苗与五节苗',-1.77,1.0,.015],['joint','平苗接牛头',.39,1.05,-.10]],
       angles:{'桥腹':[[15.5,1.75,-104.5],[0,2,-106],61]}},
     e1: {overview:[[-35.65,2.58,28.7],[-43.8,2.33,24.25],57], plates:[
-      ['wedge','透榫怎样锁住横材',[-46.08,3.13,24.6],half,7.75]], samples:['透榫加楔','十字搭接','格肩榫']},
+      ['wedge','透榫怎样锁住横材',[-46.08,3.13,24.6],half,7.75,
+        ['横材的榫头穿过立柱，直到榫肩贴住柱面。','从出榫一侧打入木楔，使榫端撑开，抵紧卯壁。']]], samples:['透榫加楔','十字搭接','格肩榫']},
     e2: {overview:[[-35.6,2.57,14.45],[-43.35,2.1,10.25],60], plates:[
-      ['dove','燕尾锁住箱角',[-46.08,3.04,10.8],half,6.38]], samples:['燕尾榫','银锭榫','龙凤榫']},
+      ['dove','燕尾锁住箱角',[-46.08,3.04,10.8],half,6.38,
+        ['看箱角两块板的交接处，榫头外宽内窄，形似燕尾。','沿槽口滑入才能合拢；向外拉时，斜肩抵住相邻的木料。']]], samples:['燕尾榫','银锭榫','龙凤榫']},
     e3: {overview:[[.05,2.58,-23.30],[0,2.22,-33.75],66], plates:[
       ['chair','一圈弧木如何接长',[-5.7,2.64,-33.9],0,5.95],
       ['desk','一张案的面、牙与足',[5.7,2.64,-33.9],0,5.95]]},
@@ -48,9 +50,37 @@ function createStudyHalls(THREE) {
     const m=new THREE.Mesh(unit,material(color)); m.scale.set(w,h,d);m.position.set(x,y,z);m.receiveShadow=true;parent.add(m);return m;
   }
   function stand(world,pos,yaw) {const g=new THREE.Group();g.position.set(...pos);g.rotation.y=yaw;world.add(g);if(world.isScene)g.userData.studyFixture=true;return g;}
-  function surface(parent,w,h,key,anisotropy) {
-    const map=loader.load(directory+key+'.jpg'); map.encoding=THREE.sRGBEncoding;map.anisotropy=Math.min(8,anisotropy);
-    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map,toneMapped:false}));
+  const readingPages = new Map();
+  function textPage(title,lines) {
+    const c=document.createElement('canvas');c.width=1200;c.height=556;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#f4ebda';ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle='#30463d';ctx.fillRect(0,0,c.width,155);
+    ctx.fillStyle='#fff7e5';ctx.font='bold 62px "Songti SC",serif';ctx.fillText(title,64,102);
+    ctx.fillStyle='#382e25';ctx.font='40px "PingFang SC",sans-serif';
+    lines.forEach((line,i)=>ctx.fillText(line,64,273+i*98,1072));
+    return c;
+  }
+  function surface(parent,w,h,key,anisotropy,title,lines) {
+    const basic=new THREE.MeshBasicMaterial({toneMapped:false});
+    const canvas=lines && textPage(title,lines);
+    if(canvas){
+      basic.map=new THREE.CanvasTexture(canvas);
+      basic.map.encoding=THREE.sRGBEncoding;
+      readingPages.set(key,canvas);
+    }
+    const map=loader.load(directory+key+'.jpg',loaded=>{
+      if(canvas)basic.map.dispose();
+      basic.map=loaded;basic.needsUpdate=true;
+      if(canvas){
+        readingPages.delete(key);
+        const dlg=document.getElementById('e4-reader'),img=dlg.querySelector('img');
+        if(dlg.open && img.alt===title)img.src=loaded.image.src;
+      }
+    },undefined,()=>map.dispose());
+    map.encoding=THREE.sRGBEncoding;map.anisotropy=Math.min(8,anisotropy);
+    if(!canvas)basic.map=map;
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),basic);
     m.name='study-'+key; m.userData.plate=key;m.position.z=.035;parent.add(m);return m;
   }
   function pieceLabel(g,text,x,y,z,w) {
@@ -133,7 +163,7 @@ function createStudyHalls(THREE) {
   }
 
   function mountPlate(scene,id,plate,anisotropy) {
-    const [key,title,pos,yaw,w]=plate, h=w*950/2048;
+    const [key,title,pos,yaw,w,lines]=plate, h=w*950/2048;
     const g=stand(scene,pos,yaw);g.name=title+' · 展陈';g.userData.noEdit=true;
     box(g,0,0,-.075,w+.19,h+.18,.16,walnut);
     box(g,0,0,.014,w+.056,h+.054,.029,brass);
@@ -142,15 +172,15 @@ function createStudyHalls(THREE) {
       box(g,s*(w/2+.14),h/2+.15,-.025,.078,.045,.13,brass);
     }
     box(g,0,h/2+.13,-.025,w+.40,.072,.23,walnut);
-    const mesh=surface(g,w,h,key,anisotropy);
+    const mesh=surface(g,w,h,key,anisotropy,title,lines);
     const faces=panels[id]??=[];
     faces.push(mesh);
     labels[key]=title;
-    // These two signs stand in the circulation path and are approached from either side.
-    if(id==='xu'||id==='zt'){
+    // Visitors can walk around these panels, including the two cases in the west wing.
+    if(id==='xu'||id==='zt'||id==='e1'||id==='e2'){
       const reverse=mesh.clone();
       reverse.rotation.y=Math.PI;
-      reverse.position.z=-.16; // beyond the timber backing, whose rear face is at -.155 m
+      reverse.position.z=-.165; // just clear of the backing and its rails
       g.add(reverse);
       faces.push(reverse);
     }
@@ -295,7 +325,9 @@ function createStudyHalls(THREE) {
   function read(key) {
     if(!labels[key])return false;
     const dialog=document.getElementById('e4-reader'),img=dialog.querySelector('img');
-    dialog.querySelector('h2').textContent=img.alt=labels[key];img.src=directory+key+'.jpg';dialog.showModal();return true;
+    dialog.querySelector('h2').textContent=img.alt=labels[key];
+    const page=readingPages.get(key);
+    img.src=page?page.toDataURL():directory+key+'.jpg';dialog.showModal();return true;
   }
   return {stations,panels,collision,install,views,read};
 }
