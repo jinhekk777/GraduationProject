@@ -157,6 +157,17 @@ button:focus-visible{outline:2px solid var(--qing);outline-offset:2px}
   .lab{font-size:11px;padding:2px 6px 3px}
 }
 @media (prefers-reduced-motion:reduce){.seg button,.seg button::after,.dots button::before,.arrow,.btn{transition:none}}
+
+#e4-views:not([hidden]){position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);display:flex;gap:6px;white-space:nowrap;background:#f7efdd;padding:4px;border:1px solid #a59176;border-radius:3px}
+#e4-reader{width:min(92vw,1260px);max-height:92vh;box-sizing:border-box;padding:14px 18px 20px;background:#f5eddc;color:#2f3029;border:1px solid #8b775d;border-radius:3px}
+#e4-views .plate-read{background:#314a40;color:#fff3d9}
+@media(max-width:650px){#e4-views:not([hidden]){gap:2px;max-width:95vw}#e4-views .btn{padding:6px 7px;font-size:12px}}
+#e4-reader .plate-scroll{overflow:auto;max-height:74vh;overscroll-behavior:contain}#e4-reader.zoomed img{max-width:none;max-height:none;width:1700px}
+#e4-reader::backdrop{background:rgba(22,22,18,.84)}
+#e4-reader header{display:flex;align-items:center;justify-content:space-between;gap:1em;margin-bottom:10px}
+#e4-reader h2{font:600 18px "Songti SC",serif;margin:0}
+#e4-reader button{background:#263c34;color:#fff5e6;border:0;padding:8px 14px;cursor:pointer}
+#e4-reader img{display:block;max-width:100%;max-height:74vh;margin:auto;object-fit:contain}
 </style>
 
 <div id="app">
@@ -185,6 +196,7 @@ button:focus-visible{outline:2px solid var(--qing);outline-offset:2px}
     </div>
   </section>
   <nav class="dock panel" id="tourDock" aria-label="漫游" hidden>
+    <div id="e4-views" role="group" aria-label="展厅四视角" hidden></div>
     <button class="arrow" id="prev" aria-label="上一处" title="上一处"><svg width="12" height="20" viewBox="0 0 12 20" aria-hidden="true"><path d="M9 3 3 10l6 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="stops">
       <div class="stop-name" aria-live="polite"><span id="stopNo"></span><b id="stopName"></b></div>
@@ -925,6 +937,9 @@ return MeshoptDecoder; })();
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<dialog id="e4-reader" aria-labelledby="e4-reader-title"><header><h2 id="e4-reader-title"></h2><span><button type="button" autofocus>关闭</button> <button id="plateZoom" type="button" aria-pressed="false">放大细看</button></span></header><div class="plate-scroll"><img alt=""></div></dialog>
+<script src="e4-gallery/gallery.js"></script>
+<script src="e4-gallery/halls/halls.js"></script>
 <script>
 (() => {
 const $ = id => document.getElementById(id);
@@ -1006,31 +1021,31 @@ const HALLS = [
     list: ['唐式柱头铺作（原大，可拆解）', '说明牌：十二种构件', '头顶的藻井'] },
   { id: 'e1', n: 3, name: '展厅一 · 直角与交叉', at: [-41, .6, 24.5],
     cam: [[-35.4, 2.5, 30.6], [-43.5, 1.6, 20]],
-    p: '西配殿南半，讲「一个节点是怎样做出来的」。正中一件放大的透榫加楔，按画线、开榫、凿卯、装配、打楔五步反复演示；后墙下是可以点开的节点样块，隔墙上挂着做它们的工具。',
-    list: ['透榫五步演示', '样块：直榫、十字搭接、格肩榫、透榫加楔', '木作工具墙'] },
+    p: '西配殿南半，讲「一个节点是怎样做出来的」。正中一件放大的透榫加楔，按画线、开榫、凿卯、装配、打楔五步反复演示；西墙图版下陈列三件可拆榫样，隔墙上挂着做它们的工具。',
+    list: ['透榫五步演示', '样块：透榫加楔、十字搭接、格肩榫', '木作工具墙'] },
   { id: 'e2', n: 4, name: '展厅二 · 拼接与延长', at: [-41, .6, 10.75],
     cam: [[-35.4, 2.5, 15.8], [-43.5, 1.6, 7]],
-    p: '西配殿北半，讲木料怎样接长、拼宽、防脱。正中一个放大的燕尾榫箱角反复开合；后墙下是燕尾榫、楔钉榫、银锭榫、龙凤榫四块样块，墙上是对应的图解。',
-    list: ['燕尾榫箱角演示', '样块：燕尾榫、楔钉榫、银锭榫、龙凤榫'] },
+    p: '西配殿北半，讲木料怎样接长、拼宽、防脱。正中一个放大的燕尾榫箱角反复开合；后墙下是燕尾榫、银锭榫、龙凤榫三件可拆榫样，墙上是对应的图解。',
+    list: ['燕尾榫箱角演示', '样块：燕尾榫、银锭榫、龙凤榫'] },
   { id: 'e3', n: 5, name: '展厅三 · 家具', at: [0, .6, -29],
     cam: [[9.6, 3.2, -33.0], [-2, 1.6, -27.2]],
-    p: '后殿，头顶是井口天花和一口藻井。两件明式家具名作各在一束光里：明式圈椅、夹头榫平头案。点一下，它们按榫卯拆成部件，编号与身后展示墙上的说明对应。',
+    p: '后殿，头顶是井口天花和一口藻井。两件明式家具名作各在一束光里：明式圈椅、夹头榫平头案。点一下，它们按榫卯拆成部件，与北墙合装和拆解图对读。',
     list: ['明式圈椅（可拆解）', '夹头榫平头案（可拆解）', '榫卯构成展示墙'] },
   { id: 'e4', n: 6, name: '展厅四 · 大木作', at: [-32, .6, -64],
-    cam: [[-23.6, 5.4, -50.9], [-32.5, 2.4, -64]],
-    p: '西厢。从节点到房屋。北圆台上是一攒清式平身科斗拱；南圆台上是一榀抬梁式屋架；西墙下是一榀穿斗式屋架，两种屋架对照着看。点一下展品，看它一层层拆开。',
-    list: ['五踩单翘单昂平身科（可拆解）', '抬梁式屋架（可拆解）', '穿斗式屋架（可拆解）'] },
+    cam: [[-32, 3.05, -54.2], [-32, 2.74, -70.7]], fov: 51,
+    p: '两座展台并列陈列抬梁式与穿斗式屋架。沿中间通道向内，可对照北墙的轴测图、山面投影与六组分步教具；穿斗式旁设穿枋榫样。点木构展品看拆合，点图版放大阅读。',
+    list: ['抬梁与穿斗', '清式平身科斗栱', '穿枋贯柱研习台'] },
   { id: 'ta', n: 7, name: '北院 · 木塔', at: [0, 1.8, -66], fov: 54,
     cam: [[12, 1.7, -38], [0, 17, -66]],
-    p: '穿过后殿进入第二进院落。正中是一座五层木塔，高四十多米，是全馆最高的建筑：每层檐下一圈斗拱，层层收分，檐上是平座栏杆，塔刹是覆钵、七重相轮和宝珠。底层四面开门，可以走进去。',
-    list: ['五层，逐层收分', '每层檐下都有斗拱和平座', '塔刹：覆钵、相轮、宝珠'] },
+    p: '穿过后殿进入第二进院落。正中是一座五层木塔，高四十多米，是全馆最高的建筑：每层檐下一圈斗拱，层层收分，檐上是平座栏杆，塔刹是覆钵、七重相轮和宝珠。南侧台阶旁的研习台放大了柱头的十字斗口。点木样看纵横两木怎样落槽，再抬头对照塔檐。',
+    list: ['五层，逐层收分', '每层檐下都有斗拱和平座', '塔前教具 · 柱头十字斗口'] },
   { id: 'ti', n: 8, name: '木塔 · 塔内', at: [0, 1.82, -66], fov: 50,
     cam: [[4.6, 3.4, -60.6], [-.6, 4.0, -66.6]],
     p: '登上两层台基，从南门走进木塔底层。塔心是一具切开的应县木塔模型：在一座木塔里看另一座木塔是怎么搭起来的。西北墙上挂着它的立面、剖面图。从北门出去，就是通往廊桥的路。',
     list: ['应县木塔剖面模型（可拆解）', '立面 · 剖面图', '南北两门可穿行'] },
   { id: 'qq', n: 9, name: '木拱廊桥', at: [0, 4.05, -106], fov: 50,
     cam: [[17, 1.2, -103], [0, 2.4, -106]],
-    p: '北院尽头的运河上架着一座木拱廊桥。桥身不用钉子，两组直木纵横穿插、互相承托：三节苗和五节苗交织成拱，横梁（牛头）把它们锁住，上面再架桥面和廊屋。可以走上去，到北岸看鲁班锁。',
+    p: '北院尽头的运河上架着一座木拱廊桥。桥身不用钉子，两组直木纵横穿插、互相承托：三节苗和五节苗交织成拱，横梁（牛头）把它们锁住，上面再架桥面和廊屋。南岸研习台陈列取自本桥的拱架缩样和放大的平苗燕尾。点击可拆合，对照横贯桥宽的牛头。过桥后可继续前往北岸。',
     list: ['三节苗 + 五节苗编木拱', '牛头横梁', '桥上廊屋'] },
   { id: 'e5', n: 10, name: '展厅五 · 榫卯与艺术', at: [32, .6, -64],
     cam: [[23.8, 3.2, -51.5], [33, 3.2, -64]],
@@ -1225,10 +1240,10 @@ const InkShader = {
       gl_FragColor = c;
     }` };
 const GradeShader = {
-  uniforms: { tDiffuse: { value: null }, exposure: { value: 1.0 }, sat: { value: .86 }, vign: { value: .5 }, seed: { value: 0 }, stage: { value: 0 }, res: { value: new THREE.Vector2(2, 2) },
+  uniforms: { tDiffuse: { value: null }, exposure: { value: 1.0 }, sat: { value: .86 }, vign: { value: .5 }, seed: { value: 0 }, stage: { value: 0 }, gallery: { value: 0 }, res: { value: new THREE.Vector2(2, 2) },
     shadowTint: { value: new THREE.Color('#53607a') }, hiTint: { value: new THREE.Color('#fff0d0') }, silk: { value: new THREE.Color('#f1e3c4') } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }',
-  fragmentShader: `uniform sampler2D tDiffuse; uniform float exposure, sat, vign, seed, stage; uniform vec2 res; uniform vec3 shadowTint, hiTint, silk; varying vec2 vUv;
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float exposure, sat, vign, seed, stage, gallery; uniform vec2 res; uniform vec3 shadowTint, hiTint, silk; varying vec2 vUv;
     vec3 rrt(vec3 v){ vec3 a = v * (v + .0245786) - .000090537; vec3 b = v * (.983729 * v + .432951) + .238081; return a / b; }
     vec3 aces(vec3 c){
       const mat3 I = mat3(vec3(.59719,.07600,.02840), vec3(.35458,.90834,.13383), vec3(.04823,.01566,.83777));
@@ -1238,7 +1253,8 @@ const GradeShader = {
     float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
       return mix(mix(h21(i), h21(i + vec2(1., 0.)), f.x), mix(h21(i + vec2(0., 1.)), h21(i + vec2(1., 1.)), f.x), f.y); }
     void main(){
-      vec3 c = aces(texture2D(tDiffuse, vUv).rgb * exposure);
+      vec3 linearImage = texture2D(tDiffuse, vUv).rgb * exposure;
+      vec3 c = aces(linearImage);
       c = mix(c, pow(c, vec3(2.1)) * 1.25, stage * .8);                         // dark hall: mid-tones drop away, only the lit pieces stay bright
       float l = dot(c, vec3(.2126,.7152,.0722)); c = mix(vec3(l), c, sat);
       c = mix(vec3(.5), c, .9) + .02;                                         // flatter, like pigment on silk
@@ -1251,6 +1267,7 @@ const GradeShader = {
       float fox = vn(q / 140.) * .6 + vn(q / 47.) * .4; c *= 1. - smoothstep(.62, .9, fox) * .06;        // foxing on old silk
       vec2 v = vUv - .5; float r2 = dot(v, v);
       c = mix(c, c * vec3(.86, .73, .52), smoothstep(.12, .5, r2) * vign * 1.3);                         // yellowed edges of the painting
+      c = mix(c, aces(linearImage * vec3(1.04,1.0,.96)), gallery);
       c = pow(clamp(c, 0., 1.), vec3(1. / 2.2));
       gl_FragColor = vec4(c, 1.);
     }` };
@@ -1353,9 +1370,9 @@ function panelTex(title, sub, items) {
 }
 const PANELS = [
   // [title, sub, items, position, rotationY, width]
-  ['大木作', '从节点到房屋：一攒斗拱、两种屋架。点一下展品，看它拆开。', ['平身科斗拱', '抬梁式屋架', '穿斗式屋架'], [-41.84, 2.8, -64], Math.PI / 2, 4.6],
-  ['尾厅', '回顾与收藏：看过的、做过的，以及这些知识从哪里来。', ['展品图鉴', '工坊作品', '资料来源'], [39, 2.25, 31.84], Math.PI, 4.6],
 ];
+const galleryFour = createTimberGallery(THREE);
+const studyHalls = createStudyHalls(THREE);
 const panelMeshes = [];
 function buildPanels() {
   panelMeshes.forEach(m => scene.remove(m)); panelMeshes.length = 0;
@@ -1426,17 +1443,30 @@ async function onModel(gltf) {
   root.updateMatrixWorld(true); root.traverse(o => {   // the screen at z = 8.5 gets a doorway on the axis
     if (!o.isMesh || !o.geometry.index) return; const glass = o.material.name === 'glass' || glassMats.includes(o.material); if (!glass && nodeOf(o) !== 'museum_base') return;
     const P = o.geometry.attributes.position, I = o.geometry.index, d = denorm(P), M = o.matrixWorld, v = new THREE.Vector3(), keep = []; let cut = 0;
-    const inDoor = i => { v.set(d(P.getX(i)), d(P.getY(i)), d(P.getZ(i))).applyMatrix4(M); return Math.abs(v.z - 8.5) < .25 && v.y > 3.8 && v.y < 11.6 && (glass ? Math.abs(v.x) < 15.2 : Math.abs(v.x) < .25 && v.y < 11.1); };
+    const stone = o.material.name === 'b_stone';
+    const inDoor = i => { v.set(d(P.getX(i)), d(P.getY(i)), d(P.getZ(i))).applyMatrix4(M); if (stone && galleryFour.oldPlinth(v)) return true; return Math.abs(v.z - 8.5) < .25 && v.y > 3.8 && v.y < 11.6 && (glass ? Math.abs(v.x) < 15.2 : Math.abs(v.x) < .25 && v.y < 11.1); };
     for (let k = 0; k < I.count; k += 3) { const a = I.getX(k), b = I.getX(k + 1), c = I.getX(k + 2); if (inDoor(a) && inDoor(b) && inDoor(c)) cut++; else keep.push(a, b, c); }
     if (cut) o.geometry.setIndex(keep); });
   for (const s of [-1, 1]) { const gm = new THREE.MeshBasicMaterial({ color: lin('#c8d4d6'), transparent: true, opacity: .08, depthWrite: false, side: THREE.DoubleSide }); glassMats.push(gm);
     const pane = new THREE.Mesh(new THREE.PlaneGeometry(12, 7.3), gm); pane.position.set(s * 9, 7.55, 8.5); pane.renderOrder = 2; scene.add(pane); const gn = root.getObjectByName('museum_glass'); if (gn) gn.attach(pane); else pane.userData.noEdit = true; }   // under the glass node, so the walker cannot pass through the panes
   roofNode = root.getObjectByName('museum_roof');
-  buildCollision(root); placeFigures();
+  const galleryColliders = galleryFour.collision();
+  const studyColliders = studyHalls.collision();
+  root.add(galleryColliders,studyColliders); buildCollision(root); root.remove(galleryColliders,studyColliders);
+  studyColliders.traverse(o => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } });
+  galleryColliders.traverse(o => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } });
+  placeFigures();
   scene.add(root);
   const steps = [buildExhibits, buildDisplays, buildMing, buildCeilings, buildCraft, buildOrnaments, buildStars, buildGate, buildNature, buildSurround, () => { buildJM(); glowExhibits(); }, () => { if (!SHOW_EXHIBITS) emptySigns(); }, () => toonify(scene)];
   for (let i = 0; i < steps.length; i++) { steps[i](); progress(.86 + .13 * (i + 1) / steps.length, '合榫'); await nextFrame(); }
-  setTime('dusk'); setMode('ext'); sceneReady = true; edInit();
+  await galleryFour.install(scene, addExhibit, toonify, renderer.capabilities.getMaxAnisotropy());
+  await studyHalls.install(scene, name => SPEC[name](timber('#bc8f61'), timber('#976742')), addExhibit, toonify, renderer.capabilities.getMaxAnisotropy());
+  setTime('dusk');
+  const requestedHall = new URLSearchParams(location.search).get('hall');
+  if (TOUR.some(s => s.id === requestedHall)) {
+    tourIdx = TOUR.findIndex(s => s.id === requestedHall); setMode('tour');
+  } else setMode('ext');
+  sceneReady = true; edInit();
   progress(1, '合榫'); for (let i = 0; i < 40 && LD.cur < 1; i++) await nextFrame(); await new Promise(r => setTimeout(r, 600));
   loadingEl.classList.add('done');
 }
@@ -1509,6 +1539,47 @@ let tween = null; controls.addEventListener('start', () => { tween = null; });
 function aim(p, t, d = 1600) { tween = { p0: camera.position.clone(), t0: controls.target.clone(), p1: new THREE.Vector3(...p), t1: new THREE.Vector3(...t), s: performance.now(), d: reduce ? 1 : d }; }
 let mode = 'ext', tourIdx = 0;
 /* info card: collapsible so it never sits on top of the view; collapsed by default on narrow screens */
+const galleryViews = {
+  '全厅': [[-32,3.05,-54.2],[-32,2.74,-70.7],51],
+  '抬梁图': [[-35.85,2.66,-71.97],[-33.62,3.35,-76.4],56],
+  '穿斗图': [[-27.12,2.5,-72.26],[-28.39,3.18,-76.4],58],
+  '榫样台': [[-26.79,2.95,-62.05],[-25.03,1.67,-65],44]
+};
+let galleryLens = 51;
+function fitGalleryLens(fov) {
+  galleryLens = fov;
+  return Math.min(108, THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(fov/2))*Math.max(1,1.55/camera.aspect))));
+}
+const plateDialog=$('e4-reader'), plateZoom=$('plateZoom');
+function zoomPlate(zoomed) {
+  plateDialog.classList.toggle('zoomed',zoomed);
+  plateZoom.setAttribute('aria-pressed',String(zoomed));
+  plateZoom.textContent=zoomed?'适合屏幕':'放大细看';
+  const scroll=plateDialog.querySelector('.plate-scroll');
+  scroll.scrollLeft=0; scroll.scrollTop=0;
+}
+plateZoom.onclick=()=>zoomPlate(!plateDialog.classList.contains('zoomed'));
+plateDialog.addEventListener('close',()=>zoomPlate(false));
+const galleryNav = $('e4-views');
+function setGalleryNav(id, title) {
+  const views = id === 'e4' ? galleryViews : studyHalls.views(id);
+  galleryNav.replaceChildren(); galleryNav.hidden = !views;
+  if (!views) return;
+  galleryNav.setAttribute('aria-label',title+'视角');
+  for (const [label,[pos,target,fov]] of Object.entries(views)) {
+    const b=document.createElement('button'); b.className='btn'; b.type='button'; b.textContent=label;
+    b.onclick=()=>{camera.fov=fitGalleryLens(fov); camera.updateProjectionMatrix(); aim(pos,target,700);};
+    galleryNav.appendChild(b);
+  }
+  if (studyHalls.stations[id]) {
+    const plates=studyHalls.stations[id].plates;
+    for(const [key,title] of plates){
+      const b=document.createElement('button'); b.className='btn plate-read'; b.type='button';
+      b.textContent=plates.length===1?'读图':({chair:'读椅图',desk:'读案图',loop:'读互承',float:'读斗栱'})[key];
+      b.setAttribute('aria-label','放大阅读'+title);b.onclick=()=>studyHalls.read(key); galleryNav.appendChild(b);
+    }
+  }
+}
 const cardEl = document.querySelector('.card');
 let cardOpen = window.innerWidth >= 900;
 function setCard(open) { cardOpen = open; cardEl.classList.toggle('collapsed', !open); $('cardTog').setAttribute('aria-expanded', String(open)); $('cardTogT').textContent = open ? '收起' : '详情'; }
@@ -1595,7 +1666,7 @@ function blocked(x, y, z, dx, dz, len) {
 const ZONES = [   // [id, x0, x1, z0, z1]: which part of the museum the walker is in
   ['xu', -18, 18, 8.5, 16], ['zt', -18, 18, -8, 8.5], ['e1', -48, -34, 17, 32], ['e2', -48, -34, 4.5, 17], ['e3', -12, 12, -35, -23],
   ['gf', 34, 48, 4.5, 17], ['wt', 34, 48, 17, 32], ['qy', -28, 28, 30, 62], ['in', -9, 9, 62, 100],
-  ['e4', -42, -22, -78, -50], ['e5', 22, 42, -78, -50], ['qq', -4.3, 4.3, -122.6, -89.4], ['ti', -7, 7, -73, -59], ['bc', -30, 30, -96, -36], ['nb', -54, 54, -142, -116.5]];
+  ['e4', -42, -22, -78, -50], ['e5', 22, 42, -78, -50], ['qq', -4.3, 4.3, -122.6, -89.4], ['ti', -7, 7, -73, -59], ['ta', 2.5, 13.5, -56, -45], ['qq', 4, 15, -95.5, -85], ['bc', -30, 30, -96, -36], ['nb', -54, 54, -142, -116.5]];
 function zoneAt(x, z) { const zz = ZONES.find(([, x0, x1, z0, z1]) => x > x0 && x < x1 && z > z0 && z < z1); return zz ? zz[0] : 'yard'; }
 function showZone(id) {
   if (id === walker.where) return; walker.where = id;
@@ -1698,11 +1769,6 @@ function buildExhibits() {
       r.scale.setScalar(k); r.position.set(x - (bb.min.x + sz.x / 2) * k, y0 - bb.min.y * k, z - (bb.min.z + sz.z / 2) * k);
       const parts = []; r.traverse(o => { if (o.userData && o.userData.role === 'dynamic') parts.push({ o, base: o.position.clone(), c: o.userData.course || 1, dou: o.userData.kind === '升斗' }); });
       const wrap = new THREE.Group(); wrap.add(r); toonify(wrap); wrap.traverse(o => { if (o.isMesh && o.material && o.material.emissive && !o.material.userData.lit) { o.material.userData.lit = 1; o.material.color.multiplyScalar(1.9); o.material.emissive.copy(o.material.color); o.material.emissiveMap = o.material.map || null; o.material.emissiveIntensity = .55; o.material.needsUpdate = true; } }); return { wrap, parts }; };
-    const a = mk(2.6, -32, -57, 1.6);
-    const ped = boxM(2.6, .7, 2.6, woodT('#6a4a34'), -32, 1.25, -57); scene.add(ped);
-    addExhibit({ id: 'pingshenke', hall: '展厅四 · 大木作', root: a.wrap, parts: a.parts, spread: .34 * 1.7,
-      title: '五踩单翘单昂平身科', p: '一攒完整的平身科斗拱，四十多个构件不用一根钉子：斗承栱、栱托斗，层层叠起，上下用暗销定位。点一下，它会一层层抬起分开；再点一下，合回原样。',
-      list: ['坐斗、正心瓜栱、头翘', '单才瓜栱、昂、耍头', '撑头木、桁椀、拽枋'], note: '状态：预览。45 个构件、16 个步骤尚未经专家审核，其中 6 个步骤为推测；耍头与拽枋的卡口与已知做法不符，已标记待修。' });
     const b = mk(2.2, 32, -60, 3.0);
     addExhibit({ id: 'hanging', hall: '展厅五 · 榫卯与艺术', root: b.wrap, parts: b.parts, spread: .34 * 2.6, art: true, on: true,
       title: '悬浮的斗拱（装置）', p: '同一攒斗拱被细线悬在半空，像呼吸一样缓缓张开又合拢。拆开时才看得见它的层次，合上时又是一个整体。点一下可以让它停下或继续。',
@@ -1711,24 +1777,6 @@ function buildExhibits() {
     const wm = new THREE.LineBasicMaterial({ color: 0x3a2a20 }); const wg = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(31.2, 7.4, -60.8), new THREE.Vector3(31.2, 5.0, -60.8), new THREE.Vector3(32.8, 7.4, -59.2), new THREE.Vector3(32.8, 5.0, -59.2)]);
     scene.add(new THREE.LineSegments(wg, wm));
   });
-  // 2) 抬梁式梁架 (structural section, schematic): seven layers lift apart
-  { const g = new THREE.Group(), W = woodT('#8b5a3a'), L = woodT('#a8744a'), layers = [];
-    const add = (o, k) => { o.userData.layer = k; o.userData.base = o.position.clone(); g.add(o); layers.push(o); };
-    for (const x of [-3, 3]) add(cylM(.22, 4.2, W, x, 2.1, 0), 0);
-    add(boxM(6.9, .5, .44, L, 0, 4.45, 0), 1);
-    for (const x of [-1.6, 1.6]) add(boxM(.32, .85, .32, W, x, 5.12, 0), 2);
-    add(boxM(4.0, .45, .4, L, 0, 5.77, 0), 3);
-    add(boxM(.3, 1.0, .3, W, 0, 6.5, 0), 4);
-    for (const [x, y] of [[-3.25, 4.95], [3.25, 4.95], [-1.6, 6.25], [1.6, 6.25], [0, 7.25]]) add(cylM(.17, 3.4, L, x, y, 0, 'z'), 5);
-    for (let s of [-1, 1]) for (let z = -1.4; z <= 1.41; z += .7) { const r = boxM(4.0, .1, .14, W, s * 1.75, 6.2, z); r.rotation.z = -s * Math.atan2(2.3, 3.4); add(r, 6); }
-    // a finer frame, one full bay with two trusses, modelled in Blender: it takes the place of the block version above once it has loaded
-    new THREE.GLTFLoader().load('liangjia.json', q => { const WW = timber('#8a4f33'), LL = timber('#bd8656'), SS = woodT('#cfc6b4'); layers.splice(0).forEach(o => g.remove(o));
-      [...q.scene.children].forEach(o => { const m = /^L(\d)/.exec(o.name); if (!m) return; o.traverse(s => { if (s.isMesh) { s.material = /^L/.test(s.material.name) ? LL : /^S/.test(s.material.name) ? SS : WW; s.castShadow = s.receiveShadow = true; } });
-        o.userData.layer = +m[1]; o.userData.base = o.position.clone(); g.add(o); layers.push(o); }); }, undefined, () => {});
-    g.scale.setScalar(.72); g.rotation.y = .5; g.position.set(-32, .95, -71);
-    addExhibit({ id: 'liangjia', hall: '展厅四 · 大木作', root: g, layers, title: '抬梁式梁架（剖面）',
-      p: '一榀抬梁式梁架：柱上架五架梁，梁上立瓜柱，再架三架梁和脊瓜柱，檩条压在梁头上，椽子搭在檩上。点一下，各层按搭建顺序分开。',
-      list: ['柱', '五架梁 · 金瓜柱', '三架梁 · 脊瓜柱', '檩 · 椽'], note: '结构示意：尺寸与比例为示意，未按某一座建筑测绘。' }); }
   // 3) 互承木构: eight logs in a ring, each tip resting in a saddle notch on the next log and carrying the one before it (modelled in Blender so the notches are real cuts)
   { const g = new THREE.Group(), parts = [], N = 8; g.position.set(32, .95, -71);
     new THREE.GLTFLoader().load('huchen.json', q => { const WW = timber('#9a6a44'); q.scene.updateMatrixWorld(true); [...q.scene.children].forEach(o => { const m = /^B(\d+)/.exec(o.name); if (!m) return; o.traverse(c => { if (c.isMesh) { c.material = WW; c.castShadow = c.receiveShadow = true; } });
@@ -1788,24 +1836,35 @@ function animateExhibits(dt, now) {
         q.o.position.lerpVectors(q.pa, q.pe, H ? kk : q.k); q.o.quaternion.copy(q.qa).slerp(q.qe, H ? kk : q.k); }); continue; }
     if (ex.kind === 'ming') { ex.parts.forEach(g => { g.position.copy(g.userData.dir).multiplyScalar(k); if (g.userData.label) g.userData.label.material.opacity = Math.max(0, k * 1.4 - .4); }); continue; }
     if (ex.id === 'pingshenke') ex.parts.forEach(p => { p.o.position.copy(p.base); p.o.position.y += ((p.c - 1) * ex.spread + (p.dou ? .2 : 0)) * k; });
-    else if (ex.layers) ex.layers.forEach(o => { o.position.copy(o.userData.base); o.position.y += o.userData.layer * .55 * k; });
+    else if (ex.layers) ex.layers.forEach(o => { o.position.copy(o.userData.base); o.position.y += o.userData.layer * (ex.layerGap || .55) * k; });
     else if (ex.id === 'burr') { ex.root.rotation.y += dt * .08; ex.bars.forEach(b => { b.position.copy(b.userData.base).addScaledVector(b.userData.dir, 2.4 * k); }); }
   }
 }
 function showExhibit(ex) {
-  const state = ex.art ? '' : ex.hotOn ? '（点器物上的编号，看那一处榫卯）' : ex.on ? '（已拆开，再点一下合上）' : '（点一下拆开）';
+  const state = ex.id === 'through-tie' ? (ex.on ? '（已推合，再点抽出）' : '（点一下推合）') : ex.art ? '' : ex.hotOn ? '（点器物上的编号，看那一处榫卯）' : ex.on ? '（已拆开，再点一下合上）' : '（点一下拆开）';
   card('展品 · ' + ex.hall, ex.title + state, ex.p, ex.list, ex.note); hotBtn(ex); setCard(true);
 }
 const pickRay = new THREE.Raycaster(), pickV = new THREE.Vector2(); let pickDown = null;
 function exhibitAt(e) {
   const r = canvas.getBoundingClientRect(); pickV.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   pickRay.setFromCamera(pickV, camera); pickRay.far = 90;
-  const hits = pickRay.intersectObjects(EXH.map(x => x.root), true); const vis = hits.filter(h => h.object.visible); exhibitAt.hit = vis.length ? (vis.find(h => h.object.userData.hot != null) || vis[0]).object : null; if (!vis.length) return null;
+  const targets = EXH.map(x => x.root);
+  if (mode === 'tour' || mode === 'walk') {
+    const id = mode === 'tour' ? TOUR[tourIdx].id : zoneAt(camera.position.x,camera.position.z);
+    if(id==='e4')targets.push(...galleryFour.panels);
+    else if(studyHalls.panels[id])targets.push(...studyHalls.panels[id]);
+    if(mode==='walk')for(const [other,cfg] of Object.entries(studyHalls.stations)){
+      if(other!==id && cfg.outdoor && Math.hypot(camera.position.x-cfg.at[0],camera.position.z-cfg.at[2])<10)
+        targets.push(...studyHalls.panels[other]);
+    }
+  }
+  const hits = pickRay.intersectObjects(targets, true);
+  if (hits.length && hits[0].object.userData.plate) { exhibitAt.hit = hits[0].object; return {plate:exhibitAt.hit.userData.plate}; } const vis = hits.filter(h => h.object.visible); exhibitAt.hit = vis.length ? (vis.find(h => h.object.userData.hot != null) || vis[0]).object : null; if (!vis.length) return null;
   return EXH.find(x => { let p = exhibitAt.hit; while (p) { if (p === x.root) return true; p = p.parent; } return false; }) || null;
 }
 canvas.addEventListener('pointerdown', e => { pickDown = { x: e.clientX, y: e.clientY, t: performance.now() }; });
 canvas.addEventListener('pointerup', e => { if (!pickDown || ED.on) { pickDown = null; return; } const d = Math.hypot(e.clientX - pickDown.x, e.clientY - pickDown.y), dtm = performance.now() - pickDown.t; pickDown = null;
-  if (d > 6 || dtm > 600) return; const ex = exhibitAt(e); if (!ex) return; const hi = exhibitAt.hit ? exhibitAt.hit.userData.hot : null;
+  if (d > 6 || dtm > 600) return; const ex = exhibitAt(e); if (!ex) return; if (ex.plate) { if (!studyHalls.read(ex.plate)) galleryFour.readPlate(ex.plate); return; } const hi = exhibitAt.hit ? exhibitAt.hit.userData.hot : null;
   if (ex.hot && hi != null) { ex.on = false; ex.t = 0; ex.focus = ex.focus === hi ? null : hi; const H = ex.hot[hi]; if (ex.focus != null) { card('榫卯 · ' + ex.title, H.name, H.text, [], '再点一下圆点合上。'); hotBtn(ex); setCard(true); } else showExhibit(ex); return; }
   ex.focus = null; if (!ex.hotOn) ex.on = !ex.on; showExhibit(ex); });
 let hoverT = 0; canvas.addEventListener('pointermove', e => { if (e.buttons || performance.now() - hoverT < 120) return; hoverT = performance.now(); canvas.style.cursor = exhibitAt(e) ? 'pointer' : ''; });
@@ -1815,7 +1874,7 @@ const SPOTS = [ // [x, floorY, z, lantern bottom, beam radius on the floor, ceil
   [-40.2, .6, 24.5, 3.9, 2.0, 5.06, 1], [-45.3, .6, 21.5, 3.9, 2.2, 5.06, 1], [-45.3, .6, 27.6, 3.9, 2.2, 5.06, 1], [-45, .6, 18.2, 3.9, 2.2, 5.06, 1], [-40.2, .6, 10.75, 3.9, 1.8, 5.06, 1], [-45.3, .6, 8, 3.9, 2.2, 5.06, 1], [-45.3, .6, 13.6, 3.9, 2.2, 5.06, 1],
   [-5.7, 1.1, -29.6, 4.3, 1.6, 5.46, 1], [5.7, 1.1, -29.6, 4.3, 2.0, 5.46, 1], [-5.7, .6, -33.4, 4.3, 2.4, 5.46, 1], [5.7, .6, -33.4, 4.3, 2.4, 5.46, 1],
   [0, 3.9, 12.55, 8.9, 2.2, 10.46, 1.4], [0, 3.9, 3.1, 17.6, 5.2, 22.08, 2.4],
-  [-32, .95, -57, 5.2, 2.4, 6.46, 1.2], [-39.2, .6, -64, 5.2, 2.6, 6.46, 1], [0, 1.82, -66, 5.6, 3.0, 6.3, 1.2], [-32, .95, -71, 5.2, 3.3, 6.46, 1.2], [32, .6, -60, 5.6, 2.2, 6.46, 1], [32, .95, -71, 5.2, 3.1, 6.46, 1.2]];
+  [-32, 1.73, -74, 4.0, 1.5, 6.46, 1], [-27.65, .94, -69.45, 5.2, 3.15, 6.46, 1], [0, 1.82, -66, 5.6, 3.0, 6.3, 1.2], [-36.35, .94, -69.1, 5.2, 3.15, 6.46, 1.2], [32, .6, -60, 5.6, 2.2, 6.46, 1], [32, .95, -71, 5.2, 3.1, 6.46, 1.2]];
 const DARK = new Set(['xu', 'zt', 'e1', 'e2', 'e3', 'e4', 'e5', 'ti']);
 const spotFX = new THREE.Group(); scene.add(spotFX);
 const beamTex = (() => { const c = document.createElement('canvas'); c.width = 4; c.height = 128; const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 128);
@@ -1842,19 +1901,26 @@ SPOTS.forEach(([x, y, z, top, r, ceil, ls]) => {
   const can = new THREE.Mesh(new THREE.CylinderGeometry(.07 * ls, .09 * ls, .16 * ls, 12), woodT('#1e1a18')); can.position.set(x, ceil - .14 * ls, z); lanternGroup.add(can);   // recessed track head
   const lens = new THREE.Mesh(new THREE.CircleGeometry(.07 * ls, 12), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.4, 1.1) })); lens.rotation.x = Math.PI / 2; lens.position.set(x, ceil - .225 * ls, z); lanternGroup.add(lens);
   const h = top - y, beam = new THREE.Mesh(new THREE.CylinderGeometry(.14 * ls, r, h, 28, 1, true), beamMat); beam.position.set(x, y + h / 2, z); spotFX.add(beam);
-  const pool = new THREE.Mesh(new THREE.CircleGeometry(r * 1.15, 40), poolMat); pool.rotation.x = -Math.PI / 2; pool.position.set(x, y + .03, z); spotFX.add(pool);
+  const pool = new THREE.Mesh(new THREE.CircleGeometry(r * 1.15, 40), poolMat); if (zoneAt(x,z) === 'e4') pool.visible = false;
+  pool.rotation.x = -Math.PI / 2; pool.position.set(x, y + .03, z); spotFX.add(pool);
 });
 const spotLights = [0, 1, 2, 3].map(() => { const l = new THREE.SpotLight(0xffe0b0, 0, 24, .5, .6, 1.2); scene.add(l, l.target); return l; });
 let dark = 0, hemiBase = .9, spotT = 0;
 function updateStage(dt) {
-  const inside = (mode === 'tour' || mode === 'walk') && DARK.has(zoneAt(camera.position.x, camera.position.z));
+  const visiting = mode === 'tour' || mode === 'walk', zone = zoneAt(camera.position.x,camera.position.z);
+  const inside = visiting && DARK.has(zone), inGallery = visiting && zone === 'e4';
+  galleryFour.lightForVisitor(inGallery);
+  const inStudyHall = visiting && !!studyHalls.stations[zone] && !studyHalls.stations[zone].outdoor;
+  if (grade) grade.uniforms.gallery.value = inGallery || inStudyHall ? .80 : 0;
+  if (ink) ink.uniforms.strength.value = inGallery || inStudyHall ? .34 : .85;
   dark += ((inside ? 1 : 0) - dark) * Math.min(1, dt * 2.5);
   hemi.intensity = hemiBase * (1 - .3 * dark); { const e = envBase * (1 - .45 * dark); if (Math.abs(e - (updateStage.e || 0)) > .01) { updateStage.e = e; STD.forEach(m => { m.envMapIntensity = e; }); } }
   hallLights.forEach(l => { l.intensity = (l.userData.b || 0) * (1 - .25 * dark); }); sun.intensity = TIMES[time].sun[1] * (1 - .93 * dark);
   beamMat.opacity = 0; poolMat.opacity = .45 * dark; spotFX.visible = dark > .02; if (grade) grade.uniforms.stage.value = dark * .3;   // halls stay readable: the lamps lift the exhibits, the room is dimmed only a little
   if ((spotT -= dt) <= 0) { spotT = .35;
     const cp = camera.position, near = SPOTS.map(s => [Math.hypot(s[0] - cp.x, s[2] - cp.z), s]).sort((a, b) => a[0] - b[0]).slice(0, spotLights.length);
-    spotLights.forEach((l, i) => { const [d, [x, y, z, top, r, ceil]] = near[i]; l.position.set(x, ceil - .25, z); l.target.position.set(x, y, z); l.angle = Math.min(1.1, Math.atan2(r * 1.15, ceil - y)); l.userData.k = d < 34 ? 1 : 0; });
+    spotLights.forEach((l, i) => { const [d, [x, y, z, top, r, ceil]] = near[i]; const timberHall = zoneAt(x,z) === 'e4';
+      l.position.set(x - (timberHall ? 1.5 : 0), ceil - .25, z + (timberHall ? 1.9 : 0)); l.target.position.set(x, timberHall ? y + 1 : y, z); l.angle = Math.min(1.1, Math.atan2(r * 1.15, ceil - y)); l.userData.k = d < 34 ? (timberHall ? 1.7 : 1) : 0; });
   }
   spotLights.forEach(l => { l.intensity = 4.2 * dark * (l.userData.k || 0); });
 }
@@ -2494,34 +2560,15 @@ function wallTex(title, sub, items, note) { return inkCanvas(2048, 960, (g, W, H
 }); }
 function buildMing() {
   const plinth = woodT('#2e221a');
-  const A = quanyi(); A.root.position.set(-5.7, 1.1, -29.6); A.root.rotation.y = .35; A.root.scale.setScalar(1.6); scene.add(A.root); scene.add(boxM(1.5, .5, 1.3, plinth, -5.7, .85, -29.6));
+  const A = quanyi(); A.root.position.set(-4.3, 1.12, -31.25); A.root.rotation.y = .35; A.root.scale.setScalar(1.6); scene.add(A.root); scene.add(boxM(1.5, .5, 1.3, plinth, -4.3, .85, -31.25));
   addExhibit({ id: 'quanyi', hall: '展厅三 · 家具', root: A.root, parts: A.parts, kind: 'ming',
-    title: '明式圈椅', p: '圈椅是明式家具里最有名的椅子之一：椅圈从靠背一路弯到扶手，一气呵成。点一下，它按榫卯拆成部件，编号与身后墙上的说明一一对应；再点一下合上。',
+    title: '明式圈椅', p: '圈椅是明式家具里最有名的椅子之一：椅圈从靠背一路弯到扶手，一气呵成。点一下，它按榫卯拆成部件，可对照北墙上椅圈、座框和横枨的图解；再点一下合上。',
     list: ['① 椅圈 · 楔钉榫', '② 靠背板', '③ 座面 · 攒边打槽装板', '④ 腿足', '⑤ 联帮棍', '⑥ 管脚枨 · 步步高赶枨', '⑦ 券口牙子'], note: '形制依明式圈椅的常见做法，尺寸为示意，展示放大 1.6 倍。' });
-  const B = pingtouan(); B.root.position.set(5.7, 1.1, -29.6); B.root.rotation.y = -.3; B.root.scale.setScalar(1.6); scene.add(B.root); scene.add(boxM(3.1, .5, 1.3, plinth, 5.7, .85, -29.6));
+  const B = pingtouan(); B.root.position.set(4.3, 1.12, -31.25); B.root.rotation.y = -.3; B.root.scale.setScalar(1.6); scene.add(B.root); scene.add(boxM(3.1, .5, 1.3, plinth, 4.3, .85, -31.25));
   addExhibit({ id: 'an', hall: '展厅三 · 家具', root: B.root, parts: B.parts, kind: 'ming',
-    title: '夹头榫平头案', p: '平头案是明代最常见的案形之一，案面两端不起翘。它的标志是夹头榫：腿足上端开口，把牙条和牙头夹在中间，再向上出榫托住案面。点一下拆开，编号对应身后墙上的说明。',
+    title: '夹头榫平头案', p: '平头案是明代最常见的案形之一，案面两端不起翘。它的标志是夹头榫：腿足上端开口，把牙条和牙头夹在中间，再向上出榫托住案面。点一下拆开，再看身后展板上的案面、牙条与足。',
     list: ['① 案面 · 攒边打槽装板', '② 穿带', '③ 夹头榫', '④ 牙条', '⑤ 牙头', '⑥ 双横枨', '⑦ 腿足 · 侧脚'], note: '形制依明式平头案的常见做法，尺寸为示意，展示放大 1.6 倍。' });
-  const wA = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 2.9), new THREE.MeshBasicMaterial({ map: wallTex('明式圈椅', '一把椅子，由哪些榫卯构成', [
-    ['椅圈', '楔钉榫', '椅圈由几段弧形木料接成。两段各做半榫相搭，中间打入一根楔钉，既拉不开，也上下错不动。', '楔钉榫'],
-    ['靠背板', '上下入槽', '一块弯成 S 形的独板，上端插入椅圈，下端落进座面后边的槽口，贴合人的脊背。', '直榫'],
-    ['座面', '攒边打槽装板', '四根边抹用格角榫攒成框，框里侧打槽，嵌入面心板，木板伸缩时不会撑裂框子。', '攒边装板'],
-    ['腿足', '直榫', '后腿穿过座面一直向上，直接承托椅圈；前腿之上接鹅脖，再与椅圈相交。', '直榫'],
-    ['联帮棍', '两端出榫', '扶手中段下的细短柱，上抵椅圈、下入座面，既加固又不挡人。', '直榫'],
-    ['管脚枨', '步步高赶枨', '前枨最低、两侧居中、后枨最高，卯眼错开高度，腿足不会因在同一处开孔而变弱。', '直榫'],
-    ['券口牙子', '嵌装', '座面下的弧形牙板，嵌在腿足与座面边框之间，起装饰也起支撑。', '券口']],
-    '形制依明式圈椅的常见做法，尺寸为示意；榫卯说明参考王世襄《明式家具研究》等通行资料。') }));
-  wA.position.set(-5.7, 2.2, -34.17); scene.add(wA);
-  const wB = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 2.9), new THREE.MeshBasicMaterial({ map: wallTex('夹头榫平头案', '一张案子，由哪些榫卯构成', [
-    ['案面', '攒边打槽装板', '大边与抹头以格角榫攒成框，框内打槽装入面心板，四边看不到板的端面。', '攒边装板'],
-    ['穿带', '燕尾穿带', '面心板背面横穿几根带子，两端出榫纳入大边，托住面板、防止翘曲。', '穿带'],
-    ['腿足与牙条', '夹头榫', '腿足上端开口，夹住牙条与牙头，腿顶再出榫纳入案面大边：腿、牙、面三者咬成一体。', '夹头榫'],
-    ['牙条', '嵌入腿足开口', '贯通两腿之间的长牙板，被腿足夹住，加强案面与腿足的联系。', '直榫'],
-    ['牙头', '与牙条同嵌', '牙条两端靠腿处的小装饰板，和牙条一起被腿足的开口夹住。', '夹头榫'],
-    ['双横枨', '直榫', '两侧腿足之间的两根横枨，两端出榫纳入腿足，稳住案的进深方向。', '直榫'],
-    ['腿足', '侧脚', '四腿下端略向外撇，案子站得更稳。', '侧脚']],
-    '形制依明式平头案的常见做法，尺寸为示意；榫卯说明参考王世襄《明式家具研究》等通行资料。') }));
-  wB.position.set(5.7, 2.2, -34.17); scene.add(wB);
+
 }
 
 /* ---------- 镇馆展品: a full-size Tang bracket set on its column, a cut-away model of the Yingxian pagoda beside its survey drawing,
@@ -2876,14 +2923,6 @@ function buildStars() {
     list: ['五个明层 + 四个暗层', '内槽、外槽两圈柱', '暗层斜撑 · 平座', '西北墙上是同一座塔的立面、剖面图'], note: '层数、年代、通高有据；各层尺寸与柱数为示意，未按测绘图制作。全塔斗拱据记载有五十四种，模型未表现。' });
   const dr = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 4.5), new THREE.MeshBasicMaterial({ map: towerDrawing() })); dr.position.set(-4.2, 4.2, -72.78); scene.add(dr);
   scene.add(boxM(3.2, 4.7, .08, woodT('#3a2a1e'), -4.2, 4.2, -72.84));
-  // 展厅四: 抬梁 vs 穿斗
-  const C = chuandou(); C.g.traverse(o => { if (o.isMesh && o.material && o.material.emissive && !o.material.userData.lit) { o.material = o.material.clone(); o.material.userData.lit = 1; o.material.emissive.copy(o.material.color); o.material.emissiveIntensity = .35; } }); C.g.scale.setScalar(.55); C.g.rotation.y = Math.PI / 2; C.g.position.set(-39.2, .9, -64); scene.add(boxM(2.6, .3, 4.6, woodT('#2e221a'), -39.2, .75, -64));
-  new THREE.GLTFLoader().load('chuandou.json', q => { const WW = timber('#8a4f33'), LL = timber('#bd8656'), SS = woodT('#cfc6b4'); C.layers.splice(0).forEach(o => C.g.remove(o));   // the finer frame from Blender: two trusses, every purlin on its own column, ties passing through
-    [...q.scene.children].forEach(o => { const m = /^L(\d)/.exec(o.name); if (!m) return; o.traverse(s => { if (s.isMesh) { s.material = /^L/.test(s.material.name) ? LL : /^S/.test(s.material.name) ? SS : WW; s.castShadow = s.receiveShadow = true; } });
-      o.userData.layer = +m[1]; o.userData.base = o.position.clone(); C.g.add(o); C.layers.push(o); }); }, undefined, () => {});
-  addExhibit({ id: 'chuandou', hall: '展厅四 · 大木作', root: C.g, layers: C.layers, kind: 'layers', title: '穿斗式屋架',
-    p: '南方民居常见的做法：每根柱子都直接顶到檩条，柱与柱之间用薄薄的穿枋穿过柱身连起来。用料细、省大木，但柱子密。和旁边的抬梁式对照着看：抬梁是梁上叠梁、室内无柱；穿斗是柱柱落地。点一下按搭建顺序分开。',
-    list: ['柱直接承檩', '穿枋穿过柱身', '短柱骑在穿枋上'], note: '结构示意，尺寸非测绘。' });
   // 序厅: 烫样
   const D = tangyang(); D.root.position.set(0, 4.98, 12.55); scene.add(D.root);
   const tb = batcher(), tw = woodT('#4a3222'); tb.box(tw, 3.6, .08, 2.4, 0, 4.94, 12.55); for (const sx of [-1, 1]) for (const sz of [-1, 1]) tb.box(tw, .1, .82, .1, sx * 1.65, 4.49, 12.55 + sz * 1.05); for (const sz of [-1, 1]) tb.box(tw, 3.3, .08, .05, 0, 4.78, 12.55 + sz * 1.05); tb.build(scene);
@@ -3011,11 +3050,11 @@ function heroMortise(x, z) {   // a big 透榫加楔 joint that makes itself in 
   const lines = []; for (const [w, h, d, px, py, pz] of [[.012, .4, .44, .3, 0, 0], [.012, .4, .44, -.3, 0, 0], [.62, .012, .26, 0, .19, .22], [.62, .012, .26, 0, -.19, .22]]) { const l = boxM(w, h, d, ink, px, py, pz); rail.add(l); lines.push(l); }
   const wedges = [boxM(.18, .07, .26, woodT('#c9a24a'), -.36, .14, 0), boxM(.18, .07, .26, woodT('#c9a24a'), -.36, -.14, 0)]; wedges.forEach(w => g.add(w));
   g.add(post, rail); rail.position.set(1.6, 1.85, 0); wedges.forEach(w => { w.position.y += 1.85; });
-  const cap = stepCaption(); cap.position.set(0, 3.55, 0); g.add(cap);
-  scene.add(boxM(3.6, .5, 1.6, woodT('#2e221a'), x + .8, .85, z)); g.position.set(x, .9, z); g.rotation.y = Math.PI / 2 - .35; scene.add(g);
+  const cap = stepCaption(); cap.position.set(0, 3.14, 0); cap.scale.set(1.45,.363,1); g.add(cap);
+  scene.add(boxM(3.14, .5, 2.4, woodT('#2e221a'), x + .1, .85, z + .02)); g.position.set(x, .205, z); g.rotation.y = Math.PI / 2 - .35; scene.add(g);
   const STEPS = [['画线', '用墨斗、角尺在料上弹出榫头和卯眼的位置'], ['开榫', '锯出榫肩，去掉榫头四周的余料'], ['凿卯', '在柱上凿出方卯，掏空卯眼'], ['装配', '榫头穿过卯眼，从另一面露出'], ['打楔', '在榫头上下打入木楔，撑紧卯眼']];
   let last = -1;
-  addExhibit({ id: 'hero_mortise', hall: '展厅一 · 直角与交叉', root: g, art: true, on: true, title: '一个透榫是怎样做成的', p: '这件放大的透榫加楔，按画线、开榫、凿卯、装配、打楔五步，一遍遍把自己做出来。旁边的工具墙上就是每一步用到的工具。点一下暂停或继续。',
+  addExhibit({ id: 'hero_mortise', T: 10.45, hall: '展厅一 · 直角与交叉', root: g, art: true, on: true, title: '一个透榫是怎样做成的', p: '这件放大的透榫加楔，按画线、开榫、凿卯、装配、打楔五步，一遍遍把自己做出来。旁边的工具墙上就是每一步用到的工具。点一下暂停或继续。',
     list: STEPS.map((s, i) => `${i + 1} ${s[0]}：${s[1]}`), note: '工艺演示，尺寸放大，步骤为通行做法的简化。',
     anim: (k, T) => { const t = T % 15, st = Math.min(4, Math.floor(t / 3)), f = (t % 3) / 3, e = x => x * x * (3 - 2 * x);
       if (st !== last) { last = st; cap.userData.draw(String(st + 1), STEPS[st][0], STEPS[st][1]); }
@@ -3062,10 +3101,6 @@ function heroLabel(title, lead, body, foot, x, z) {   // the main exhibit's labe
   scene.add(g, boxM(.07, .46, .07, dk, x - .1, .6 + .23, z), boxM(.5, .04, .4, dk, x - .06, .62, z));
 }
 function buildCraft() {
-  specimenTable(-45.3, 24.6, ['直榫', '十字搭接', '格肩榫', '透榫加楔'], '展厅一 · 直角与交叉');
-  specimenTable(-45.3, 10.8, ['燕尾榫', '楔钉榫', '银锭榫', '龙凤榫'], '展厅二 · 拼接与延长', true);
-  craftWall(-46.17, 19.2, 30.0, '直角与交叉：一个节点怎么做', [['画线', '墨斗弹线，角尺定方，先在料上画出榫与卯。', '直榫'], ['开榫', '锯出榫肩，去掉余料，留下榫头。', '格肩榫'], ['凿卯', '在另一根料上凿出方卯。', '十字搭接'], ['装配打楔', '榫头入卯，再打楔撑紧。', '透榫加楔']]);
-  craftWall(-46.17, 6.4, 15.2, '器物里的榫卯：这几种榫卯，在哪件家具上', [['透榫', '看展厅一的板凳：腿顶的榫头穿出凳面，有的还会再打进木楔撑紧。', '透榫加楔'], ['直榫', '看板凳的横枨：榫头插进腿里就停住，从外面看不到。', '直榫'], ['楔钉榫', '看展厅三圈椅的椅圈：几段弧形料靠它接成一整圈。', '楔钉榫'], ['燕尾榫', '看本厅中央的箱角：梯形榫头外宽里窄，越拉越紧。', '燕尾榫']]);
   heroMortise(-40.2, 24.5);
   if (SHOW_EXHIBITS) heroLabel('透榫加楔', '看榫头从柱子另一面穿出来：再打进两枚木楔，把它撑紧。', '这件放大的节点按画线、开榫、凿卯、装配、打楔五步，一遍遍把自己做出来。', '演示件，尺寸放大 · 点一下暂停或继续', -37.3, 24.5);
   if (SHOW_EXHIBITS) heroLabel('燕尾榫', '看箱角上这排梯形的榫头：外宽里窄，像燕子的尾巴。', '箱子装满东西往外撑，榫头被卡在卯口里，角就拉不开。抽屉和衣箱的角大多这样做。', '演示件，尺寸放大 · 点一下暂停或继续', -39.05, 10.75);
@@ -3097,9 +3132,9 @@ function buildCraft() {
       list: ['腿：长短榫各一', '横料：两根，端头斜切', '看面：三道 45° 格角缝'], note: '工艺演示，尺寸放大，内部卡口做了简化。' }); }
   // 展厅二 hero: a dovetailed box corner drawn apart and back together
   { const g = new THREE.Group(), [[tails], [pins]] = SPEC['燕尾榫'](timber('#c2925e'), timber('#9a6238')); tails.rotation.y = pins.rotation.y = 0; tails.position.set(0, 0, 0); pins.position.set(0, 0, 0);
-    g.add(tails, pins); g.scale.setScalar(3.0); g.position.set(-39.9, 1.75, 11.0); g.rotation.set(0, .7, 0); scene.add(g); scene.add(boxM(1.6, .5, 1.6, woodT('#2e221a'), -40.2, .85, 10.75));
-    addExhibit({ id: 'hero_dove', hall: '展厅二 · 拼接与延长', root: g, art: true, on: true, title: '燕尾榫箱角（放大）', p: '抽屉和箱子的转角用一排燕尾榫：几个梯形的榫头对着同形的卯口推进去，箱板既拉不开也不会错位。它在这里一遍遍分开又合上。点一下暂停或继续。', list: [], note: '工艺演示，尺寸放大。',
-      anim: (k, T) => { const s = .5 - .5 * Math.cos(T * .6); tails.position.z = s * .22; g.rotation.y = .8 + Math.sin(T * .15) * .35; } }); }
+    g.add(tails, pins); g.scale.setScalar(3.0); g.position.set(-39.9, 1.66, 11.0); g.rotation.set(0, .7, 0); scene.add(g); scene.add(boxM(1.6, .5, 1.6, woodT('#2e221a'), -40.2, .85, 10.75));
+    addExhibit({ id: 'hero_dove', T: 4.5, hall: '展厅二 · 拼接与延长', root: g, art: true, on: true, title: '燕尾榫箱角（放大）', p: '抽屉和箱子的转角用一排燕尾榫：几个梯形的榫头对着同形的卯口推进去，箱板既拉不开也不会错位。它在这里一遍遍分开又合上。点一下暂停或继续。', list: [], note: '工艺演示，尺寸放大。',
+      anim: (k, T) => { const s = .5 - .5 * Math.cos(T * .6); tails.position.z = s * .22; g.rotation.y = -.13 + Math.sin(T * .15) * .18; } }); }
 }
 
 /* visitors for scale: simple robed figures standing about the court, on the stairs and the terrace */
@@ -3122,6 +3157,7 @@ function walkStart() {
 }
 function walkStop() { controls.enabled = true; camera.fov = 40; camera.updateProjectionMatrix(); walker.keys = {}; walker.joy.x = walker.joy.y = 0; }
 function walkUpdate(dt) {
+  if ($('e4-reader').open) return;
   const K = walker.keys; let f = 0, r = 0;
   if (K.KeyW || K.ArrowUp) f += 1; if (K.KeyS || K.ArrowDown) f -= 1; if (K.KeyD) r += 1; if (K.KeyA) r -= 1;
   if (K.ArrowLeft) walker.yaw += 1.8 * dt; if (K.ArrowRight) walker.yaw -= 1.8 * dt;
@@ -3185,8 +3221,10 @@ function setMode(m) {
 function goTour(i) {
   tourIdx = Math.max(0, Math.min(TOUR.length - 1, i)); const s = TOUR[tourIdx];
   card(s.k, s.name, s.p, s.list, tourIdx === 0 ? '点“下一处”沿参观路线逐站前进，也可以直接点下面的站名。每站可拖动环顾。' : '');
-  camera.fov = s.fov || 40; camera.updateProjectionMatrix();
-  aim(s.cam[0], s.cam[1], 1800);
+  setGalleryNav(s.id,s.name);
+  const entrance=studyHalls.stations[s.id]?.overview;
+  camera.fov = entrance || s.id === 'e4' ? fitGalleryLens(entrance?.[2] || s.fov) : (s.fov || 40); camera.updateProjectionMatrix();
+  aim(entrance?.[0] || s.cam[0], entrance?.[1] || s.cam[1], 1800);
   [...$('dots').children].forEach((b, j) => { b.setAttribute('aria-current', j === tourIdx ? 'true' : 'false'); b.dataset.past = j < tourIdx ? 'true' : 'false'; });
   $('stopNo').textContent = '第' + ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四'][tourIdx] + '处'; $('stopName').textContent = s.name;
   $('prev').disabled = tourIdx === 0; $('next').disabled = tourIdx === TOUR.length - 1;
@@ -3252,7 +3290,7 @@ window.addEventListener('keydown', e => { if (e.ctrlKey && e.shiftKey && e.code 
 window.addEventListener('hashchange', () => { if (location.hash === '#edit' && !ED.on) edToggle(true); });
 /* ---------- film: plays the storyboard. One list of shots drives the camera, the subtitles, the mini-map in the corner and the exported video,
    so every frame of the video can be found on the plan. Open with #film in the address or Ctrl+Shift+V. ---------- */
-const SHOTS = [{"place":"院外东南上空","scale":"远景","lvl":"主","a":[[74,66,262],[0,4,60]],"b":[[72,62,120],[0,6,-24]],"text":"这是木构博物馆，一座讲榫卯的线上展馆。它是一组两进的院落，中轴线贯穿南北：山门、主殿、后殿、木塔，最北是运河上的廊桥。","note":"全院鸟瞰，交代布局和中轴线","open":[],"n":1,"dur":16.3,"t0":0,"subs":[[0.35,5.46,"这是木构博物馆，一座讲榫卯的线上展馆"],[5.46,10.28,"它是一组两进的院落，中轴线贯穿南北"],[10.28,13.4,"山门、主殿、后殿、木塔"],[13.4,15.95,"最北是运河上的廊桥"]]},{"place":"山门外","scale":"全景","lvl":"次","a":[[-10,4.5,99],[0,6.5,66]],"b":[[-5,3.6,88],[0,5.6,66]],"text":"参观从山门开始。山门三开间，两侧院墙围出一座完整的院落。","note":"山门正面","open":[],"n":2,"dur":8.4,"t0":16.3,"subs":[[0.35,4.2,"参观从山门开始。山门三开间"],[4.2,8.05,"两侧院墙围出一座完整的院落"]]},{"place":"山门前","scale":"特写","lvl":"次","a":[[-2.6,2.4,76.5],[0.6,3.0,70.6]],"b":[[2.2,2.2,76],[0.2,2.6,70.6]],"text":"板门上有门钉和铺首，门楣上有门簪，门前一对抱鼓石。","note":"门钉、铺首、抱鼓石","open":[],"n":3,"dur":7.6,"t0":24.7,"subs":[[0.35,5.15,"板门上有门钉和铺首，门楣上有门簪"],[5.15,7.25,"门前一对抱鼓石"]]},{"place":"前院南端","scale":"全景","lvl":"次","a":[[7,2.6,58],[0,10,12]],"b":[[1,3.0,46],[0,13,10]],"text":"绕过影壁就是前院。石道两侧各一方水池，东西回廊把院子连成一圈，尽头是主殿。","note":"进门后主殿出现","open":[],"n":4,"dur":10.7,"t0":32.3,"subs":[[0.35,5.49,"绕过影壁就是前院。石道两侧各一方水池"],[5.49,10.35,"东西回廊把院子连成一圈，尽头是主殿"]]},{"place":"前院中轴","scale":"全景","lvl":"主","a":[[0,3.4,40],[0,8,10]],"b":[[0,6.5,37],[0,21,8]],"text":"主殿是重檐屋顶，坐在两层台基上，体量是两侧配殿的一倍半，是前院的中心。","note":"主殿正面，由台基摇到屋脊","open":[],"n":5,"dur":10.2,"t0":43.0,"subs":[[0.35,4.67,"主殿是重檐屋顶，坐在两层台基上"],[4.67,9.85,"体量是两侧配殿的一倍半，是前院的中心"]]},{"place":"主殿檐下","scale":"特写","lvl":"主","a":[[13,8.5,27],[3,14.5,12]],"b":[[-5,9,26.5],[-11,14.5,12]],"text":"抬头看檐下。额枋上是青绿相间的旋子彩画，往上是一攒一攒的斗拱，再往上是檐椽和飞椽。斗拱全靠榫卯层层咬合，没有一颗钉子。","note":"彩画、斗拱、椽子，沿檐口横移","open":[],"n":6,"dur":16.3,"t0":53.2,"subs":[[0.35,5.64,"抬头看檐下。额枋上是青绿相间的旋子彩画"],[5.64,11.21,"往上是一攒一攒的斗拱，再往上是檐椽和飞椽"],[11.21,15.95,"斗拱全靠榫卯层层咬合，没有一颗钉子"]]},{"place":"序厅","scale":"中景","lvl":"次","a":[[2.6,6.6,16.2],[0,5.1,12.5]],"b":[[-2.4,6.3,15.6],[0,5.1,12.5]],"text":"进主殿先到序厅。长案上是全馆的烫样，也就是古代做给人看的建筑模型，先在这里认一认路。","note":"烫样","open":["tangyang"],"n":7,"dur":12.0,"t0":69.5,"subs":[[0.35,5.28,"进主殿先到序厅。长案上是全馆的烫样"],[5.28,9.33,"也就是古代做给人看的建筑模型"],[9.33,11.65,"先在这里认一认路"]]},{"place":"中庭东北角","scale":"全景","lvl":"主","a":[[11,8,-4],[0,8.5,2.2]],"b":[[9.5,6.4,6.4],[0,9.4,3.2]],"text":"穿过屏风门是中庭，全馆最高的空间。一根五米高的柱子，顶着一朵原大的唐式斗拱。","note":"中庭全貌和原大斗拱","open":[],"n":8,"dur":10.9,"t0":81.5,"subs":[[0.35,4.88,"穿过屏风门是中庭，全馆最高的空间"],[4.88,10.55,"一根五米高的柱子，顶着一朵原大的唐式斗拱"]]},{"place":"中庭斗拱旁","scale":"特写","lvl":"主","a":[[7,8.6,-2.6],[0,9.8,1.8]],"b":[[-6,10.2,-2],[0,10.0,1.8]],"text":"点一下，它一层层拆开。每一件构件都靠榫头和卯眼相扣，层层出挑，把屋檐托出四米多。","note":"斗拱逐层拆解","open":["tang"],"n":9,"dur":11.5,"t0":92.4,"subs":[[0.35,3.27,"点一下，它一层层拆开"],[3.27,8.81,"每一件构件都靠榫头和卯眼相扣，层层出挑"],[8.81,11.15,"把屋檐托出四米多"]]},{"place":"中庭北侧","scale":"仰拍","lvl":"次","a":[[7.5,4.4,-5.5],[0,22,2]],"b":[[6.6,4.8,-5.6],[0,22,2]],"text":"头顶是一口藻井，方井、八角井、圆井层层内收。","note":"藻井","open":[],"n":10,"dur":7.0,"t0":103.9,"subs":[[0.35,2.56,"头顶是一口藻井"],[2.56,6.65,"方井、八角井、圆井层层内收"]]},{"place":"展厅一入口","scale":"全景","lvl":"次","a":[[-35.4,2.5,30.6],[-43.5,1.6,20]],"b":[[-36.4,2.6,27.6],[-43,1.8,21.5]],"text":"出主殿向西是展厅一，从最基本的讲起：一个节点是怎样做出来的。","note":"展厅一全貌","open":[],"n":11,"dur":8.9,"t0":110.9,"subs":[[0.35,5.33,"出主殿向西是展厅一，从最基本的讲起"],[5.33,8.55,"一个节点是怎样做出来的"]]},{"place":"展厅一中央","scale":"特写","lvl":"主","a":[[-36.4,3.0,26.8],[-40.0,2.6,24.5]],"b":[[-36.8,3.1,22.4],[-40.0,2.6,24.5]],"text":"这件放大的透榫，按画线、开榫、凿卯、装配、打楔五步，一遍遍把自己做出来。","note":"透榫加楔五步演示","open":["hero_mortise"],"n":12,"dur":11,"t0":119.8,"subs":[[0.35,2.53,"这件放大的透榫"],[2.53,7.84,"按画线、开榫、凿卯、装配、打楔五步"],[7.84,10.65,"一遍遍把自己做出来"]]},{"place":"展厅一南墙","scale":"近景","lvl":"主","a":[[-41.4,2.9,26.2],[-43.2,2.0,30.2]],"b":[[-44.6,2.9,26.6],[-45.4,2.0,30.2]],"text":"沿墙是三件器物：提盒、圆凳、板凳。每件身上有编号圆点，点一下，那一处的榫卯就单独退开。看板凳，腿顶的榫头穿过了凳面。","note":"三件器物，圆点拆开局部","open":["jm_tihe#0","jm_bandeng#0"],"n":13,"dur":16.1,"t0":130.8,"subs":[[0.35,4.91,"沿墙是三件器物：提盒、圆凳、板凳"],[4.91,8.62,"每件身上有编号圆点，点一下"],[8.62,12.9,"那一处的榫卯就单独退开。看板凳"],[12.9,15.75,"腿顶的榫头穿过了凳面"]]},{"place":"展厅二中央","scale":"特写","lvl":"主","a":[[-36.5,2.8,12.8],[-40.0,1.9,10.9]],"b":[[-37.4,2.6,8.4],[-40.0,1.9,10.9]],"text":"展厅二讲木料怎样接长、拼宽。这是放大的燕尾榫箱角：梯形榫头外宽里窄，越往外拉，卡得越紧。","note":"燕尾榫箱角开合","open":["hero_dove"],"n":14,"dur":12.5,"t0":146.9,"subs":[[0.35,4.09,"展厅二讲木料怎样接长、拼宽"],[4.09,9.56,"这是放大的燕尾榫箱角：梯形榫头外宽里窄"],[9.56,12.15,"越往外拉，卡得越紧"]]},{"place":"展厅二北墙","scale":"近景","lvl":"次","a":[[-40.6,3.2,12.2],[-38.2,2.0,6.5]],"b":[[-39.4,3.0,10.4],[-36.6,1.9,6.5]],"text":"这边是博古架和翘头案。看翘头案的腿：腿顶开口，把牙条夹在当中，这叫夹头榫。","note":"翘头案，夹头榫局部拆开","open":["jm_qiaotouan#0"],"n":15,"dur":10.7,"t0":159.4,"subs":[[0.35,5.21,"这边是博古架和翘头案。看翘头案的腿"],[5.21,10.35,"腿顶开口，把牙条夹在当中，这叫夹头榫"]]},{"place":"展厅三东北角","scale":"全景","lvl":"次","a":[[9.6,3.2,-33.0],[-2,1.6,-27.2]],"b":[[7.4,3.0,-32.4],[-3,1.6,-26.6]],"text":"沿回廊向北到后殿，这里看榫卯做成的家具。","note":"展厅三全貌","open":["jm_luohanchuang","jm_lianggegui","jm_jiazichuang"],"n":16,"dur":7.0,"t0":170.1,"subs":[[0.35,6.65,"沿回廊向北到后殿，这里看榫卯做成的家具"]]},{"place":"展厅三西侧","scale":"特写","lvl":"主","a":[[-3.0,3.0,-26.0],[-5.7,2.2,-29.6]],"b":[[-8.2,3.1,-26.4],[-5.7,2.2,-29.6]],"text":"明式圈椅拆开来看：椅圈由几段弧料用楔钉榫接成，腿足、座面、靠背之间全是榫卯。","note":"圈椅拆解","open":["quanyi"],"n":17,"dur":10.9,"t0":177.1,"subs":[[0.35,2.68,"明式圈椅拆开来看"],[2.68,6.47,"椅圈由几段弧料用楔钉榫接成"],[6.47,10.55,"腿足、座面、靠背之间全是榫卯"]]},{"place":"展厅三东侧","scale":"近景","lvl":"次","a":[[8.8,2.9,-26.0],[5.7,2.0,-29.6]],"b":[[3.4,2.9,-26.2],[5.7,2.0,-29.6]],"text":"旁边的平头案用夹头榫：腿足上端开口，夹住牙条，再托起案面。","note":"平头案拆解","open":["an"],"n":18,"dur":9,"t0":188.0,"subs":[[0.35,5.58,"旁边的平头案用夹头榫：腿足上端开口"],[5.58,8.65,"夹住牙条，再托起案面"]]},{"place":"北院南侧","scale":"全景","lvl":"主","a":[[-30,9,-26],[0,21,-66]],"b":[[-30,16,-26],[0,24,-66]],"text":"穿过后殿是北院。正中是五层木塔，高四十六米，是全馆最高的建筑。","note":"木塔全貌","open":[],"n":19,"dur":9.1,"t0":197.0,"subs":[[0.35,4.69,"穿过后殿是北院。正中是五层木塔"],[4.69,8.75,"高四十六米，是全馆最高的建筑"]]},{"place":"木塔脚下","scale":"仰拍","lvl":"主","a":[[13,2.2,-50],[0,8,-66]],"b":[[13,2.2,-50],[0,25,-66]],"text":"塔身逐层收分，每层檐下都有斗拱，檐上是平座栏杆，最上面是塔刹。","note":"由下往上摇，逐层的檐和平座","open":[],"n":20,"dur":9.1,"t0":206.1,"subs":[[0.35,4.69,"塔身逐层收分，每层檐下都有斗拱"],[4.69,8.75,"檐上是平座栏杆，最上面是塔刹"]]},{"place":"展厅四入口","scale":"全景","lvl":"次","a":[[-23.6,5.4,-50.9],[-32.5,2.4,-64]],"b":[[-24.4,4.8,-53],[-32.8,2.4,-65]],"text":"先进西厢的展厅四，看榫卯怎样从一个节点长成一座房屋。","note":"展厅四全貌","open":[],"n":21,"dur":7.9,"t0":215.2,"subs":[[0.35,2.75,"先进西厢的展厅四"],[2.75,7.55,"看榫卯怎样从一个节点长成一座房屋"]]},{"place":"展厅四南圆台","scale":"特写","lvl":"主","a":[[-26.6,3.6,-53],[-32,2.6,-57]],"b":[[-27,4.0,-61],[-32,2.6,-57]],"text":"这是一攒清式的平身科斗拱，拆开是几十个构件，一件压一件。","note":"平身科斗拱拆解","open":["pingshenke"],"n":22,"dur":9,"t0":223.1,"subs":[[0.35,4.18,"这是一攒清式的平身科斗拱"],[4.18,8.65,"拆开是几十个构件，一件压一件"]]},{"place":"展厅四北侧","scale":"中景","lvl":"次","a":[[-27.6,3.4,-66.2],[-32,3.0,-71]],"b":[[-34.6,3.2,-67.6],[-39.2,2.6,-64]],"text":"旁边是抬梁和穿斗两种屋架：一个用梁层层抬起，一个用柱子直接承檩。","note":"抬梁与穿斗屋架对照","open":["liangjia","chuandou"],"n":23,"dur":9.4,"t0":232.1,"subs":[[0.35,3.83,"旁边是抬梁和穿斗两种屋架"],[3.83,9.05,"一个用梁层层抬起，一个用柱子直接承檩"]]},{"place":"木塔底层","scale":"全景","lvl":"主","a":[[4.6,3.5,-60.8],[0,3.8,-66]],"b":[[-4.6,3.8,-61],[0,4.4,-66]],"text":"再走进木塔。塔心是一具应县木塔的剖面模型：在一座木塔里，看另一座木塔是怎么搭起来的。","note":"塔内的木塔剖面模型","open":["tower"],"n":24,"dur":12.0,"t0":241.5,"subs":[[0.35,6.0,"再走进木塔。塔心是一具应县木塔的剖面模型"],[6.0,11.65,"在一座木塔里，看另一座木塔是怎么搭起来的"]]},{"place":"运河西岸","scale":"全景","lvl":"次","a":[[-36,9,-98],[2,3,-106]],"b":[[-27,6,-100],[2,3.4,-106]],"text":"从塔的北门出去是运河。桥身是编木拱，两组直木交织成拱，同样不用一颗钉子。","note":"木拱廊桥侧面","open":[],"n":25,"dur":10.4,"t0":253.5,"subs":[[0.35,5.2,"从塔的北门出去是运河。桥身是编木拱"],[5.2,10.05,"两组直木交织成拱，同样不用一颗钉子"]]},{"place":"运河北岸","scale":"中景","lvl":"次","a":[[12,3.6,-118],[0,5.6,-131]],"b":[[8,4.6,-119],[0,6,-131]],"text":"过桥到北岸，是一件放大的鲁班锁。","note":"鲁班锁雕塑","open":["burr"],"n":26,"dur":7.0,"t0":263.9,"subs":[[0.35,6.65,"过桥到北岸，是一件放大的鲁班锁"]]},{"place":"展厅五入口","scale":"中景","lvl":"次","a":[[23.8,3.2,-51.5],[33,3.2,-64]],"b":[[26.4,3.5,-56.5],[33,3.6,-66]],"text":"东厢的展厅五，把构件当作材料来创作：悬在半空的斗拱、互承木构、窗棂灯墙。","note":"展厅五的三件装置","open":[],"n":27,"dur":10.4,"t0":270.9,"subs":[[0.35,5.2,"东厢的展厅五，把构件当作材料来创作"],[5.2,10.05,"悬在半空的斗拱、互承木构、窗棂灯墙"]]},{"place":"工坊","scale":"中景","lvl":"次","a":[[40.2,2.9,8.4],[35.3,1.9,10.4]],"b":[[40.2,2.9,12.4],[35.3,1.9,12.6]],"text":"工坊里是四件用薄板插接的小件：方盒、托盘、盖盒、鸟屋。拆开来，每一件都只是几片平板。","note":"四件插接小件，拆开两件","open":["jm_xj1","jm_xj3"],"n":28,"dur":12.0,"t0":281.3,"subs":[[0.35,4.41,"工坊里是四件用薄板插接的小件"],[4.41,8.75,"方盒、托盘、盖盒、鸟屋。拆开来"],[8.75,11.65,"每一件都只是几片平板"]]},{"place":"尾厅","scale":"中景","lvl":"次","a":[[41,3.0,24.8],[41,1.9,30.3]],"b":[[39.8,2.9,26.2],[40.4,1.9,30.3]],"text":"尾厅留给今天的设计：插接的花器、折叠小凳和小架，用的还是同样的道理。","note":"三件现代小件","open":["jm_jiaowu"],"n":29,"dur":9.9,"t0":293.3,"subs":[[0.35,3.02,"尾厅留给今天的设计"],[3.02,6.88,"插接的花器、折叠小凳和小架"],[6.88,9.55,"用的还是同样的道理"]]},{"place":"院外西南上空","scale":"远景","lvl":"主","a":[[-60,48,118],[0,8,-10]],"b":[[-72,80,262],[0,6,40]],"text":"走完一圈，回到山门。从一个节点，到一件家具，到一座房屋：这就是木构。","note":"回望全院，收尾","open":[],"n":30,"dur":9.9,"t0":303.2,"subs":[[0.35,4.66,"走完一圈，回到山门。从一个节点"],[4.66,9.55,"到一件家具，到一座房屋：这就是木构"]]}];
+const SHOTS = [{"place":"院外东南上空","scale":"远景","lvl":"主","a":[[74,66,262],[0,4,60]],"b":[[72,62,120],[0,6,-24]],"text":"这是木构博物馆，一座讲榫卯的线上展馆。它是一组两进的院落，中轴线贯穿南北：山门、主殿、后殿、木塔，最北是运河上的廊桥。","note":"全院鸟瞰，交代布局和中轴线","open":[],"n":1,"dur":16.3,"t0":0,"subs":[[0.35,5.46,"这是木构博物馆，一座讲榫卯的线上展馆"],[5.46,10.28,"它是一组两进的院落，中轴线贯穿南北"],[10.28,13.4,"山门、主殿、后殿、木塔"],[13.4,15.95,"最北是运河上的廊桥"]]},{"place":"山门外","scale":"全景","lvl":"次","a":[[-10,4.5,99],[0,6.5,66]],"b":[[-5,3.6,88],[0,5.6,66]],"text":"参观从山门开始。山门三开间，两侧院墙围出一座完整的院落。","note":"山门正面","open":[],"n":2,"dur":8.4,"t0":16.3,"subs":[[0.35,4.2,"参观从山门开始。山门三开间"],[4.2,8.05,"两侧院墙围出一座完整的院落"]]},{"place":"山门前","scale":"特写","lvl":"次","a":[[-2.6,2.4,76.5],[0.6,3.0,70.6]],"b":[[2.2,2.2,76],[0.2,2.6,70.6]],"text":"板门上有门钉和铺首，门楣上有门簪，门前一对抱鼓石。","note":"门钉、铺首、抱鼓石","open":[],"n":3,"dur":7.6,"t0":24.7,"subs":[[0.35,5.15,"板门上有门钉和铺首，门楣上有门簪"],[5.15,7.25,"门前一对抱鼓石"]]},{"place":"前院南端","scale":"全景","lvl":"次","a":[[7,2.6,58],[0,10,12]],"b":[[1,3.0,46],[0,13,10]],"text":"绕过影壁就是前院。石道两侧各一方水池，东西回廊把院子连成一圈，尽头是主殿。","note":"进门后主殿出现","open":[],"n":4,"dur":10.7,"t0":32.3,"subs":[[0.35,5.49,"绕过影壁就是前院。石道两侧各一方水池"],[5.49,10.35,"东西回廊把院子连成一圈，尽头是主殿"]]},{"place":"前院中轴","scale":"全景","lvl":"主","a":[[0,3.4,40],[0,8,10]],"b":[[0,6.5,37],[0,21,8]],"text":"主殿是重檐屋顶，坐在两层台基上，体量是两侧配殿的一倍半，是前院的中心。","note":"主殿正面，由台基摇到屋脊","open":[],"n":5,"dur":10.2,"t0":43.0,"subs":[[0.35,4.67,"主殿是重檐屋顶，坐在两层台基上"],[4.67,9.85,"体量是两侧配殿的一倍半，是前院的中心"]]},{"place":"主殿檐下","scale":"特写","lvl":"主","a":[[13,8.5,27],[3,14.5,12]],"b":[[-5,9,26.5],[-11,14.5,12]],"text":"抬头看檐下。额枋上是青绿相间的旋子彩画，往上是一攒一攒的斗拱，再往上是檐椽和飞椽。斗拱全靠榫卯层层咬合，没有一颗钉子。","note":"彩画、斗拱、椽子，沿檐口横移","open":[],"n":6,"dur":16.3,"t0":53.2,"subs":[[0.35,5.64,"抬头看檐下。额枋上是青绿相间的旋子彩画"],[5.64,11.21,"往上是一攒一攒的斗拱，再往上是檐椽和飞椽"],[11.21,15.95,"斗拱全靠榫卯层层咬合，没有一颗钉子"]]},{"place":"序厅","scale":"中景","lvl":"次","a":[[2.6,6.6,16.2],[0,5.1,12.5]],"b":[[-2.4,6.3,15.6],[0,5.1,12.5]],"text":"进主殿先到序厅。长案上是全馆的烫样，也就是古代做给人看的建筑模型，先在这里认一认路。","note":"烫样","open":["tangyang"],"n":7,"dur":12.0,"t0":69.5,"subs":[[0.35,5.28,"进主殿先到序厅。长案上是全馆的烫样"],[5.28,9.33,"也就是古代做给人看的建筑模型"],[9.33,11.65,"先在这里认一认路"]]},{"place":"中庭东北角","scale":"全景","lvl":"主","a":[[11,8,-4],[0,8.5,2.2]],"b":[[9.5,6.4,6.4],[0,9.4,3.2]],"text":"穿过屏风门是中庭，全馆最高的空间。一根五米高的柱子，顶着一朵原大的唐式斗拱。","note":"中庭全貌和原大斗拱","open":[],"n":8,"dur":10.9,"t0":81.5,"subs":[[0.35,4.88,"穿过屏风门是中庭，全馆最高的空间"],[4.88,10.55,"一根五米高的柱子，顶着一朵原大的唐式斗拱"]]},{"place":"中庭斗拱旁","scale":"特写","lvl":"主","a":[[7,8.6,-2.6],[0,9.8,1.8]],"b":[[-6,10.2,-2],[0,10.0,1.8]],"text":"点一下，它一层层拆开。每一件构件都靠榫头和卯眼相扣，层层出挑，把屋檐托出四米多。","note":"斗拱逐层拆解","open":["tang"],"n":9,"dur":11.5,"t0":92.4,"subs":[[0.35,3.27,"点一下，它一层层拆开"],[3.27,8.81,"每一件构件都靠榫头和卯眼相扣，层层出挑"],[8.81,11.15,"把屋檐托出四米多"]]},{"place":"中庭北侧","scale":"仰拍","lvl":"次","a":[[7.5,4.4,-5.5],[0,22,2]],"b":[[6.6,4.8,-5.6],[0,22,2]],"text":"头顶是一口藻井，方井、八角井、圆井层层内收。","note":"藻井","open":[],"n":10,"dur":7.0,"t0":103.9,"subs":[[0.35,2.56,"头顶是一口藻井"],[2.56,6.65,"方井、八角井、圆井层层内收"]]},{"place":"展厅一入口","scale":"全景","lvl":"次","a":[[-35.4,2.5,30.6],[-43.5,1.6,20]],"b":[[-36.4,2.6,27.6],[-43,1.8,21.5]],"text":"出主殿向西是展厅一，从最基本的讲起：一个节点是怎样做出来的。","note":"展厅一全貌","open":[],"n":11,"dur":8.9,"t0":110.9,"subs":[[0.35,5.33,"出主殿向西是展厅一，从最基本的讲起"],[5.33,8.55,"一个节点是怎样做出来的"]]},{"place":"展厅一中央","scale":"特写","lvl":"主","a":[[-36.4,3.0,26.8],[-40.0,2.6,24.5]],"b":[[-36.8,3.1,22.4],[-40.0,2.6,24.5]],"text":"这件放大的透榫，按画线、开榫、凿卯、装配、打楔五步，一遍遍把自己做出来。","note":"透榫加楔五步演示","open":["hero_mortise"],"n":12,"dur":11,"t0":119.8,"subs":[[0.35,2.53,"这件放大的透榫"],[2.53,7.84,"按画线、开榫、凿卯、装配、打楔五步"],[7.84,10.65,"一遍遍把自己做出来"]]},{"place":"展厅一南墙","scale":"近景","lvl":"主","a":[[-41.4,2.9,26.2],[-43.2,2.0,30.2]],"b":[[-44.6,2.9,26.6],[-45.4,2.0,30.2]],"text":"沿墙是三件器物：提盒、圆凳、板凳。每件身上有编号圆点，点一下，那一处的榫卯就单独退开。看板凳，腿顶的榫头穿过了凳面。","note":"三件器物，圆点拆开局部","open":["jm_tihe#0","jm_bandeng#0"],"n":13,"dur":16.1,"t0":130.8,"subs":[[0.35,4.91,"沿墙是三件器物：提盒、圆凳、板凳"],[4.91,8.62,"每件身上有编号圆点，点一下"],[8.62,12.9,"那一处的榫卯就单独退开。看板凳"],[12.9,15.75,"腿顶的榫头穿过了凳面"]]},{"place":"展厅二中央","scale":"特写","lvl":"主","a":[[-36.5,2.8,12.8],[-40.0,1.9,10.9]],"b":[[-37.4,2.6,8.4],[-40.0,1.9,10.9]],"text":"展厅二讲木料怎样接长、拼宽。这是放大的燕尾榫箱角：梯形榫头外宽里窄，越往外拉，卡得越紧。","note":"燕尾榫箱角开合","open":["hero_dove"],"n":14,"dur":12.5,"t0":146.9,"subs":[[0.35,4.09,"展厅二讲木料怎样接长、拼宽"],[4.09,9.56,"这是放大的燕尾榫箱角：梯形榫头外宽里窄"],[9.56,12.15,"越往外拉，卡得越紧"]]},{"place":"展厅二北墙","scale":"近景","lvl":"次","a":[[-40.6,3.2,12.2],[-38.2,2.0,6.5]],"b":[[-39.4,3.0,10.4],[-36.6,1.9,6.5]],"text":"这边是博古架和翘头案。看翘头案的腿：腿顶开口，把牙条夹在当中，这叫夹头榫。","note":"翘头案，夹头榫局部拆开","open":["jm_qiaotouan#0"],"n":15,"dur":10.7,"t0":159.4,"subs":[[0.35,5.21,"这边是博古架和翘头案。看翘头案的腿"],[5.21,10.35,"腿顶开口，把牙条夹在当中，这叫夹头榫"]]},{"place":"展厅三东北角","scale":"全景","lvl":"次","a":[[9.6,3.2,-33.0],[-2,1.6,-27.2]],"b":[[7.4,3.0,-32.4],[-3,1.6,-26.6]],"text":"沿回廊向北到后殿，这里看榫卯做成的家具。","note":"展厅三全貌","open":["jm_luohanchuang","jm_lianggegui","jm_jiazichuang"],"n":16,"dur":7.0,"t0":170.1,"subs":[[0.35,6.65,"沿回廊向北到后殿，这里看榫卯做成的家具"]]},{"place":"展厅三西侧","scale":"特写","lvl":"主","a":[[-3.0,3.0,-26.0],[-5.7,2.2,-29.6]],"b":[[-8.2,3.1,-26.4],[-5.7,2.2,-29.6]],"text":"明式圈椅拆开来看：椅圈由几段弧料用楔钉榫接成，腿足、座面、靠背之间全是榫卯。","note":"圈椅拆解","open":["quanyi"],"n":17,"dur":10.9,"t0":177.1,"subs":[[0.35,2.68,"明式圈椅拆开来看"],[2.68,6.47,"椅圈由几段弧料用楔钉榫接成"],[6.47,10.55,"腿足、座面、靠背之间全是榫卯"]]},{"place":"展厅三东侧","scale":"近景","lvl":"次","a":[[8.8,2.9,-26.0],[5.7,2.0,-29.6]],"b":[[3.4,2.9,-26.2],[5.7,2.0,-29.6]],"text":"旁边的平头案用夹头榫：腿足上端开口，夹住牙条，再托起案面。","note":"平头案拆解","open":["an"],"n":18,"dur":9,"t0":188.0,"subs":[[0.35,5.58,"旁边的平头案用夹头榫：腿足上端开口"],[5.58,8.65,"夹住牙条，再托起案面"]]},{"place":"北院南侧","scale":"全景","lvl":"主","a":[[-30,9,-26],[0,21,-66]],"b":[[-30,16,-26],[0,24,-66]],"text":"穿过后殿是北院。正中是五层木塔，高四十六米，是全馆最高的建筑。","note":"木塔全貌","open":[],"n":19,"dur":9.1,"t0":197.0,"subs":[[0.35,4.69,"穿过后殿是北院。正中是五层木塔"],[4.69,8.75,"高四十六米，是全馆最高的建筑"]]},{"place":"木塔脚下","scale":"仰拍","lvl":"主","a":[[13,2.2,-50],[0,8,-66]],"b":[[13,2.2,-50],[0,25,-66]],"text":"塔身逐层收分，每层檐下都有斗拱，檐上是平座栏杆，最上面是塔刹。","note":"由下往上摇，逐层的檐和平座","open":[],"n":20,"dur":9.1,"t0":206.1,"subs":[[0.35,4.69,"塔身逐层收分，每层檐下都有斗拱"],[4.69,8.75,"檐上是平座栏杆，最上面是塔刹"]]},{"place":"展厅四入口","scale":"全景","lvl":"次","a":[[-32,2.88,-53.2],[-32,2.6,-70]],"b":[[-32.6,2.85,-57],[-32,2.8,-71]],"text":"先进西厢的展厅四，看榫卯怎样从一个节点长成一座房屋。","note":"展厅四全貌","open":[],"n":21,"dur":7.9,"t0":215.2,"subs":[[0.35,2.75,"先进西厢的展厅四"],[2.75,7.55,"看榫卯怎样从一个节点长成一座房屋"]]},{"place":"展厅四中央展座","scale":"特写","lvl":"主","a":[[-30.0,2.7,-70.7],[-32,2.3,-74]],"b":[[-32.85,3.05,-70.4],[-32,2.6,-74]],"text":"这是一攒清式的平身科斗拱，拆开是几十个构件，一件压一件。","note":"平身科斗拱拆解","open":["pingshenke"],"n":22,"dur":9,"t0":223.1,"subs":[[0.35,4.18,"这是一攒清式的平身科斗拱"],[4.18,8.65,"拆开是几十个构件，一件压一件"]]},{"place":"展厅四屋架对读","scale":"中景","lvl":"次","a":[[-34.8,2.9,-63.0],[-36.35,3.05,-69.1]],"b":[[-29.1,2.9,-63.0],[-27.65,3.05,-69.45]],"text":"旁边是抬梁和穿斗两种屋架：一个用梁层层抬起，一个用柱子直接承檩。","note":"抬梁与穿斗屋架对照","open":["liangjia","chuandou"],"n":23,"dur":9.4,"t0":232.1,"subs":[[0.35,3.83,"旁边是抬梁和穿斗两种屋架"],[3.83,9.05,"一个用梁层层抬起，一个用柱子直接承檩"]]},{"place":"木塔底层","scale":"全景","lvl":"主","a":[[4.6,3.5,-60.8],[0,3.8,-66]],"b":[[-4.6,3.8,-61],[0,4.4,-66]],"text":"再走进木塔。塔心是一具应县木塔的剖面模型：在一座木塔里，看另一座木塔是怎么搭起来的。","note":"塔内的木塔剖面模型","open":["tower"],"n":24,"dur":12.0,"t0":241.5,"subs":[[0.35,6.0,"再走进木塔。塔心是一具应县木塔的剖面模型"],[6.0,11.65,"在一座木塔里，看另一座木塔是怎么搭起来的"]]},{"place":"运河西岸","scale":"全景","lvl":"次","a":[[-36,9,-98],[2,3,-106]],"b":[[-27,6,-100],[2,3.4,-106]],"text":"从塔的北门出去是运河。桥身是编木拱，两组直木交织成拱，同样不用一颗钉子。","note":"木拱廊桥侧面","open":[],"n":25,"dur":10.4,"t0":253.5,"subs":[[0.35,5.2,"从塔的北门出去是运河。桥身是编木拱"],[5.2,10.05,"两组直木交织成拱，同样不用一颗钉子"]]},{"place":"运河北岸","scale":"中景","lvl":"次","a":[[12,3.6,-118],[0,5.6,-131]],"b":[[8,4.6,-119],[0,6,-131]],"text":"过桥到北岸，是一件放大的鲁班锁。","note":"鲁班锁雕塑","open":["burr"],"n":26,"dur":7.0,"t0":263.9,"subs":[[0.35,6.65,"过桥到北岸，是一件放大的鲁班锁"]]},{"place":"展厅五入口","scale":"中景","lvl":"次","a":[[23.8,3.2,-51.5],[33,3.2,-64]],"b":[[26.4,3.5,-56.5],[33,3.6,-66]],"text":"东厢的展厅五，把构件当作材料来创作：悬在半空的斗拱、互承木构、窗棂灯墙。","note":"展厅五的三件装置","open":[],"n":27,"dur":10.4,"t0":270.9,"subs":[[0.35,5.2,"东厢的展厅五，把构件当作材料来创作"],[5.2,10.05,"悬在半空的斗拱、互承木构、窗棂灯墙"]]},{"place":"工坊","scale":"中景","lvl":"次","a":[[40.2,2.9,8.4],[35.3,1.9,10.4]],"b":[[40.2,2.9,12.4],[35.3,1.9,12.6]],"text":"工坊里是四件用薄板插接的小件：方盒、托盘、盖盒、鸟屋。拆开来，每一件都只是几片平板。","note":"四件插接小件，拆开两件","open":["jm_xj1","jm_xj3"],"n":28,"dur":12.0,"t0":281.3,"subs":[[0.35,4.41,"工坊里是四件用薄板插接的小件"],[4.41,8.75,"方盒、托盘、盖盒、鸟屋。拆开来"],[8.75,11.65,"每一件都只是几片平板"]]},{"place":"尾厅","scale":"中景","lvl":"次","a":[[41,3.0,24.8],[41,1.9,30.3]],"b":[[39.8,2.9,26.2],[40.4,1.9,30.3]],"text":"尾厅留给今天的设计：插接的花器、折叠小凳和小架，用的还是同样的道理。","note":"三件现代小件","open":["jm_jiaowu"],"n":29,"dur":9.9,"t0":293.3,"subs":[[0.35,3.02,"尾厅留给今天的设计"],[3.02,6.88,"插接的花器、折叠小凳和小架"],[6.88,9.55,"用的还是同样的道理"]]},{"place":"院外西南上空","scale":"远景","lvl":"主","a":[[-60,48,118],[0,8,-10]],"b":[[-72,80,262],[0,6,40]],"text":"走完一圈，回到山门。从一个节点，到一件家具，到一座房屋：这就是木构。","note":"回望全院，收尾","open":[],"n":30,"dur":9.9,"t0":303.2,"subs":[[0.35,4.66,"走完一圈，回到山门。从一个节点"],[4.66,9.55,"到一件家具，到一座房屋：这就是木构"]]}];
 const FILM = { on: false, t0: 0, i: -1, comp: null, g: null, rec: null, chunks: [], ac: null, dest: null, clips: {}, src: null, map: null, opened: [], tgt: new THREE.Vector3() };
 let filmTotal = 0;
 function filmTiming() { let t = 0; SHOTS.forEach(s => { s.t0 = t; t += s.dur; }); filmTotal = t; } filmTiming();
@@ -3358,7 +3396,7 @@ window.__t = { FILM, SHOTS, filmStart, filmExport, filmStop, filmToggle, ED, edS
 function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false);
   if (composer) { const pr = renderer.getPixelRatio(); composer.setPixelRatio(pr); composer.setSize(w, h); normalRT.setSize(Math.round(w * pr), Math.round(h * pr));
     ink.uniforms.res.value.set(w * pr, h * pr); ink.uniforms.thick.value = Math.max(1, pr * .85); grade.uniforms.res.value.set(w * pr, h * pr); }
-  camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  camera.aspect = w / h; if (mode === 'tour' && (TOUR[tourIdx].id === 'e4' || studyHalls.stations[TOUR[tourIdx].id]) && !FILM.on) camera.fov = fitGalleryLens(galleryLens); camera.updateProjectionMatrix(); }
 window.addEventListener('resize', resize); if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas); resize();
 const v = new THREE.Vector3();
 let last = performance.now();
