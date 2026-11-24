@@ -1449,6 +1449,8 @@ async function onModel(gltf) {
       if (stone && galleryFour.oldPlinth(v)) return true;
       // Two superseded wall boards in the west wing share a mesh with the active wood sample wall.
       if (panel && Math.abs(v.x + 46.4) < .25 && v.z > 6.4 && v.z < 30.1) return true;
+      if (o.material.name === 'b_wood' && Math.abs(v.x + 46.4) < .25 &&
+          v.y > 3.79 && v.y < 3.89 && ((v.z > 18.95 && v.z < 30.05) || (v.z > 6.45 && v.z < 15.05))) return true;
       return Math.abs(v.z - 8.5) < .25 && v.y > 3.8 && v.y < 11.6 && (glass ? Math.abs(v.x) < 15.2 : Math.abs(v.x) < .25 && v.y < 11.1);
     };
     for (let k = 0; k < I.count; k += 3) { const a = I.getX(k), b = I.getX(k + 1), c = I.getX(k + 2); if (inDoor(a) && inDoor(b) && inDoor(c)) cut++; else keep.push(a, b, c); }
