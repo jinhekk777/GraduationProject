@@ -30,8 +30,9 @@ function createStudyHalls(THREE) {
       ['bracket','从栌斗看到双下昂',[4.9,5.67,3.9],1.95,3.65]]},
     ti: {overview:[[3.8,3.38,-60.8],[-1,3.96,-68],56],plates:[
       ['pagoda','檐与檐之间',[2.65,3.48,-72],0,3.15]]},
-    gf: {overview:[[43,2.68,15.5],[39.05,2.05,6.8],65],plates:[
-      ['box','方盒怎样合拢',[40.55,2.53,5.27],0,5.38]]},
+    gf: {overview:[[39.15,2.9,14.75],[43.35,2.15,5.95],63],plates:[
+      // The north doorway occupies x=39.8–42.2. Fit the entire framed bay on the solid wall to its east.
+      ['box','方盒怎样合拢',[45.1,2.79,4.67],0,4.05]]},
     wt: {overview:[[37.25,2.69,21.4],[41.15,2.09,30.5],62],plates:[
       ['index','几片木板，一件器物',[41.1,3.11,31.44],Math.PI,6.25]]}
   };
