@@ -69,7 +69,8 @@ function createStudyHalls(THREE) {
     const preview=new THREE.CanvasTexture(canvas);preview.encoding=THREE.sRGBEncoding;
     const basic=new THREE.MeshBasicMaterial({map:preview,toneMapped:false});
     readingPages.set(key,canvas);
-    const map=loader.load(directory+key+'.jpg',loaded=>{
+    const url=directory+key+'.jpg'+(key==='float'?'?v=2':'');
+    const map=loader.load(url,loaded=>{
       basic.map=loaded;basic.needsUpdate=true;preview.dispose();
       readingPages.set(key,loaded.image);showExhibitPage(key,title,loaded.image,true);
     },undefined,()=>map.dispose());

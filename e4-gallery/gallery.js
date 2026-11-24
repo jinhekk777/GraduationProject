@@ -58,7 +58,18 @@ function createTimberGallery(THREE) {
     return groups.get(id);
   }
   async function install(scene, addExhibit, finishMaterials, anisotropy) {
-    const gltf = await new THREE.GLTFLoader().loadAsync('e4-gallery/gallery.gltf');
+    const manager=new THREE.LoadingManager(),images=new THREE.TextureLoader(manager);
+    // A missing printed sheet should not abort loading all of the timber models.
+    manager.addHandler(new RegExp('^(?:'+Object.keys(titles).join('|')+')\\.jpg$'),{
+      load(url,done,progress){
+        const key=url.split('/').pop().replace(/\.jpg$/,'');
+        images.load(url,done,progress,()=>{
+          const page=exhibitTextPage(titles[key],['大木作展厅 · 木构架研习','沿展墙对照屋架、构件和分步教具。']);
+          done(new THREE.CanvasTexture(page));
+        });
+      }
+    });
+    const gltf = await new THREE.GLTFLoader(manager).loadAsync('e4-gallery/gallery.gltf');
     for (const node of [...gltf.scene.children]) {
       const {exhibit, plate} = node.userData;
       node.traverse(mesh => {
@@ -68,10 +79,6 @@ function createTimberGallery(THREE) {
         if (plate) {
           m.toneMapped = false;
           if (titles[plate]) {
-            if(!m.map?.image){
-              const sheet=exhibitTextPage(titles[plate],['大木作展厅 · 木构架研习','沿展墙可对照屋架、构件和分步教具。']);
-              m.map=new THREE.CanvasTexture(sheet);m.map.encoding=THREE.sRGBEncoding;m.needsUpdate=true;
-            }
             sheets.set(plate,m.map.image);mesh.userData.plate=plate;panels.push(mesh);
           }
         } else {
