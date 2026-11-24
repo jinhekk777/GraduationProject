@@ -2610,6 +2610,7 @@ function legendBoard(title, sub, lines, note, w, h, x, y, z, ry) {   // a free-s
         g.fillStyle = '#2a1d14'; g.font = `700 ${Math.round(40 * k)}px ${SERIF}`; g.fillText(name, cx + 76 * k, cy + 6 * k); g.fillStyle = '#4a3828'; g.font = `400 ${Math.round(27 * k)}px ${SANS}`; L[i].forEach((l, j) => g.fillText(l, cx + 76 * k, cy + 60 * k + j * 35 * k)); cy += hs[i] + slack; } }
     g.fillStyle = '#8a7058'; g.font = `400 24px ${SANS}`; NL.forEach((l, j) => g.fillText(l, 112, H - 52 - (NL.length - j) * 34)); });
   const grp = new THREE.Group(), pl = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t })); pl.position.y = h / 2 + .55; grp.add(pl);
+  const reverse = pl.clone(); reverse.rotation.y = Math.PI; reverse.position.z = -.061; grp.add(reverse);
   const fr = woodT('#3a2a1e'); grp.add(boxM(w + .1, h + .1, .05, fr, 0, h / 2 + .55, -.03)); for (const s of [-1, 1]) grp.add(boxM(.07, .6, .07, fr, s * (w / 2 - .2), .3, -.03));
   grp.position.set(x, y, z); grp.rotation.y = ry; grp.rotation.order = 'YXZ'; scene.add(grp); return grp;
 }

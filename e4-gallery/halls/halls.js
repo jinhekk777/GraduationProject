@@ -142,7 +142,18 @@ function createStudyHalls(THREE) {
       box(g,s*(w/2+.14),h/2+.15,-.025,.078,.045,.13,brass);
     }
     box(g,0,h/2+.13,-.025,w+.40,.072,.23,walnut);
-    const mesh=surface(g,w,h,key,anisotropy);(panels[id]??=[]).push(mesh);labels[key]=title;
+    const mesh=surface(g,w,h,key,anisotropy);
+    const faces=panels[id]??=[];
+    faces.push(mesh);
+    labels[key]=title;
+    // These two signs stand in the circulation path and are approached from either side.
+    if(id==='xu'||id==='zt'){
+      const reverse=mesh.clone();
+      reverse.rotation.y=Math.PI;
+      reverse.position.z=-.16; // beyond the timber backing, whose rear face is at -.155 m
+      g.add(reverse);
+      faces.push(reverse);
+    }
     const ground=id==='xu'||id==='zt'?3.90:id==='ti'?1.82:.60;
     displayBay(g,key,w,h,ground-pos[1]);
     const leg=pos[1]-ground-h/2;
