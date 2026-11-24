@@ -30,9 +30,9 @@ function createStudyHalls(THREE) {
       ['bracket','从栌斗看到双下昂',[4.9,5.67,3.9],1.95,3.65]]},
     ti: {overview:[[3.8,3.38,-60.8],[-1,3.96,-68],56],plates:[
       ['pagoda','檐与檐之间',[2.65,3.48,-72],0,3.15]]},
-    gf: {overview:[[39.15,2.9,14.75],[43.35,2.15,5.95],63],plates:[
-      // The north doorway occupies x=39.8–42.2. Fit the entire framed bay on the solid wall to its east.
-      ['box','方盒怎样合拢',[45.1,2.79,4.67],0,4.05]]},
+    gf: {overview:[[41.9,2.95,14.55],[38.85,2.15,6.2],63],plates:[
+      // The north doorway occupies x=39.8–42.2. Fit the entire framed bay on the solid wall to its west.
+      ['box','方盒怎样合拢',[36.9,2.9,5.19],0,4.05]]},
     wt: {overview:[[37.25,2.69,21.4],[41.15,2.09,30.5],62],plates:[
       ['index','几片木板，一件器物',[41.1,3.11,31.44],Math.PI,6.25]]}
   };
@@ -325,6 +325,7 @@ function createStudyHalls(THREE) {
       result['悬浮装置']=[[28.8,3.6,-66.05],[32.65,3.6,-59.2],49];
       result['窗棂灯墙']=[[31.5,2.65,-63],[41.4,2.65,-63],67];
     }
+    if(id==='gf')result['方盒图']=[[38.4,3.24,8.85],s.plates[0][2],51];
     if(id==='gf')result['木材墙']=[[40.7,2.65,10.5],[46.14,2.25,10.5],58];
     if(id==='wt')result['榫卯图谱']=[[39.8,2.6,24.65],[46.5,2.05,24.65],66];
     return result;
