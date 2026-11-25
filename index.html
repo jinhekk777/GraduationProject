@@ -167,6 +167,7 @@ button:focus-visible{outline:2px solid var(--qing);outline-offset:2px}
 #e4-reader header{display:flex;align-items:center;justify-content:space-between;gap:1em;margin-bottom:10px}
 #e4-reader h2{font:600 18px "Songti SC",serif;margin:0}
 #e4-reader button{background:#263c34;color:#fff5e6;border:0;padding:8px 14px;cursor:pointer}
+#exteriorView{position:absolute;bottom:max(19px,env(safe-area-inset-bottom));left:max(18px,env(safe-area-inset-left));font:600 14px var(--display);color:var(--ink);padding:7px 12px;cursor:pointer;max-width:45vw}
 #e4-reader img{display:block;max-width:100%;max-height:74vh;margin:auto;object-fit:contain}
 </style>
 
@@ -195,6 +196,7 @@ button:focus-visible{outline:2px solid var(--qing);outline-offset:2px}
       <div class="note" id="cardN"></div>
     </div>
   </section>
+  <select id="exteriorView" class="panel" aria-label="建筑外观视角" hidden><option value="" disabled selected>建筑近览</option></select>
   <nav class="dock panel" id="tourDock" aria-label="漫游" hidden>
     <div id="e4-views" role="group" aria-label="展厅四视角" hidden></div>
     <button class="arrow" id="prev" aria-label="上一处" title="上一处"><svg width="12" height="20" viewBox="0 0 12 20" aria-hidden="true"><path d="M9 3 3 10l6 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -1429,7 +1431,7 @@ async function meshopt() {   // wasm decoder, or the plain-JS reference decoder 
 fetchModel().then(async buf => { const L = new THREE.GLTFLoader(); L.setMeshoptDecoder(await meshopt()); progress(.76, '开榫'); await nextFrame();
   L.parse(buf, '', g => onModel(g).catch(e => { console.error(e); fail('场景搭建失败，请刷新重试'); }), e => { console.error(e); fail('模型解析失败，请刷新重试'); }); })
   .catch(e => { console.error(e); fail('模型下载失败，请刷新重试'); });
-let SITE_ROOT = null;
+let SITE_ROOT = null, focusExterior = null;
 async function onModel(gltf) {
   clearTimeout(stall); progress(.84, '合榫'); await nextFrame();
   const root = gltf.scene; root.userData.noEdit = true; SITE_ROOT = root;
@@ -1493,11 +1495,20 @@ async function onModel(gltf) {
   for (let i = 0; i < steps.length; i++) { steps[i](); progress(.86 + .13 * (i + 1) / steps.length, '合榫'); await nextFrame(); }
   await galleryFour.install(scene, addExhibit, toonify, renderer.capabilities.getMaxAnisotropy());
   await studyHalls.install(scene, name => SPEC[name](timber('#bc8f61'), timber('#976742')), addExhibit, toonify, renderer.capabilities.getMaxAnisotropy());
+  if (new URLSearchParams(location.search).get('finish') !== 'gate-study') {
+    const {finishMuseum} = await import('./exterior/finish.js');
+    await finishMuseum(THREE,scene,renderer);
+    const {exteriorViews}=await import('./exterior/views.js');
+    focusExterior=exteriorViews($('exteriorView'),camera,controls,aim);
+  }
   setTime('dusk');
   const requestedHall = new URLSearchParams(location.search).get('hall');
   if (TOUR.some(s => s.id === requestedHall)) {
     tourIdx = TOUR.findIndex(s => s.id === requestedHall); setMode('tour');
-  } else setMode('ext');
+  } else {
+    setMode('ext');
+    focusExterior?.(new URLSearchParams(location.search).get('exterior'));
+  }
   sceneReady = true; edInit();
   progress(1, '合榫'); for (let i = 0; i < 40 && LD.cur < 1; i++) await nextFrame(); await new Promise(r => setTimeout(r, 600));
   loadingEl.classList.add('done');
@@ -3293,6 +3304,8 @@ $('walkHome').addEventListener('click', () => { walkStart(); });
 function setMode(m) {
   if (mode === 'walk' && m !== 'walk') walkStop();
   if (m !== 'walk') { camera.fov = 40; camera.updateProjectionMatrix(); }
+  $('exteriorView').hidden = m!=='ext'||!focusExterior;
+  $('exteriorView').value='';
   mode = m; document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m ? 'true' : 'false'));
   const cut = m === 'cut'; if (roofNode) roofNode.visible = !cut; ceilGroup.visible = !cut; routeLine.visible = arrows.visible = cut; plaque.visible = !cut;
   $('tourDock').hidden = m !== 'tour'; $('walkBar').hidden = $('stick').hidden = m !== 'walk';

@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>山门材质样板 · 木构博物馆</title>
+<style>
+*{box-sizing:border-box}body{margin:0;color:#332d22;background:#ede4d3;font:15px system-ui,"PingFang SC",sans-serif}iframe{border:0;width:100vw;height:100dvh;display:block}
+header,nav,#status{position:absolute;background:#faf4e7f2;border:1px solid #b9a98f;box-shadow:0 2px 14px #34241624}
+header{top:16px;left:17px;padding:9px 16px;font:600 20px "Songti SC",serif;letter-spacing:.08em}
+nav{bottom:20px;left:50%;transform:translateX(-50%);padding:5px;display:flex;align-items:center;gap:3px;max-width:96vw;width:max-content}
+button{background:transparent;color:#3c362a;border:0;font:inherit;padding:8px 12px;cursor:pointer;border-radius:2px;white-space:nowrap}
+select{font:inherit;padding:7px 6px;border:1px solid #b9a98f;background:#f5ebd9;color:#403b32}button:focus-visible{outline:2px solid #8c4b2d}button[aria-pressed=true]{background:#384f47;color:#fffaf0}button:hover{box-shadow:inset 0 0 0 1px #a79376}
+#compare{border-left:1px solid #c3b59f;margin-left:3px}#status{left:50%;top:54%;transform:translate(-50%,-50%);padding:11px 16px}
+@media(max-width:620px){header{top:9px;left:9px;font-size:17px}nav{bottom:12px;flex-wrap:wrap;justify-content:center}button{font-size:13px;padding:8px}}
+</style>
+<iframe id="museum" title="山门三维材质样板" src="../index.html?hall=in&amp;finish=gate-study"></iframe>
+<header>山门材质样板</header><div role="status" id="status">正在载入山门与材质…</div>
+<nav aria-label="山门观察视角" hidden><button data-shot="front">全景</button><button data-shot="lantern">檐下宫灯</button><button data-shot="stone">抱鼓石</button><button data-shot="knocker">门环</button><select id="more" aria-label="更多视角"><option value="">更多视角</option><option value="roof">屋瓦</option><option value="eave">瓦当</option><option value="beam">檐下彩画</option><option value="wall">墙柱与台基</option><option value="window">窗棂石作</option></select><select aria-label="材质版本" id="version"><option value="craft">细作版</option><option value="deep">深化版</option><option value="first">上一版</option><option value="original">网页原貌</option></select></nav>
+<style>[hidden]{display:none!important}</style>
+<script type="module" src="sample.js?v=7"></script></html>
