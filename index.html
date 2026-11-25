@@ -1060,9 +1060,22 @@ const HALLS = [
     p: '在索引桌旁回看木样，再沿东墙比较五种接合方式。从榫头穿柱、横木相搭，到箱角、拼板和椅圈，顺着接缝把节点认回器物上。',
     list: ['五种榫卯分解图', '器物构造图', '索引桌木样'] },
 ];
-const ROUTE = [[0, 86], [0, 66], [-7.5, 63.5], [-1, 60], [0, 35], [0, 24], [0, 12.5], [0, 3.1], [0, -2], [-30.5, -2], [-30.5, 10.6], [-29.5, 26], [-41, 25], [-41, 17], [-41, 10.75],
-  [-41, -2], [-41, -29], [-12, -29], [0, -29], [0, -37], [-12, -48], [-20, -64], [-32, -64], [-20, -64], [-9, -66], [0, -66], [0, -73], [0, -86], [0, -126], [0, -86], [11.5, -84], [11.5, -70], [20, -64], [32, -64], [31, -50], [31, -29], [41, -29],
-  [41, -2], [41, 10.75], [41, 17], [41, 25], [34, 26], [29.5, 26], [29.5, 64], [8.4, 64], [0, 66], [0, 86]];
+const BURR_Z = -136;   // Set back from the foot of the north bridge stairs.
+const ROUTE = [
+  [0, 81], [0, 66], [0, 63.15], [-7.6, 63.15], [-7.6, 59], [0, 52], [2.7, 35],
+  [2.7, 24], [0, 18], [2.38, 15.4], [2.38, 10.4], [1, 9.6], [1, 7.1], [-7.3, 6.45],
+  [-7.3, 3], [-6, -2], [-17, -2], [-30.5, -2], [-32.4, -2], [-31.35, 9.7], [-31.35, 24.5],
+  [-33, 24.6], [-35.8, 24.6], [-36.2, 20], [-41, 19], [-41, 15], [-36.3, 13.4], [-36.6, 8.75],
+  [-41, 8.75], [-41, -2], [-41, -29], [-12, -29], [-6, -29], [0, -29], [0, -37],
+  [-12, -48], [-20, -64], [-26, -63], [-31, -63], [-26, -63], [-20, -64], [-15, -53],
+  [4, -52], [6, -53], [0, -54], [0, -56], [0, -61], [3, -62.5], [3.8, -66],
+  [3.5, -70], [0, -71], [0, -75], [0, -79.7], [6.5, -81], [6.5, -87], [8, -90],
+  [4.8, -80], [0, -79], [0, -86], [0, -97], [0, -132], [0, -79.8], [11.5, -84],
+  [11.5, -70], [20, -64], [27, -64], [31, -65], [27, -64], [27, -54], [32, -53],
+  [32, -48], [32, -29], [41, -29], [41, -2], [41, 7.3], [41, 14.5], [41, 19.4],
+  [37, 22], [37, 24.5], [32, 24.5], [31.25, 24.5], [31.1, 52], [31.1, 58], [9, 58],
+  [7.9, 63.15], [0, 63.15], [0, 84]
+];
 const TOUR = [
   { id: 'in', name: '山门', k: '馆外', cam: [[-4, 3.2, 94], [0, 7.5, 66]], list: [],
     p: '山门三开间，门框上做出三个燕尾榫头——进门之前，先看到一个榫卯。两侧院墙围出一座完整的院落。' },
@@ -1070,7 +1083,7 @@ const TOUR = [
     p: '绕过影壁进入前院。中轴石道两侧各一方水池，池中有汀步，石灯沿路排开。尽头是两层须弥座台基上的重檐主殿，体量是两侧配殿的一倍半，正脊离地三十多米；上下檐都是一攒攒彩画斗拱，一块素匾挂在上檐下。东西两侧回廊把整座院子连成一圈。' },
 ].concat(HALLS.map(h => ({ id: h.id, name: h.name, cam: h.cam, fov: h.fov, k: `第 ${h.n} 站`, p: h.p, list: h.list })))
  .concat([{ id: 'out', name: '出口', k: '馆外', cam: [[46, 6, 78], [8, 6, 40]], list: [],
-    p: '从尾厅出来，沿东回廊回到山门。院子是一个环：进门向西，出门在东，整条路线不走回头路。' }]);
+    p: '从尾厅出来，沿东回廊回到山门。来时绕过影壁西侧，回程沿东侧出院。' }]);
 
 /* ---------- renderer, sky, haze (rendering language borrowed from Journey: warm low sun, deep aerial haze, glow) ---------- */
 const canvas = $('scene');
@@ -1460,11 +1473,20 @@ async function onModel(gltf) {
   for (const s of [-1, 1]) { const gm = new THREE.MeshBasicMaterial({ color: lin('#c8d4d6'), transparent: true, opacity: .08, depthWrite: false, side: THREE.DoubleSide }); glassMats.push(gm);
     const pane = new THREE.Mesh(new THREE.PlaneGeometry(12, 7.3), gm); pane.position.set(s * 9, 7.55, 8.5); pane.renderOrder = 2; scene.add(pane); const gn = root.getObjectByName('museum_glass'); if (gn) gn.attach(pane); else pane.userData.noEdit = true; }   // under the glass node, so the walker cannot pass through the panes
   roofNode = root.getObjectByName('museum_roof');
+  // Two stone treads bridge the 0.54 m drop on the courtyard side of the gate.
+  // Keep the visible treads in the same collision mesh as the existing threshold.
+  const gateSteps = new THREE.Group();
+  gateSteps.name = 'museum_base_gate_steps';
+  const gateStone = dress(stylize(new THREE.MeshToonMaterial({ color: lin('#d9d3c6'), gradientMap: RAMP })), 'plaster', .8);
+  gateSteps.add(boxM(4.36, .24, 1.04, gateStone, 0, .12, 63.86),
+                boxM(4.36, .18, .50, gateStone, 0, .33, 64.13));
+  root.add(gateSteps);
   const galleryColliders = galleryFour.collision();
   const studyColliders = studyHalls.collision();
   root.add(galleryColliders,studyColliders); buildCollision(root); root.remove(galleryColliders,studyColliders);
   studyColliders.traverse(o => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } });
   galleryColliders.traverse(o => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } });
+  buildRouteLine();
   placeFigures();
   scene.add(root);
   const steps = [buildExhibits, buildDisplays, buildMing, buildCeilings, buildCraft, buildOrnaments, buildStars, buildGate, buildNature, buildSurround, () => { buildJM(); glowExhibits(); }, () => { if (!SHOW_EXHIBITS) emptySigns(); }, () => toonify(scene)];
@@ -1482,23 +1504,39 @@ async function onModel(gltf) {
 }
 
 /* ---------- route + labels (shown in the cutaway) ---------- */
-const routePts = ROUTE.map(([x, z]) => new THREE.Vector3(x, 1.0, z));
-routePts.forEach(p => { const inMain = Math.abs(p.x) < 23.2 && p.z < 25.8 && p.z > -15.6; if (inMain) p.y = 4.3; if (Math.abs(p.x) < 3 && p.z < -89 && p.z > -123) p.y = 4.4; });
-// densify the bridge stretch so the line follows the deck height
-
-const routePath = new THREE.CurvePath(); for (let i = 0; i < routePts.length - 1; i++) routePath.add(new THREE.LineCurve3(routePts[i], routePts[i + 1]));
-const routeLine = new THREE.Mesh(new THREE.TubeGeometry(routePath, 900, .3, 8, false), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, .62, .14), fog: false }));
-routeLine.visible = false; scene.add(routeLine);
-const arrows = new THREE.Group(); arrows.visible = false; scene.add(arrows);
-const coneG = new THREE.ConeGeometry(.6, 1.4, 12), coneM = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, .62, .14), fog: false });
-for (let i = 0; i < routePts.length - 1; i++) {
-  const a = routePts[i], b = routePts[i + 1]; if (a.distanceTo(b) < 4) continue;
-  const c = new THREE.Mesh(coneG, coneM); c.position.copy(a).lerp(b, .55); c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); arrows.add(c);
+const routeLine = new THREE.Group(), arrows = new THREE.Group();
+routeLine.visible = arrows.visible = false;
+scene.add(routeLine, arrows);
+function buildRouteLine() {
+  const material = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, .62, .14), fog: false });
+  const cone = new THREE.ConeGeometry(.48, 1.12, 12), up = new THREE.Vector3(0, 1, 0);
+  const points = [];
+  let ground = floorAt(ROUTE[0][0], 0, ROUTE[0][1]);
+  ROUTE.forEach(([x, z], i) => {
+    const [sx, sz] = ROUTE[Math.max(0, i - 1)];
+    const distance = Math.hypot(x - sx, z - sz);
+    const count = Math.max(1, Math.ceil(distance / .25));
+    for (let k = 1; k <= count; k++) {
+      const t = k / count, px = sx + (x - sx) * t, pz = sz + (z - sz) * t;
+      ground = floorAt(px, ground, pz);
+      const point = new THREE.Vector3(px, ground + .52, pz);
+      points.push(point);
+      if (distance >= 4 && k === Math.ceil(count * .55)) {
+        const arrow = new THREE.Mesh(cone, material);
+        arrow.position.copy(point);
+        arrow.quaternion.setFromUnitVectors(up, new THREE.Vector3(x - sx, 0, z - sz).normalize());
+        arrows.add(arrow);
+      }
+    }
+  });
+  const curve = new THREE.CurvePath();
+  for (let i = 1; i < points.length; i++) curve.add(new THREE.LineCurve3(points[i - 1], points[i]));
+  routeLine.add(new THREE.Mesh(new THREE.TubeGeometry(curve, points.length, .16, 6, false), material));
 }
 const labelsEl = $('labels');
 const LABELS = HALLS.map(h => { const d = document.createElement('div'); d.className = 'lab'; d.innerHTML = `<b>${h.n}</b>${h.name}`; labelsEl.appendChild(d);
   return { el: d, p: new THREE.Vector3(h.at[0], h.at[1] + (h.id === 'zt' ? 5.5 : 3.4), h.at[2]) }; });
-[['山门', [0, 4.5, 68]], ['影壁', [0, 5, 62]], ['前院', [-10, 1.5, 48]], ['回廊', [29.5, 3.5, 50]], ['北院', [-16, 1.5, -44]], ['运河', [-30, 1, -106]], ['鲁班锁', [0, 12, -131]]].forEach(([t, p]) => {
+[['山门', [0, 4.5, 68]], ['影壁', [0, 5, 62]], ['前院', [-10, 1.5, 48]], ['回廊', [29.5, 3.5, 50]], ['北院', [-16, 1.5, -44]], ['运河', [-30, 1, -106]], ['鲁班锁', [0, 12, BURR_Z]]].forEach(([t, p]) => {
   const d = document.createElement('div'); d.className = 'lab'; d.textContent = t; d.style.borderColor = 'rgba(42,34,27,.3)'; labelsEl.appendChild(d); LABELS.push({ el: d, p: new THREE.Vector3(...p) }); });
 
 /* ---------- time of day ---------- */
@@ -1823,8 +1861,8 @@ function buildExhibits() {
       for (const e of [-1, 1]) { const c = [0, 0, 0], sz = [0, 0, 0]; c[la] = e * 3; c[oa] = sd; sz[la] = 2; sz[oa] = 2; sz[ta] = 2; put(c, sz); }           // the two free ends, full section
       for (const a of [-1.5, -.5, .5, 1.5]) for (const o of [.5, 1.5]) for (const t of [-.5, .5]) { const c = [0, 0, 0]; c[la] = a; c[oa] = o * sd; c[ta] = t; if (owner(c) === st) put(c, [1, 1, 1]); }   // the crossing: only the cells this stick keeps
       B.build(grp); const dir = new THREE.Vector3(); dir.setComponent(oa, sd); grp.userData.base = grp.position.clone(); grp.userData.dir = dir; g.add(grp); bars.push(grp); });
-    const spin = new THREE.Group(); spin.add(g); spin.position.set(0, 6.2, -131); g.rotation.set(.62, 0, .5);
-    const plinth = cylM(2.2, 1.2, woodT('#b9a88a'), 0, .6, -131); scene.add(plinth);
+    const spin = new THREE.Group(); spin.add(g); spin.position.set(0, 6.2, BURR_Z); g.rotation.set(.62, 0, .5);
+    const plinth = cylM(2.2, 1.2, woodT('#b9a88a'), 0, .6, BURR_Z); scene.add(plinth);
     addExhibit({ id: 'burr', hall: '运河北岸', root: spin, inner: g, bars, art: true, on: false, title: '鲁班锁（雕塑）',
       p: '运河北岸的巨型鲁班锁，六根木料两两成对、三向交叉，靠各自身上的缺口互相卡住，在空中缓缓转动。点一下，六根木料向外分开，可以看到每一根中段被切掉的部分；再点一下，重新锁合。', list: ['六柱鲁班锁', '每根中段开有缺口，相互咬合', '雕塑尺度：单根约 4.6 米'], note: '雕塑作品。缺口的形状是示意，不是某一种传世鲁班锁的解法；为了看清缺口，六根木料是同时向外平移的，真实的鲁班锁要按顺序一根根抽出。' }); }
 }
@@ -3265,8 +3303,8 @@ function setMode(m) {
       ['前院：序厅、中庭、展厅一至三、工坊、尾厅', '北院：木塔、展厅四、展厅五', '运河：木拱廊桥、北岸鲁班锁'], '建筑为当代设计，屋顶、斗拱和格扇是简化的设计语言，不按法式；馆内展品才按法式考证。拖动旋转，滚轮缩放，右上角可切换白昼、黄昏、入夜。');
     aim([10, 6.5, 104], [0, 14, 6]);
   } else if (m === 'cut') {
-    card('剖视布局', '两进院落，十二处展区', '掀掉屋顶看平面：进主殿序厅后向西，看完西配殿的两个展厅，沿北回廊进后殿，穿过后殿进入北院：走进木塔底层、西厢展厅四、运河上的木拱廊桥、东厢展厅五；再回到主殿中庭，最后经东配殿的工坊、尾厅回到山门。橙色线是参观路线。',
-      HALLS.map(h => `${h.n} ${h.name}`), '进门沿中轴直入主殿，先看中庭的原大斗拱，再顺时针绕院一周，每个展厅只进一次。');
+    card('剖视布局', '两进院落，十二处展区', '橙线从山门出发，绕过影壁，穿过序厅和中庭，再经西配殿与后殿进入北院。参观西厢后，从木塔走向廊桥，到北岸看鲁班锁。返程经过东厢、工坊和尾厅，沿东回廊回到山门。',
+      HALLS.map(h => `${h.n} ${h.name}`), '沿箭头可辨认各展厅的门洞、看展过道和上下台阶的位置。');
     aim([8, 230, 70], [-4, 0, -30]);
   } else if (m === 'walk') { walkStart(); }
   else { goTour(tourIdx); }
